@@ -3,8 +3,7 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody2D))]
 public class UnitMovement : MonoBehaviour
 {
-    [Header("Movement Settings")]
-    [SerializeField] private float moveSpeed = 5f;
+    private float moveSpeed;
     public float MoveSpeed => moveSpeed;
 
     private float stoppingDistance = 0.05f;
