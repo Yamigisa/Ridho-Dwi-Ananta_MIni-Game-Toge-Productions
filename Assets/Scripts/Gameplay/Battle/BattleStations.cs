@@ -58,20 +58,8 @@ public class BattleStations : MonoBehaviour
     {
         List<int> indices = new();
 
-        switch (unitCount)
-        {
-            case 1:
-                indices.Add(maxStations / 2);
-                break;
-            case 2:
-                indices.Add(0);
-                indices.Add(maxStations - 1);
-                break;
-            default:
-                for (int i = 0; i < unitCount; i++)
-                    indices.Add(i);
-                break;
-        }
+        for (int i = 0; i < unitCount && i < maxStations; i++)
+            indices.Add(i);
 
         return indices;
     }

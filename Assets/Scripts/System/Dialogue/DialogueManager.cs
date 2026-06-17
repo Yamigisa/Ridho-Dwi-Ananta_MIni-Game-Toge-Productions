@@ -2,6 +2,7 @@ using UnityEngine;
 using Fungus;
 using UnityEngine.SceneManagement;
 using System.Collections;
+using System;
 
 public class DialogueManager : MonoBehaviour
 {
@@ -16,6 +17,8 @@ public class DialogueManager : MonoBehaviour
     [SerializeField] private string popupVariableName = "PopupText";
 
     public static DialogueManager Instance { get; private set; }
+    public event Action<bool> OnPopupVisibilityChanged;
+    private bool isPopupVisible;
 
     private void Awake()
     {
@@ -69,9 +72,11 @@ public class DialogueManager : MonoBehaviour
         if (!TryFindPopupFlowchart(out Flowchart popupFlowchart))
             yield break;
 
+        SetPopupVisible(true);
         popupFlowchart.SetStringVariable(popupVariableName, message);
         popupFlowchart.ExecuteBlock(popupBlockName);
         yield return WaitForDialogueToFinish(popupFlowchart);
+        SetPopupVisible(false);
     }
 
     public void ShowFormattedPopup(string template, params (string key, string value)[] replacements)
@@ -90,6 +95,30 @@ public class DialogueManager : MonoBehaviour
             message = message.Replace($"{{{key}}}", value);
 
         yield return ShowPopupAndWait(message);
+    }
+
+    public IEnumerator ShowFormattedPopupForSeconds(float seconds, string template, params (string key, string value)[] replacements)
+    {
+        string message = template;
+        foreach (var (key, value) in replacements)
+            message = message.Replace($"{{{key}}}", value);
+
+        yield return ShowPopupForSeconds(message, seconds);
+    }
+
+    public IEnumerator ShowPopupForSeconds(string message, float seconds)
+    {
+        yield return WaitUntilFlowchartFree();
+
+        if (!TryFindPopupFlowchart(out Flowchart popupFlowchart))
+            yield break;
+
+        SetPopupVisible(true);
+        popupFlowchart.SetStringVariable(popupVariableName, message);
+        popupFlowchart.ExecuteBlock(popupBlockName);
+        yield return new WaitForSeconds(seconds);
+        yield return WaitForDialogueToFinish(popupFlowchart);
+        SetPopupVisible(false);
     }
 
     public IEnumerator WaitUntilFlowchartFree()
@@ -177,5 +206,14 @@ public class DialogueManager : MonoBehaviour
         }
 
         return false;
+    }
+
+    private void SetPopupVisible(bool visible)
+    {
+        if (isPopupVisible == visible)
+            return;
+
+        isPopupVisible = visible;
+        OnPopupVisibilityChanged?.Invoke(visible);
     }
 }

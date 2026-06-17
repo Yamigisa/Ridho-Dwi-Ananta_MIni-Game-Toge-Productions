@@ -1,4 +1,5 @@
 using TMPro;
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -18,8 +19,15 @@ public class UnitBattle : MonoBehaviour
     [Header("For Enemy Unit ONLY")]
     [SerializeField] private SpriteRenderer spriteRenderer;
 
+    [Header("Selection Highlight")]
+    [SerializeField] private Color targetedColor = Color.yellow;
+    [SerializeField] private float targetedScaleMultiplier = 1.12f;
+
     private UnitBattleData unitBattleData;
     private Animator animator;
+    private Color defaultSpriteColor = Color.white;
+    private Color defaultUIImageColor = Color.white;
+    private Vector3 defaultScale;
 
     public int CurrentHP { get; private set; }
     public int CurrentMP { get; private set; }
@@ -30,10 +38,26 @@ public class UnitBattle : MonoBehaviour
     public int Defense => IsGuarding ? BaseDefense * 2 : BaseDefense;
     public int Speed { get; private set; }
     public bool IsGuarding { get; private set; }
+    public bool IsAlive => CurrentHP > 0;
+    public bool IsTargetable { get; private set; }
+    public event Action<UnitBattle> OnSelected;
 
     private void Awake()
     {
         TryGetComponent(out animator);
+        defaultScale = transform.localScale;
+
+        if (hpSlider != null)
+            hpSlider.interactable = false;
+
+        if (mpSlider != null)
+            mpSlider.interactable = false;
+
+        if (spriteRenderer != null)
+            defaultSpriteColor = spriteRenderer.color;
+
+        if (uiImage != null)
+            defaultUIImageColor = uiImage.color;
     }
 
     public void InitializeUnitBattle(UnitData unitData)
@@ -115,14 +139,52 @@ public class UnitBattle : MonoBehaviour
         if (uiImage != null && unitData != null && unitData.icon != null)
             uiImage.sprite = unitData.icon;
 
-        if (spriteRenderer != null && unitBattleData != null && unitBattleData.battleSprite != null)
-            spriteRenderer.sprite = unitBattleData.battleSprite;
+        if (spriteRenderer != null)
+        {
+            if (unitBattleData != null && unitBattleData.battleSprite != null)
+                spriteRenderer.sprite = unitBattleData.battleSprite;
+
+            EnsureSelectionCollider();
+        }
 
         SetHP(CurrentHP);
         SetMP(CurrentMP);
     }
 
     public UnitBattleData GetUnitBattleData() => unitBattleData;
+
+    public void SetTargetable(bool isTargetable)
+    {
+        IsTargetable = isTargetable && IsAlive;
+    }
+
+    public void SetTargeted(bool isTargeted)
+    {
+        if (spriteRenderer != null)
+            spriteRenderer.color = isTargeted ? targetedColor : defaultSpriteColor;
+
+        if (uiImage != null)
+            uiImage.color = isTargeted ? targetedColor : defaultUIImageColor;
+
+        transform.localScale = isTargeted ? defaultScale * targetedScaleMultiplier : defaultScale;
+    }
+
+    private void OnMouseDown()
+    {
+        if (!IsTargetable)
+            return;
+
+        OnSelected?.Invoke(this);
+    }
+
+    private void EnsureSelectionCollider()
+    {
+        if (spriteRenderer == null || GetComponent<Collider2D>() != null)
+            return;
+
+        BoxCollider2D boxCollider = gameObject.AddComponent<BoxCollider2D>();
+        boxCollider.isTrigger = true;
+    }
 
     public void PlayAttack() => animator?.SetTrigger("Attack");
     public void PlayHurt() => animator?.SetTrigger("Hurt");

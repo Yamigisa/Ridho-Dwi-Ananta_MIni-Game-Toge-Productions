@@ -15,7 +15,11 @@ public class BattleHUD : MonoBehaviour
     [SerializeField] private Button passButton;
     [SerializeField] private Button fleeButton;
 
+    [Header("Cancel Button")]
+    [SerializeField] private Button cancelButton;
+
     public event Action<BattleAction> OnActionSelected;
+    public event Action OnCancelSelected;
 
     private void Awake()
     {
@@ -25,10 +29,26 @@ public class BattleHUD : MonoBehaviour
         fleeButton.onClick.AddListener(() => OnActionSelected?.Invoke(BattleAction.Flee));
         skillButton.onClick.AddListener(() => OnActionSelected?.Invoke(BattleAction.Skill));
         passButton.onClick.AddListener(() => OnActionSelected?.Invoke(BattleAction.Pass));
+
+        if (cancelButton != null)
+            cancelButton.onClick.AddListener(() => OnCancelSelected?.Invoke());
+
+        HideCancelButton();
     }
 
     public void ShowActionMenu() => actionMenu.SetActive(true);
     public void HideActionMenu() => actionMenu.SetActive(false);
+    public void ShowCancelButton()
+    {
+        if (cancelButton != null)
+            cancelButton.gameObject.SetActive(true);
+    }
+
+    public void HideCancelButton()
+    {
+        if (cancelButton != null)
+            cancelButton.gameObject.SetActive(false);
+    }
 }
 
 public enum BattleAction

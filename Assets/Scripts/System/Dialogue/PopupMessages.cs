@@ -8,6 +8,7 @@ public class PopupMessages : ScriptableObject
 
     [Header("Battle - Turn")]
     public string unitAttack = "{unit} attacks {target}!";
+    public string unitDamageDealt = "{unit} dealt {amount} damage to {target}!";
     public string unitrMiss = "{unit} missed!";
     public string unitHurt = "{unit} took {amount} damage!";
     public string unitDie = "{unit} was defeated!";
