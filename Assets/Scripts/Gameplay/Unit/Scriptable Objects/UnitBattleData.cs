@@ -3,8 +3,9 @@ using UnityEngine;
 [CreateAssetMenu(menuName = "Units/Battle Data")]
 public class UnitBattleData : ScriptableObject
 {
-    [Header("Visuals")]
+    [Header("Portrait for player card UI")]
     public Sprite portrait;        // for player card UI
+    [Header("Portrait for player card UI")]
     public Sprite battleSprite;    // for enemy sprite renderer
     public Sprite turnOrderIcon;   // for turn order display
 

@@ -26,6 +26,10 @@ public class BattleManager : MonoBehaviour
 
     [Header("HUD")]
     [SerializeField] private BattleHUD battleHUD;
+
+    [Header("Feedback")]
+    [SerializeField] private float damagePopupDelay = 0.35f;
+
     private UnitBattle currentActingUnit;
     public UnitBattle CurrentActingUnit => currentActingUnit;
     private UnitBattle selectedEnemyTarget;
@@ -33,6 +37,7 @@ public class BattleManager : MonoBehaviour
     private bool targetConfirmed;
     private bool targetSelectionCanceled;
     private bool subscribedToDialogueEvents;
+    private bool keepPlayerCardsVisibleDuringPopups;
 
     private BattleState currentState;
     public BattleState CurrentState => currentState;
@@ -100,13 +105,20 @@ public class BattleManager : MonoBehaviour
             currentActingUnit.ClearGuard();
             currentActingUnit.SetTargeted(true);
             battleHUD.HideCancelButton();
-            battleHUD.ShowActionMenu();
+
+            if (currentActingUnit.BattleAIProfile == null)
+                battleHUD.ShowActionMenu();
+            else
+                StartCoroutine(HandleAITurnSequence(currentActingUnit, playerBattleUnits, enemyBattleUnits));
         }
         else
         {
             currentState = BattleState.EnemyTurn;
+            currentActingUnit = next;
+            currentActingUnit.ClearGuard();
             battleHUD.HideActionMenu();
             battleHUD.HideCancelButton();
+            StartCoroutine(HandleAITurnSequence(currentActingUnit, enemyBattleUnits, playerBattleUnits));
         }
     }
 
@@ -145,6 +157,128 @@ public class BattleManager : MonoBehaviour
     }
     #endregion
 
+    #region AI
+
+    private IEnumerator HandleAITurnSequence(UnitBattle actingUnit, List<UnitBattle> allies, List<UnitBattle> opponents)
+    {
+        if (actingUnit == null || !actingUnit.IsAlive)
+        {
+            turnOrderManager.CompleteCurrentTurn();
+            ProcessNextTurn();
+            yield break;
+        }
+
+        BattleAIProfile profile = actingUnit.BattleAIProfile;
+        if (profile != null && profile.ThinkDelay > 0f)
+            yield return new WaitForSeconds(profile.ThinkDelay);
+        else
+            yield return new WaitForSeconds(0.5f);
+
+        BattleAIIntent intent = profile != null
+            ? profile.ChooseIntent(actingUnit, allies, opponents)
+            : CreateDefaultAIIntent(opponents);
+
+        yield return ExecuteAIIntent(actingUnit, intent, allies, opponents);
+    }
+
+    private BattleAIIntent CreateDefaultAIIntent(List<UnitBattle> opponents)
+    {
+        UnitBattle target = GetFirstAliveUnit(opponents);
+        return target != null
+            ? new BattleAIIntent(BattleAIAction.Attack, target)
+            : new BattleAIIntent(BattleAIAction.Pass);
+    }
+
+    private IEnumerator ExecuteAIIntent(UnitBattle actingUnit, BattleAIIntent intent, List<UnitBattle> allies, List<UnitBattle> opponents)
+    {
+        switch (intent.Action)
+        {
+            case BattleAIAction.Attack:
+                if (intent.Target != null)
+                    yield return ExecuteAttackSequence(actingUnit, intent.Target);
+                break;
+            case BattleAIAction.Skill:
+                yield return ExecuteSkillSequence(actingUnit, intent.Target);
+                break;
+            case BattleAIAction.Item:
+                yield return ExecuteItemSequence(actingUnit);
+                break;
+            case BattleAIAction.Defend:
+                yield return ExecuteDefendSequence(actingUnit);
+                break;
+            case BattleAIAction.Pass:
+                yield return ExecutePassSequence(actingUnit);
+                break;
+            case BattleAIAction.Flee:
+                yield return ExecuteAIFleeSequence(actingUnit, allies, opponents);
+                yield break;
+        }
+
+        if (IsBattleOver())
+            yield break;
+
+        turnOrderManager.CompleteCurrentTurn();
+        ProcessNextTurn();
+    }
+
+    private IEnumerator ExecuteAIFleeSequence(UnitBattle actingUnit, List<UnitBattle> allies, List<UnitBattle> opponents)
+    {
+        DialogueManager.Instance.BeginPopupSequence();
+
+        yield return DialogueManager.Instance.ShowFormattedPopupAndWait(
+            DialogueManager.Instance.Messages.unitFleeAttempt,
+            ("unit", actingUnit.name)
+        );
+
+        bool success = actingUnit.BattleAIProfile != null && actingUnit.BattleAIProfile.RollFleeSuccess(actingUnit, opponents);
+
+        if (success)
+        {
+            yield return DialogueManager.Instance.ShowFormattedPopupAndWait(
+                DialogueManager.Instance.Messages.unitFleeSuccess,
+                ("unit", actingUnit.name)
+            );
+
+            if (enemyBattleUnits.Contains(actingUnit))
+                actingUnit.OnSelected -= OnEnemyTargetSelected;
+
+            allies.Remove(actingUnit);
+            turnOrderManager.RemoveUnit(actingUnit);
+
+            Destroy(actingUnit.gameObject);
+
+            if (enemyBattleUnits.Count == 0)
+            {
+                currentState = BattleState.Win;
+                yield return DialogueManager.Instance.ShowPopupAndWait(DialogueManager.Instance.Messages.victory);
+                DialogueManager.Instance.EndPopupSequence();
+                yield break;
+            }
+
+            if (playerBattleUnits.Count == 0)
+            {
+                currentState = BattleState.Lose;
+                yield return DialogueManager.Instance.ShowPopupAndWait(DialogueManager.Instance.Messages.defeat);
+                DialogueManager.Instance.EndPopupSequence();
+                yield break;
+            }
+        }
+        else
+        {
+            yield return DialogueManager.Instance.ShowFormattedPopupAndWait(
+                DialogueManager.Instance.Messages.unitFleeFailed,
+                ("unit", actingUnit.name)
+            );
+
+            turnOrderManager.CompleteCurrentTurn();
+        }
+
+        DialogueManager.Instance.EndPopupSequence();
+        ProcessNextTurn();
+    }
+
+    #endregion
+
     #region Attack
 
     private IEnumerator HandleAttackSequence()
@@ -173,6 +307,22 @@ public class BattleManager : MonoBehaviour
             yield break;
         }
 
+        yield return ExecuteAttackSequence(attacker, target);
+
+        ClearTargetIndicator();
+        if (IsBattleOver())
+            yield break;
+
+        turnOrderManager.CompleteCurrentTurn();
+        ProcessNextTurn();
+    }
+
+    private IEnumerator ExecuteAttackSequence(UnitBattle attacker, UnitBattle target)
+    {
+        bool previousKeepPlayerCardsVisible = keepPlayerCardsVisibleDuringPopups;
+        keepPlayerCardsVisibleDuringPopups = previousKeepPlayerCardsVisible || playerBattleUnits.Contains(target);
+        RefreshPlayerCardsForPopupState();
+
         string attackerName = attacker.name;
         string targetName = target.name;
 
@@ -187,17 +337,19 @@ public class BattleManager : MonoBehaviour
         yield return new WaitForSeconds(0.5f);
 
         int damage = CalculateAttackDamage(attacker, target);
-        target.SetHP(target.CurrentHP - damage);
         target.PlayHurt();
+        yield return target.SetHPAnimated(target.CurrentHP - damage);
 
+        if (damagePopupDelay > 0f)
+            yield return new WaitForSeconds(damagePopupDelay);
+
+        DialogueManager.Instance.BeginPopupSequence();
         yield return DialogueManager.Instance.ShowFormattedPopupAndWait(
             DialogueManager.Instance.Messages.unitDamageDealt,
             ("unit", attackerName),
             ("amount", damage.ToString()),
             ("target", targetName)
         );
-
-        ClearTargetIndicator();
 
         if (!target.IsAlive)
         {
@@ -208,21 +360,47 @@ public class BattleManager : MonoBehaviour
                 ("unit", targetName)
             );
 
-            enemyBattleUnits.Remove(target);
+            RemoveDefeatedUnit(target);
             turnOrderManager.RemoveUnit(target);
-            target.OnSelected -= OnEnemyTargetSelected;
             Destroy(target.gameObject);
 
             if (enemyBattleUnits.Count == 0)
             {
                 currentState = BattleState.Win;
                 yield return DialogueManager.Instance.ShowPopupAndWait(DialogueManager.Instance.Messages.victory);
+                DialogueManager.Instance.EndPopupSequence();
+                keepPlayerCardsVisibleDuringPopups = previousKeepPlayerCardsVisible;
+                RefreshPlayerCardsForPopupState();
+                yield break;
+            }
+
+            if (playerBattleUnits.Count == 0)
+            {
+                currentState = BattleState.Lose;
+                yield return DialogueManager.Instance.ShowPopupAndWait(DialogueManager.Instance.Messages.defeat);
+                DialogueManager.Instance.EndPopupSequence();
+                keepPlayerCardsVisibleDuringPopups = previousKeepPlayerCardsVisible;
+                RefreshPlayerCardsForPopupState();
                 yield break;
             }
         }
 
-        turnOrderManager.CompleteCurrentTurn();
-        ProcessNextTurn();
+        DialogueManager.Instance.EndPopupSequence();
+        keepPlayerCardsVisibleDuringPopups = previousKeepPlayerCardsVisible;
+        RefreshPlayerCardsForPopupState();
+    }
+
+    private void RemoveDefeatedUnit(UnitBattle unit)
+    {
+        if (enemyBattleUnits.Remove(unit))
+            unit.OnSelected -= OnEnemyTargetSelected;
+        else
+            playerBattleUnits.Remove(unit);
+    }
+
+    private bool IsBattleOver()
+    {
+        return currentState == BattleState.Win || currentState == BattleState.Lose;
     }
 
     private IEnumerator WaitForEnemyTargetSelection(UnitBattle defaultTarget)
@@ -314,10 +492,15 @@ public class BattleManager : MonoBehaviour
 
     private UnitBattle GetFirstAliveEnemy()
     {
-        foreach (UnitBattle enemy in enemyBattleUnits)
+        return GetFirstAliveUnit(enemyBattleUnits);
+    }
+
+    private UnitBattle GetFirstAliveUnit(List<UnitBattle> units)
+    {
+        foreach (UnitBattle unit in units)
         {
-            if (enemy.IsAlive)
-                return enemy;
+            if (unit != null && unit.IsAlive)
+                return unit;
         }
 
         return null;
@@ -330,11 +513,26 @@ public class BattleManager : MonoBehaviour
 
     private void HandlePopupVisibilityChanged(bool isVisible)
     {
+        RefreshPlayerCardsForPopupState(isVisible);
+    }
+
+    private void RefreshPlayerCardsForPopupState()
+    {
+        RefreshPlayerCardsForPopupState(false);
+    }
+
+    private void RefreshPlayerCardsForPopupState(bool popupVisible)
+    {
         foreach (UnitBattle playerUnit in playerBattleUnits)
         {
             if (playerUnit != null)
-                playerUnit.gameObject.SetActive(!isVisible);
+                playerUnit.gameObject.SetActive(ShouldShowPlayerCardsDuringPopup(popupVisible));
         }
+    }
+
+    private bool ShouldShowPlayerCardsDuringPopup(bool popupVisible)
+    {
+        return !popupVisible || currentState == BattleState.PlayerTurn || keepPlayerCardsVisibleDuringPopups;
     }
 
     private void SubscribeDialogueEvents()
@@ -348,13 +546,47 @@ public class BattleManager : MonoBehaviour
 
     #endregion
 
+    #region Item & Skill
+
+    private IEnumerator ExecuteItemSequence(UnitBattle actingUnit)
+    {
+        string unitName = actingUnit != null ? actingUnit.name : "Unit";
+
+        yield return DialogueManager.Instance.ShowFormattedPopupAndWait(
+            DialogueManager.Instance.Messages.unitItem,
+            ("unit", unitName)
+        );
+    }
+
+    private IEnumerator ExecuteSkillSequence(UnitBattle actingUnit, UnitBattle target)
+    {
+        string unitName = actingUnit != null ? actingUnit.name : "Unit";
+        string targetName = target != null ? target.name : "target";
+
+        yield return DialogueManager.Instance.ShowFormattedPopupAndWait(
+            DialogueManager.Instance.Messages.unitSkill,
+            ("unit", unitName),
+            ("target", targetName)
+        );
+    }
+
+    #endregion
+
     #region Pass
 
     private IEnumerator HandlePassSequence()
     {
-        string unitName = currentActingUnit != null ? currentActingUnit.name : "Unit";
-        int recoveredHP = currentActingUnit != null ? currentActingUnit.RecoverHPPercent(0.1f) : 0;
-        int recoveredMP = currentActingUnit != null ? currentActingUnit.RecoverMPPercent(0.1f) : 0;
+        yield return ExecutePassSequence(currentActingUnit);
+
+        turnOrderManager.CompleteCurrentTurn();
+        ProcessNextTurn();
+    }
+
+    private IEnumerator ExecutePassSequence(UnitBattle actingUnit)
+    {
+        string unitName = actingUnit != null ? actingUnit.name : "Unit";
+        int recoveredHP = actingUnit != null ? actingUnit.RecoverHPPercent(0.1f) : 0;
+        int recoveredMP = actingUnit != null ? actingUnit.RecoverMPPercent(0.1f) : 0;
 
         yield return DialogueManager.Instance.ShowFormattedPopupAndWait(
             DialogueManager.Instance.Messages.unitPass,
@@ -362,9 +594,6 @@ public class BattleManager : MonoBehaviour
             ("hp", recoveredHP.ToString()),
             ("mp", recoveredMP.ToString())
         );
-
-        turnOrderManager.CompleteCurrentTurn();
-        ProcessNextTurn();
     }
 
     #endregion
@@ -373,13 +602,21 @@ public class BattleManager : MonoBehaviour
 
     private IEnumerator HandleDefendSequence()
     {
-        string unitName = currentActingUnit != null ? currentActingUnit.name : "Unit";
+        yield return ExecuteDefendSequence(currentActingUnit);
+
+        turnOrderManager.CompleteCurrentTurn();
+        ProcessNextTurn();
+    }
+
+    private IEnumerator ExecuteDefendSequence(UnitBattle actingUnit)
+    {
+        string unitName = actingUnit != null ? actingUnit.name : "Unit";
         int recoveredMP = 0;
 
-        if (currentActingUnit != null)
+        if (actingUnit != null)
         {
-            recoveredMP = currentActingUnit.RecoverMPPercent(0.2f);
-            currentActingUnit.StartGuard();
+            recoveredMP = actingUnit.RecoverMPPercent(0.2f);
+            actingUnit.StartGuard();
         }
 
         yield return DialogueManager.Instance.ShowFormattedPopupAndWait(
@@ -387,9 +624,6 @@ public class BattleManager : MonoBehaviour
             ("unit", unitName),
             ("mp", recoveredMP.ToString())
         );
-
-        turnOrderManager.CompleteCurrentTurn();
-        ProcessNextTurn();
     }
 
     #endregion
@@ -398,6 +632,8 @@ public class BattleManager : MonoBehaviour
 
     private IEnumerator HandleFleeSequence()
     {
+        DialogueManager.Instance.BeginPopupSequence();
+
         yield return DialogueManager.Instance.ShowPopupAndWait(DialogueManager.Instance.Messages.fleeAttempt);
 
         bool success = Random.value <= CalculateFleeChance();
@@ -406,6 +642,7 @@ public class BattleManager : MonoBehaviour
         {
             yield return DialogueManager.Instance.ShowPopupAndWait(DialogueManager.Instance.Messages.escapeSuccess);
 
+            DialogueManager.Instance.EndPopupSequence();
             SceneManager.LoadScene("Gameplay");
         }
         else
@@ -414,6 +651,7 @@ public class BattleManager : MonoBehaviour
 
             yield return new WaitForSeconds(1f);
 
+            DialogueManager.Instance.EndPopupSequence();
             turnOrderManager.CompleteCurrentTurn();
             ProcessNextTurn();
         }

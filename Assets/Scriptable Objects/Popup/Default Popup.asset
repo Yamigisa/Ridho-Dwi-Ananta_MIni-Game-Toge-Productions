@@ -21,10 +21,15 @@ MonoBehaviour:
   unitPass: '{unit} passed and recovered {hp} HP and {mp} MP.'
   unitGuard: '{unit} guarded and recovered {mp} MP.'
   itemUsed: '{unit} used {item}!'
+  unitItem: '{unit} tried to use an item, but items are not ready yet.'
   itemAttributes: '{unit}''s {attributes} increased by {amount}!'
+  unitSkill: '{unit} tried to use a skill, but skills are not ready yet.'
   fleeAttempt: The party is trying to flee...
   escapeSuccess: Successfully escaped!
   escapeFailed: Couldn't escape!
+  unitFleeAttempt: '{unit} is trying to flee...'
+  unitFleeSuccess: '{unit} fled!'
+  unitFleeFailed: '{unit} couldn''t escape!'
   victory: Victory!
   defeat: Your party was defeated...
   expGained: Gained {exp} EXP!

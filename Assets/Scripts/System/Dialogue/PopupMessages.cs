@@ -17,12 +17,19 @@ public class PopupMessages : ScriptableObject
 
     [Header("Battle - Items")]
     public string itemUsed = "{unit} used {item}!";
+    public string unitItem = "{unit} tried to use an item, but items are not ready yet.";
     public string itemAttributes = "{unit}'s {attributes} increased by {amount}!";
+
+    [Header("Battle - Skills")]
+    public string unitSkill = "{unit} tried to use a skill, but skills are not ready yet.";
 
     [Header("Battle - Escape")]
     public string fleeAttempt = "The party is trying to flee...";
     public string escapeSuccess = "Successfully escaped!";
     public string escapeFailed = "Couldn't escape!";
+    public string unitFleeAttempt = "{unit} is trying to flee...";
+    public string unitFleeSuccess = "{unit} fled!";
+    public string unitFleeFailed = "{unit} couldn't escape!";
 
     [Header("Battle - End")]
     public string victory = "Victory!";

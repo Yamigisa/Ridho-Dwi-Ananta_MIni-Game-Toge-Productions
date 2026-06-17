@@ -10,6 +10,9 @@ public class UnitData : ScriptableObject
     public UnitBattleData battleData;
     public UnitExplorationData explorationData;
 
-    [Header("Leave empty for player units")]
+    [Header("Battle AI (leave empty for player-controlled units)")]
+    public BattleAIProfile battleAIProfile;
+
+    [Header("AI Exploration Data ((leave empty for player-controlled units)")]
     public UnitAIData aiData;
 }

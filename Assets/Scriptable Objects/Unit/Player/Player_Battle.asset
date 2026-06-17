@@ -12,10 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 54854188cd1b1504cafba87fb42c5a61, type: 3}
   m_Name: Player_Battle
   m_EditorClassIdentifier: Assembly-CSharp::UnitBattleData
+  portrait: {fileID: 0}
+  battleSprite: {fileID: 0}
   turnOrderIcon: {fileID: 21300000, guid: ea8f56c43254d41728f5ac4e8299b6c9, type: 3}
   baseHP: 5
   baseMP: 5
   baseAttack: 5
   baseDefense: 5
-  baseSpeed: 5
+  baseSpeed: 0
   battleAnimator: {fileID: 0}

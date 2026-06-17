@@ -1,5 +1,6 @@
 using TMPro;
 using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -23,11 +24,18 @@ public class UnitBattle : MonoBehaviour
     [SerializeField] private Color targetedColor = Color.yellow;
     [SerializeField] private float targetedScaleMultiplier = 1.12f;
 
+    [Header("Stat Bar Animation")]
+    [SerializeField] private float hpBarAnimationDuration = 0.5f;
+    [SerializeField] private float mpBarAnimationDuration = 0.35f;
+
     private UnitBattleData unitBattleData;
+    private UnitData unitData;
     private Animator animator;
     private Color defaultSpriteColor = Color.white;
     private Color defaultUIImageColor = Color.white;
     private Vector3 defaultScale;
+    private Coroutine hpBarCoroutine;
+    private Coroutine mpBarCoroutine;
 
     public int CurrentHP { get; private set; }
     public int CurrentMP { get; private set; }
@@ -37,6 +45,9 @@ public class UnitBattle : MonoBehaviour
     public int BaseDefense { get; private set; }
     public int Defense => IsGuarding ? BaseDefense * 2 : BaseDefense;
     public int Speed { get; private set; }
+    public int Level { get; private set; }
+    public UnitData UnitData => unitData;
+    public BattleAIProfile BattleAIProfile => unitData != null ? unitData.battleAIProfile : null;
     public bool IsGuarding { get; private set; }
     public bool IsAlive => CurrentHP > 0;
     public bool IsTargetable { get; private set; }
@@ -68,7 +79,9 @@ public class UnitBattle : MonoBehaviour
             return;
         }
 
+        this.unitData = unitData;
         unitBattleData = unitData.battleData;
+        Level = unitData.level;
 
         if (unitBattleData == null)
         {
@@ -95,14 +108,30 @@ public class UnitBattle : MonoBehaviour
     {
         CurrentHP = Mathf.Clamp(value, 0, MaxHP);
         if (hpText != null) hpText.text = $"{CurrentHP} / {MaxHP}";
-        if (hpSlider != null) hpSlider.value = MaxHP > 0 ? (float)CurrentHP / MaxHP : 0f;
+        SetSliderImmediate(hpSlider, GetHPPercent());
     }
 
     public void SetMP(int value)
     {
         CurrentMP = Mathf.Clamp(value, 0, MaxMP);
         if (mpText != null) mpText.text = $"{CurrentMP} / {MaxMP}";
-        if (mpSlider != null) mpSlider.value = MaxMP > 0 ? (float)CurrentMP / MaxMP : 0f;
+        SetSliderImmediate(mpSlider, GetMPPercent());
+    }
+
+    public IEnumerator SetHPAnimated(int value)
+    {
+        CurrentHP = Mathf.Clamp(value, 0, MaxHP);
+        if (hpText != null) hpText.text = $"{CurrentHP} / {MaxHP}";
+
+        yield return AnimateSlider(hpSlider, GetHPPercent(), hpBarAnimationDuration, true);
+    }
+
+    public IEnumerator SetMPAnimated(int value)
+    {
+        CurrentMP = Mathf.Clamp(value, 0, MaxMP);
+        if (mpText != null) mpText.text = $"{CurrentMP} / {MaxMP}";
+
+        yield return AnimateSlider(mpSlider, GetMPPercent(), mpBarAnimationDuration, false);
     }
 
     public int RecoverHPPercent(float percent)
@@ -113,12 +142,28 @@ public class UnitBattle : MonoBehaviour
         return CurrentHP - before;
     }
 
+    public IEnumerator RecoverHPPercentAnimated(float percent, Action<int> onRecovered = null)
+    {
+        int before = CurrentHP;
+        int amount = MaxHP > 0 ? Mathf.CeilToInt(MaxHP * percent) : 0;
+        yield return SetHPAnimated(CurrentHP + amount);
+        onRecovered?.Invoke(CurrentHP - before);
+    }
+
     public int RecoverMPPercent(float percent)
     {
         int before = CurrentMP;
         int amount = MaxMP > 0 ? Mathf.CeilToInt(MaxMP * percent) : 0;
         SetMP(CurrentMP + amount);
         return CurrentMP - before;
+    }
+
+    public IEnumerator RecoverMPPercentAnimated(float percent, Action<int> onRecovered = null)
+    {
+        int before = CurrentMP;
+        int amount = MaxMP > 0 ? Mathf.CeilToInt(MaxMP * percent) : 0;
+        yield return SetMPAnimated(CurrentMP + amount);
+        onRecovered?.Invoke(CurrentMP - before);
     }
 
     public void StartGuard()
@@ -189,4 +234,69 @@ public class UnitBattle : MonoBehaviour
     public void PlayAttack() => animator?.SetTrigger("Attack");
     public void PlayHurt() => animator?.SetTrigger("Hurt");
     public void PlayDie() => animator?.SetTrigger("Die");
+
+    private float GetHPPercent()
+    {
+        return MaxHP > 0 ? (float)CurrentHP / MaxHP : 0f;
+    }
+
+    private float GetMPPercent()
+    {
+        return MaxMP > 0 ? (float)CurrentMP / MaxMP : 0f;
+    }
+
+    private void SetSliderImmediate(Slider slider, float value)
+    {
+        if (slider != null)
+            slider.value = value;
+    }
+
+    private IEnumerator AnimateSlider(Slider slider, float targetValue, float duration, bool isHP)
+    {
+        if (slider == null)
+            yield break;
+
+        Coroutine activeCoroutine = isHP ? hpBarCoroutine : mpBarCoroutine;
+        if (activeCoroutine != null)
+            StopCoroutine(activeCoroutine);
+
+        IEnumerator routine = AnimateSliderValue(slider, targetValue, duration, isHP);
+        if (isHP)
+            hpBarCoroutine = StartCoroutine(routine);
+        else
+            mpBarCoroutine = StartCoroutine(routine);
+
+        if (isHP)
+        {
+            yield return hpBarCoroutine;
+            hpBarCoroutine = null;
+        }
+        else
+        {
+            yield return mpBarCoroutine;
+            mpBarCoroutine = null;
+        }
+    }
+
+    private IEnumerator AnimateSliderValue(Slider slider, float targetValue, float duration, bool isHP)
+    {
+        float startValue = slider.value;
+
+        if (duration <= 0f || Mathf.Approximately(startValue, targetValue))
+        {
+            slider.value = targetValue;
+            yield break;
+        }
+
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+            slider.value = Mathf.Lerp(startValue, targetValue, t);
+            yield return null;
+        }
+
+        slider.value = targetValue;
+    }
 }

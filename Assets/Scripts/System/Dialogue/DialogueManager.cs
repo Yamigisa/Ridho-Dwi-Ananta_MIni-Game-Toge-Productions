@@ -19,6 +19,7 @@ public class DialogueManager : MonoBehaviour
     public static DialogueManager Instance { get; private set; }
     public event Action<bool> OnPopupVisibilityChanged;
     private bool isPopupVisible;
+    private int popupSequenceDepth;
 
     private void Awake()
     {
@@ -76,7 +77,7 @@ public class DialogueManager : MonoBehaviour
         popupFlowchart.SetStringVariable(popupVariableName, message);
         popupFlowchart.ExecuteBlock(popupBlockName);
         yield return WaitForDialogueToFinish(popupFlowchart);
-        SetPopupVisible(false);
+        HidePopupIfNotSequencing();
     }
 
     public void ShowFormattedPopup(string template, params (string key, string value)[] replacements)
@@ -118,7 +119,19 @@ public class DialogueManager : MonoBehaviour
         popupFlowchart.ExecuteBlock(popupBlockName);
         yield return new WaitForSeconds(seconds);
         yield return WaitForDialogueToFinish(popupFlowchart);
-        SetPopupVisible(false);
+        HidePopupIfNotSequencing();
+    }
+
+    public void BeginPopupSequence()
+    {
+        popupSequenceDepth++;
+        SetPopupVisible(true);
+    }
+
+    public void EndPopupSequence()
+    {
+        popupSequenceDepth = Mathf.Max(0, popupSequenceDepth - 1);
+        HidePopupIfNotSequencing();
     }
 
     public IEnumerator WaitUntilFlowchartFree()
@@ -215,5 +228,13 @@ public class DialogueManager : MonoBehaviour
 
         isPopupVisible = visible;
         OnPopupVisibilityChanged?.Invoke(visible);
+    }
+
+    private void HidePopupIfNotSequencing()
+    {
+        if (popupSequenceDepth > 0)
+            return;
+
+        SetPopupVisible(false);
     }
 }
