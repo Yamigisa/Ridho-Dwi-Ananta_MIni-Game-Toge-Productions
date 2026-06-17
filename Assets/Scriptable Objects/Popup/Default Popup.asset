@@ -17,8 +17,11 @@ MonoBehaviour:
   unitrMiss: '{unit} missed!'
   unitHurt: '{unit} took {amount} damage!'
   unitDie: '{unit} was defeated!'
+  unitPass: '{unit} passed and recovered {hp} HP and {mp} MP.'
+  unitGuard: '{unit} guarded and recovered {mp} MP.'
   itemUsed: '{unit} used {item}!'
   itemAttributes: '{unit}''s {attributes} increased by {amount}!'
+  fleeAttempt: The party is trying to flee...
   escapeSuccess: Successfully escaped!
   escapeFailed: Couldn't escape!
   victory: Victory!

@@ -5,6 +5,7 @@ public class UnitData : ScriptableObject
 {
     [Header("General Info")]
     public string unitName;
+    public int level;
     public Sprite icon;
     public UnitBattleData battleData;
     public UnitExplorationData explorationData;

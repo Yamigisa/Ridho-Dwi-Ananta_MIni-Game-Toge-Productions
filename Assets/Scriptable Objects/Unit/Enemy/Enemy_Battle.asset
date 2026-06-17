@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 54854188cd1b1504cafba87fb42c5a61, type: 3}
   m_Name: Enemy_Battle
   m_EditorClassIdentifier: Assembly-CSharp::UnitBattleData
+  turnOrderIcon: {fileID: 21300000, guid: 8d3c80dd0c2904cdbb745cf481348a76, type: 3}
   baseHP: 1
   baseMP: 1
   baseAttack: 1

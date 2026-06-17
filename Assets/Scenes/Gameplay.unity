@@ -990,11 +990,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   version: 1
-  scrollPos: {x: 349.0252, y: 56.46044}
+  scrollPos: {x: 2009.166, y: 310.00586}
   variablesScrollPos: {x: 0, y: 0}
   variablesExpanded: 1
   blockViewHeight: 400
-  zoom: 0.75999993
+  zoom: 0.25000015
   scrollViewRect:
     serializedVersion: 2
     x: -343
@@ -1003,8 +1003,7 @@ MonoBehaviour:
     height: 859
   selectedBlocks:
   - {fileID: 1680918533}
-  selectedCommands:
-  - {fileID: 1680918534}
+  selectedCommands: []
   variables:
   - {fileID: 1680918532}
   description: 
@@ -1143,7 +1142,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Fungus::Fungus.Block
   nodeRect:
     serializedVersion: 2
-    x: 27.738586
+    x: 19.556755
     y: 52.25945
     width: 137.584
     height: 40
@@ -1429,6 +1428,7 @@ MonoBehaviour:
   flowchart: {fileID: 1680918526}
   popupMessages: {fileID: 11400000, guid: ee608d6e7ff8e964f88f1e2093ecc876, type: 2}
   popupBlockName: PopupMessage
+  popupVariableName: PopupText
 --- !u!4 &2136853567
 Transform:
   m_ObjectHideFlags: 0

@@ -11,12 +11,15 @@ public class PopupMessages : ScriptableObject
     public string unitrMiss = "{unit} missed!";
     public string unitHurt = "{unit} took {amount} damage!";
     public string unitDie = "{unit} was defeated!";
+    public string unitPass = "{unit} passed and recovered {hp} HP and {mp} MP.";
+    public string unitGuard = "{unit} guarded and recovered {mp} MP.";
 
     [Header("Battle - Items")]
     public string itemUsed = "{unit} used {item}!";
     public string itemAttributes = "{unit}'s {attributes} increased by {amount}!";
 
     [Header("Battle - Escape")]
+    public string fleeAttempt = "The party is trying to flee...";
     public string escapeSuccess = "Successfully escaped!";
     public string escapeFailed = "Couldn't escape!";
 

@@ -3,6 +3,11 @@ using UnityEngine;
 [CreateAssetMenu(menuName = "Units/Battle Data")]
 public class UnitBattleData : ScriptableObject
 {
+    [Header("Visuals")]
+    public Sprite portrait;        // for player card UI
+    public Sprite battleSprite;    // for enemy sprite renderer
+    public Sprite turnOrderIcon;   // for turn order display
+
     [Header("Base Stats")]
     public int baseHP = 15;
     public int baseMP = 50;
