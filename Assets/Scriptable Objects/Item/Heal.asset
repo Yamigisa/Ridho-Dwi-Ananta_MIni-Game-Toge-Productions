@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3b896e8ad68a2064cb1064b3a0f87a28, type: 3}
+  m_Name: Heal
+  m_EditorClassIdentifier: Assembly-CSharp::ItemData
+  itemName: Heal
+  description: Heal for 90 health
+  icon: {fileID: 1232179201, guid: 113b8dfa5daf1c84392574ab27716fb2, type: 3}
+  category: 0
+  maxStacks: 99
+  attributes:
+  - attribute: 0
+    valueType: 0
+    value: 10

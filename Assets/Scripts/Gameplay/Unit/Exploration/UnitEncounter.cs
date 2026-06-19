@@ -5,9 +5,18 @@ using UnityEngine.SceneManagement;
 public class UnitEncounter : MonoBehaviour
 {
     private UnitBattleParty enemyBattleParty;
+    private string encounterId;
 
     private void Awake()
     {
+        encounterId = BuildEncounterId();
+        if (BattleRelay.IsEncounterDefeated(encounterId))
+        {
+            gameObject.SetActive(false);
+            Destroy(gameObject);
+            return;
+        }
+
         enemyBattleParty = GetComponent<UnitBattleParty>();
     }
 
@@ -23,7 +32,21 @@ public class UnitEncounter : MonoBehaviour
             return;
         }
 
-        BattleRelay.Set(playerParty, enemyBattleParty);
+        BattleRelay.Set(playerParty, enemyBattleParty, encounterId);
         SceneManager.LoadScene("Battle");
+    }
+
+    private string BuildEncounterId()
+    {
+        string path = transform.GetSiblingIndex().ToString();
+        Transform current = transform;
+
+        while (current.parent != null)
+        {
+            current = current.parent;
+            path = $"{current.GetSiblingIndex()}/{path}";
+        }
+
+        return $"{gameObject.scene.path}:{path}";
     }
 }

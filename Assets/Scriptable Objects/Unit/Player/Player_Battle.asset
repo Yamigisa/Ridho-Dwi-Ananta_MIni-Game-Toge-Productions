@@ -18,6 +18,6 @@ MonoBehaviour:
   baseHP: 5
   baseMP: 5
   baseAttack: 5
-  baseDefense: 5
-  baseSpeed: 0
+  baseDefense: 0
+  baseSpeed: 1
   battleAnimator: {fileID: 0}

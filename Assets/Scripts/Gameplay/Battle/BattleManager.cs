@@ -252,6 +252,8 @@ public class BattleManager : MonoBehaviour
                 currentState = BattleState.Win;
                 yield return DialogueManager.Instance.ShowPopupAndWait(DialogueManager.Instance.Messages.victory);
                 DialogueManager.Instance.EndPopupSequence();
+                BattleRelay.MarkCurrentEncounterDefeated();
+                SceneManager.LoadScene("Gameplay");
                 yield break;
             }
 
@@ -371,6 +373,8 @@ public class BattleManager : MonoBehaviour
                 DialogueManager.Instance.EndPopupSequence();
                 keepPlayerCardsVisibleDuringPopups = previousKeepPlayerCardsVisible;
                 RefreshPlayerCardsForPopupState();
+                BattleRelay.MarkCurrentEncounterDefeated();
+                SceneManager.LoadScene("Gameplay");
                 yield break;
             }
 
@@ -508,7 +512,7 @@ public class BattleManager : MonoBehaviour
 
     private int CalculateAttackDamage(UnitBattle attacker, UnitBattle target)
     {
-        return Mathf.Max(1, attacker.Attack - target.Defense);
+        return Mathf.Max(0, attacker.Attack - target.Defense);
     }
 
     private void HandlePopupVisibilityChanged(bool isVisible)
@@ -643,6 +647,7 @@ public class BattleManager : MonoBehaviour
             yield return DialogueManager.Instance.ShowPopupAndWait(DialogueManager.Instance.Messages.escapeSuccess);
 
             DialogueManager.Instance.EndPopupSequence();
+            BattleRelay.ClearCurrentEncounter();
             SceneManager.LoadScene("Gameplay");
         }
         else

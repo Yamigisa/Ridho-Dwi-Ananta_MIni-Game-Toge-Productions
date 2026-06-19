@@ -1,10 +1,13 @@
 using TMPro;
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using DG.Tweening;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class UnitBattle : MonoBehaviour
+public class UnitBattle : MonoBehaviour, IPointerClickHandler
 {
     [Header("Unit Battle UI")]
     [SerializeField] private TextMeshProUGUI nameText;
@@ -28,14 +31,31 @@ public class UnitBattle : MonoBehaviour
     [SerializeField] private float hpBarAnimationDuration = 0.5f;
     [SerializeField] private float mpBarAnimationDuration = 0.35f;
 
+    [Header("Damage Feedback")]
+    [SerializeField] private Color damageFlashColor = new Color(1f, 0.05f, 0.05f, 0.45f);
+    [SerializeField] private Vector2 damageShakeStrength = new Vector2(10f, 5f);
+    [SerializeField] private Vector2 enemyDamageShakeStrength = new Vector2(0.15f, 0.08f);
+    [SerializeField, Min(1)] private int damageShakeVibrato = 18;
+    [SerializeField, Range(0f, 180f)] private float damageShakeRandomness = 45f;
+    [SerializeField, Min(1)] private int damageFlashCount = 3;
+
     private UnitBattleData unitBattleData;
     private UnitData unitData;
+    private UnitRuntimeState.State runtimeState;
     private Animator animator;
     private Color defaultSpriteColor = Color.white;
     private Color defaultUIImageColor = Color.white;
     private Vector3 defaultScale;
     private Coroutine hpBarCoroutine;
     private Coroutine mpBarCoroutine;
+    private RectTransform cardRectTransform;
+    private Image damageFlashOverlay;
+    private Sequence damageFeedbackSequence;
+    private Vector2 cardPositionBeforeShake;
+    private bool hasDamageFeedbackPosition;
+    private Vector3 enemyPositionBeforeShake;
+    private Color enemyColorBeforeFlash;
+    private bool hasEnemyDamageFeedbackState;
 
     public int CurrentHP { get; private set; }
     public int CurrentMP { get; private set; }
@@ -68,10 +88,19 @@ public class UnitBattle : MonoBehaviour
             defaultSpriteColor = spriteRenderer.color;
 
         if (uiImage != null)
+        {
             defaultUIImageColor = uiImage.color;
+            cardRectTransform = transform as RectTransform;
+            CreateDamageFlashOverlay();
+        }
     }
 
-    public void InitializeUnitBattle(UnitData unitData)
+    private void OnDisable()
+    {
+        ResetDamageFeedback();
+    }
+
+    public void InitializeUnitBattle(UnitData unitData, bool usePersistentState = false)
     {
         if (unitData == null)
         {
@@ -91,11 +120,25 @@ public class UnitBattle : MonoBehaviour
         {
             MaxHP = unitBattleData.baseHP;
             MaxMP = unitBattleData.baseMP;
-            CurrentHP = MaxHP;
-            CurrentMP = MaxMP;
-            Attack = unitBattleData.baseAttack;
-            BaseDefense = unitBattleData.baseDefense;
-            Speed = unitBattleData.baseSpeed;
+
+            if (usePersistentState)
+            {
+                runtimeState = UnitRuntimeState.GetOrCreate(unitData);
+                CurrentHP = Mathf.Clamp(runtimeState.currentHP, 0, MaxHP);
+                CurrentMP = Mathf.Clamp(runtimeState.currentMP, 0, MaxMP);
+                Attack = runtimeState.attack;
+                BaseDefense = runtimeState.defense;
+                Speed = runtimeState.speed;
+            }
+            else
+            {
+                runtimeState = null;
+                CurrentHP = MaxHP;
+                CurrentMP = MaxMP;
+                Attack = unitBattleData.baseAttack;
+                BaseDefense = unitBattleData.baseDefense;
+                Speed = unitBattleData.baseSpeed;
+            }
 
             if (animator != null && unitBattleData.battleAnimator != null)
                 animator.runtimeAnimatorController = unitBattleData.battleAnimator;
@@ -107,6 +150,9 @@ public class UnitBattle : MonoBehaviour
     public void SetHP(int value)
     {
         CurrentHP = Mathf.Clamp(value, 0, MaxHP);
+        if (runtimeState != null)
+            runtimeState.currentHP = CurrentHP;
+
         if (hpText != null) hpText.text = $"{CurrentHP} / {MaxHP}";
         SetSliderImmediate(hpSlider, GetHPPercent());
     }
@@ -114,14 +160,59 @@ public class UnitBattle : MonoBehaviour
     public void SetMP(int value)
     {
         CurrentMP = Mathf.Clamp(value, 0, MaxMP);
+        if (runtimeState != null)
+            runtimeState.currentMP = CurrentMP;
+
         if (mpText != null) mpText.text = $"{CurrentMP} / {MaxMP}";
         SetSliderImmediate(mpSlider, GetMPPercent());
     }
 
+    public int HealHP(int amount)
+    {
+        int before = CurrentHP;
+        SetHP(CurrentHP + Mathf.Max(0, amount));
+        return CurrentHP - before;
+    }
+
+    public int HealMP(int amount)
+    {
+        int before = CurrentMP;
+        SetMP(CurrentMP + Mathf.Max(0, amount));
+        return CurrentMP - before;
+    }
+
+    public void IncreaseAttack(int amount)
+    {
+        Attack += Mathf.Max(0, amount);
+        if (runtimeState != null)
+            runtimeState.attack = Attack;
+    }
+
+    public void IncreaseDefense(int amount)
+    {
+        BaseDefense += Mathf.Max(0, amount);
+        if (runtimeState != null)
+            runtimeState.defense = BaseDefense;
+    }
+
+    public void IncreaseSpeed(int amount)
+    {
+        Speed += Mathf.Max(0, amount);
+        if (runtimeState != null)
+            runtimeState.speed = Speed;
+    }
+
     public IEnumerator SetHPAnimated(int value)
     {
+        int previousHP = CurrentHP;
         CurrentHP = Mathf.Clamp(value, 0, MaxHP);
+        if (runtimeState != null)
+            runtimeState.currentHP = CurrentHP;
+
         if (hpText != null) hpText.text = $"{CurrentHP} / {MaxHP}";
+
+        if (CurrentHP < previousHP)
+            PlayDamageFeedback();
 
         yield return AnimateSlider(hpSlider, GetHPPercent(), hpBarAnimationDuration, true);
     }
@@ -129,6 +220,9 @@ public class UnitBattle : MonoBehaviour
     public IEnumerator SetMPAnimated(int value)
     {
         CurrentMP = Mathf.Clamp(value, 0, MaxMP);
+        if (runtimeState != null)
+            runtimeState.currentMP = CurrentMP;
+
         if (mpText != null) mpText.text = $"{CurrentMP} / {MaxMP}";
 
         yield return AnimateSlider(mpSlider, GetMPPercent(), mpBarAnimationDuration, false);
@@ -205,21 +299,39 @@ public class UnitBattle : MonoBehaviour
 
     public void SetTargeted(bool isTargeted)
     {
+        SetTargeted(isTargeted, true);
+    }
+
+    public void SetTargeted(bool isTargeted, bool changeScale)
+    {
         if (spriteRenderer != null)
             spriteRenderer.color = isTargeted ? targetedColor : defaultSpriteColor;
 
         if (uiImage != null)
             uiImage.color = isTargeted ? targetedColor : defaultUIImageColor;
 
-        transform.localScale = isTargeted ? defaultScale * targetedScaleMultiplier : defaultScale;
+        transform.localScale = isTargeted && changeScale
+            ? defaultScale * targetedScaleMultiplier
+            : defaultScale;
     }
 
     private void OnMouseDown()
     {
-        if (!IsTargetable)
+        HandleSelectionClick();
+    }
+
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (eventData.button != PointerEventData.InputButton.Left)
             return;
 
-        OnSelected?.Invoke(this);
+        HandleSelectionClick();
+    }
+
+    private void HandleSelectionClick()
+    {
+        if (IsTargetable)
+            OnSelected?.Invoke(this);
     }
 
     private void EnsureSelectionCollider()
@@ -298,5 +410,183 @@ public class UnitBattle : MonoBehaviour
         }
 
         slider.value = targetValue;
+    }
+
+    private void CreateDamageFlashOverlay()
+    {
+        if (cardRectTransform == null || damageFlashOverlay != null)
+            return;
+
+        GameObject overlayObject = new GameObject(
+            "Damage Flash",
+            typeof(RectTransform),
+            typeof(CanvasRenderer),
+            typeof(Image)
+        );
+
+        RectTransform overlayRect = overlayObject.GetComponent<RectTransform>();
+        overlayRect.SetParent(cardRectTransform, false);
+        overlayRect.anchorMin = Vector2.zero;
+        overlayRect.anchorMax = Vector2.one;
+        overlayRect.offsetMin = Vector2.zero;
+        overlayRect.offsetMax = Vector2.zero;
+        overlayRect.SetAsLastSibling();
+
+        damageFlashOverlay = overlayObject.GetComponent<Image>();
+        damageFlashOverlay.raycastTarget = false;
+        SetDamageFlashAlpha(0f);
+    }
+
+    private void PlayDamageFeedback()
+    {
+        if (cardRectTransform == null && spriteRenderer == null)
+            return;
+
+        ResetDamageFeedback();
+
+        float duration = Mathf.Max(0.01f, hpBarAnimationDuration);
+        int flashLoops = Mathf.Max(1, damageFlashCount) * 2;
+        float flashHalfDuration = duration / flashLoops;
+
+        damageFeedbackSequence = DOTween.Sequence()
+            .SetTarget(this);
+
+        if (cardRectTransform != null)
+        {
+            CreateDamageFlashOverlay();
+            cardPositionBeforeShake = cardRectTransform.anchoredPosition;
+            hasDamageFeedbackPosition = true;
+            SetDamageFlashAlpha(0f);
+
+            damageFeedbackSequence
+                .Join(cardRectTransform.DOShakeAnchorPos(
+                    duration,
+                    damageShakeStrength,
+                    damageShakeVibrato,
+                    damageShakeRandomness,
+                    false,
+                    true,
+                    ShakeRandomnessMode.Harmonic
+                ))
+                .Join(damageFlashOverlay
+                    .DOFade(damageFlashColor.a, flashHalfDuration)
+                    .SetEase(Ease.OutQuad)
+                    .SetLoops(flashLoops, LoopType.Yoyo));
+        }
+
+        if (spriteRenderer != null)
+        {
+            enemyPositionBeforeShake = transform.localPosition;
+            enemyColorBeforeFlash = spriteRenderer.color;
+            hasEnemyDamageFeedbackState = true;
+
+            Color enemyFlashColor = damageFlashColor;
+            enemyFlashColor.a = enemyColorBeforeFlash.a;
+
+            damageFeedbackSequence
+                .Join(transform.DOShakePosition(
+                    duration,
+                    new Vector3(enemyDamageShakeStrength.x, enemyDamageShakeStrength.y, 0f),
+                    damageShakeVibrato,
+                    damageShakeRandomness,
+                    false,
+                    true,
+                    ShakeRandomnessMode.Harmonic
+                ))
+                .Join(spriteRenderer
+                    .DOColor(enemyFlashColor, flashHalfDuration)
+                    .SetEase(Ease.OutQuad)
+                    .SetLoops(flashLoops, LoopType.Yoyo));
+        }
+
+        damageFeedbackSequence.OnComplete(FinishDamageFeedback);
+    }
+
+    private void FinishDamageFeedback()
+    {
+        if (cardRectTransform != null && hasDamageFeedbackPosition)
+            cardRectTransform.anchoredPosition = cardPositionBeforeShake;
+
+        if (spriteRenderer != null && hasEnemyDamageFeedbackState)
+        {
+            transform.localPosition = enemyPositionBeforeShake;
+            spriteRenderer.color = enemyColorBeforeFlash;
+        }
+
+        hasDamageFeedbackPosition = false;
+        hasEnemyDamageFeedbackState = false;
+        SetDamageFlashAlpha(0f);
+        damageFeedbackSequence = null;
+    }
+
+    private void SetDamageFlashAlpha(float alpha)
+    {
+        if (damageFlashOverlay == null)
+            return;
+
+        Color color = damageFlashColor;
+        color.a = alpha;
+        damageFlashOverlay.color = color;
+    }
+
+    private void ResetDamageFeedback()
+    {
+        if (damageFeedbackSequence != null && damageFeedbackSequence.IsActive())
+            damageFeedbackSequence.Kill();
+
+        damageFeedbackSequence = null;
+
+        if (cardRectTransform != null && hasDamageFeedbackPosition)
+            cardRectTransform.anchoredPosition = cardPositionBeforeShake;
+
+        if (spriteRenderer != null && hasEnemyDamageFeedbackState)
+        {
+            transform.localPosition = enemyPositionBeforeShake;
+            spriteRenderer.color = enemyColorBeforeFlash;
+        }
+
+        hasDamageFeedbackPosition = false;
+        hasEnemyDamageFeedbackState = false;
+        SetDamageFlashAlpha(0f);
+    }
+}
+
+public static class UnitRuntimeState
+{
+    public sealed class State
+    {
+        public int currentHP;
+        public int currentMP;
+        public int attack;
+        public int defense;
+        public int speed;
+    }
+
+    private static readonly Dictionary<UnitData, State> states =
+        new Dictionary<UnitData, State>();
+
+    public static State GetOrCreate(UnitData unitData)
+    {
+        if (!states.TryGetValue(unitData, out State state))
+        {
+            UnitBattleData battleData = unitData.battleData;
+            state = new State
+            {
+                currentHP = battleData != null ? battleData.baseHP : 0,
+                currentMP = battleData != null ? battleData.baseMP : 0,
+                attack = battleData != null ? battleData.baseAttack : 0,
+                defense = battleData != null ? battleData.baseDefense : 0,
+                speed = battleData != null ? battleData.baseSpeed : 0
+            };
+
+            states.Add(unitData, state);
+        }
+
+        return state;
+    }
+
+    public static void Clear()
+    {
+        states.Clear();
     }
 }

@@ -13,7 +13,9 @@ MonoBehaviour:
   m_Name: Enemy
   m_EditorClassIdentifier: Assembly-CSharp::UnitData
   unitName: Enemy
+  level: 0
   icon: {fileID: 21300000, guid: 888feb4a32e3b564fb7e6f9b28cc8e10, type: 3}
   battleData: {fileID: 11400000, guid: fdcc0bb61047d0747a39ecd1f73a92d1, type: 2}
   explorationData: {fileID: 11400000, guid: 47cd7922c1104b64ea8fa027318140fd, type: 2}
+  battleAIProfile: {fileID: 11400000, guid: 5994b0c0122d7ec4e818454cbea0f2c9, type: 2}
   aiData: {fileID: 11400000, guid: 11404ab23e195464cb2546acad3d1e12, type: 2}

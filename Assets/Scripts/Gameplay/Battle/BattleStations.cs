@@ -29,7 +29,7 @@ public class BattleStations : MonoBehaviour
         {
             UnitBattle unitBattle = Instantiate(prefab, stations[indices[i]]);
             unitBattle.name = unitData[i].unitName;
-            unitBattle.InitializeUnitBattle(unitData[i]);
+            unitBattle.InitializeUnitBattle(unitData[i], true);
             result.Add(unitBattle);
         }
 
