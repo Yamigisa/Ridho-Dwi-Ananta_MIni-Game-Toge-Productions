@@ -22,7 +22,9 @@ public class PopupMessages : ScriptableObject
     public string itemAttributes = "{unit}'s {attributes} increased by {amount}!";
 
     [Header("Battle - Skills")]
-    public string unitSkill = "{unit} tried to use a skill, but skills are not ready yet.";
+    public string unitSkill = "{unit} uses {skill}!";
+    public string skillMiss = "{unit}'s {skill} missed {target}!";
+    public string skillCannotUse = "{unit} does not have enough HP or MP to use {skill}.";
 
     [Header("Battle - Escape")]
     public string fleeAttempt = "The party is trying to flee...";

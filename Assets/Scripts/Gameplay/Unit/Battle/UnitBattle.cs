@@ -214,6 +214,43 @@ public class UnitBattle : MonoBehaviour, IPointerClickHandler, IPointerEnterHand
             runtimeState.speed = Speed;
     }
 
+    public void DecreaseAttack(int amount)
+    {
+        Attack = Mathf.Max(0, Attack - Mathf.Max(0, amount));
+        if (runtimeState != null)
+            runtimeState.attack = Attack;
+    }
+
+    public void DecreaseDefense(int amount)
+    {
+        BaseDefense = Mathf.Max(0, BaseDefense - Mathf.Max(0, amount));
+        if (runtimeState != null)
+            runtimeState.defense = BaseDefense;
+    }
+
+    public void DecreaseSpeed(int amount)
+    {
+        Speed = Mathf.Max(0, Speed - Mathf.Max(0, amount));
+        if (runtimeState != null)
+            runtimeState.speed = Speed;
+    }
+
+    public bool CanPaySkillCost(SkillData skill)
+    {
+        return skill != null &&
+               CurrentHP > skill.HPCost &&
+               CurrentMP >= skill.MPCost;
+    }
+
+    public void PaySkillCost(SkillData skill)
+    {
+        if (skill == null)
+            return;
+
+        SetHP(CurrentHP - skill.HPCost);
+        SetMP(CurrentMP - skill.MPCost);
+    }
+
     public IEnumerator SetHPAnimated(int value)
     {
         int previousHP = CurrentHP;

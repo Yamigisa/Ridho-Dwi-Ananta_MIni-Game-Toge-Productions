@@ -19,5 +19,5 @@ MonoBehaviour:
   baseMP: 5
   baseAttack: 5
   baseDefense: 0
-  baseSpeed: 1
+  baseSpeed: 5
   battleAnimator: {fileID: 0}

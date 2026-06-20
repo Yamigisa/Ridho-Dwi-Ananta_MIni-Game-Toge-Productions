@@ -26,6 +26,7 @@ public class BattleManager : MonoBehaviour
 
     [Header("HUD")]
     [SerializeField] private BattleHUD battleHUD;
+    [SerializeField] private SkillUI skillUI;
 
     [Header("Feedback")]
     [SerializeField] private float damagePopupDelay = 0.35f;
@@ -36,9 +37,13 @@ public class BattleManager : MonoBehaviour
     private UnitBattle confirmedEnemyTarget;
     private UnitBattle selectedItemTarget;
     private ItemData itemBeingUsed;
+    private SkillData skillBeingUsed;
     private bool isSelectingTarget;
     private bool isChoosingItem;
     private bool isSelectingItemTarget;
+    private bool isChoosingSkill;
+    private bool isSelectingSkillTarget;
+    private bool isExecutingSkill;
     private bool targetConfirmed;
     private bool targetSelectionCanceled;
     private bool subscribedToDialogueEvents;
@@ -49,14 +54,24 @@ public class BattleManager : MonoBehaviour
 
     private void Awake()
     {
+        if (skillUI == null)
+            skillUI = FindFirstObjectByType<SkillUI>(FindObjectsInactive.Include);
+
         battleHUD.OnActionSelected += OnPlayerAction;
         battleHUD.OnCancelSelected += OnCancelAction;
+
+        if (skillUI != null)
+            skillUI.SkillSelected += OnBattleSkillSelected;
+
         SubscribeDialogueEvents();
     }
 
     private void Update()
     {
-        if (!isChoosingItem && !isSelectingItemTarget)
+        if (!isChoosingItem &&
+            !isSelectingItemTarget &&
+            !isChoosingSkill &&
+            !isSelectingSkillTarget)
             return;
 
         if (Input.GetKeyDown(KeyCode.Escape) || Input.GetMouseButtonDown(1))
@@ -67,6 +82,9 @@ public class BattleManager : MonoBehaviour
     {
         battleHUD.OnActionSelected -= OnPlayerAction;
         battleHUD.OnCancelSelected -= OnCancelAction;
+
+        if (skillUI != null)
+            skillUI.SkillSelected -= OnBattleSkillSelected;
 
         if (Inventory.Instance != null)
         {
@@ -171,9 +189,7 @@ public class BattleManager : MonoBehaviour
                 BeginBattleItemSelection();
                 break;
             case BattleAction.Skill:
-                // open skill submenu
-                turnOrderManager.CompleteCurrentTurn();
-                ProcessNextTurn();
+                BeginBattleSkillSelection();
                 break;
             case BattleAction.Pass:
                 ClearPlayerTurnIndicators();
@@ -434,8 +450,12 @@ public class BattleManager : MonoBehaviour
             unit.OnSelected -= OnEnemyTargetSelected;
             unit.OnHoverEntered -= OnEnemyTargetHoverEntered;
         }
-        else
-            playerBattleUnits.Remove(unit);
+        else if (playerBattleUnits.Remove(unit))
+        {
+            unit.OnSelected -= OnPlayerItemTargetSelected;
+            unit.OnHoverEntered -= OnPlayerItemTargetHoverEntered;
+            unit.OnHoverExited -= OnPlayerItemTargetHoverExited;
+        }
     }
 
     private bool IsBattleOver()
@@ -485,6 +505,14 @@ public class BattleManager : MonoBehaviour
 
     private void OnEnemyTargetSelected(UnitBattle enemy)
     {
+        if (isSelectingSkillTarget &&
+            skillBeingUsed != null &&
+            skillBeingUsed.Targeting == SkillData.TargetType.SingleEnemy)
+        {
+            ConfirmSkillTarget(enemy);
+            return;
+        }
+
         if (!isSelectingTarget || targetConfirmed || enemy == null || !enemy.IsAlive)
             return;
 
@@ -496,6 +524,15 @@ public class BattleManager : MonoBehaviour
 
     private void OnEnemyTargetHoverEntered(UnitBattle enemy)
     {
+        if (isSelectingSkillTarget &&
+            skillBeingUsed != null &&
+            skillBeingUsed.Targeting == SkillData.TargetType.SingleEnemy)
+        {
+            if (enemy != null && enemy.IsAlive)
+                SetTargetIndicator(enemy);
+            return;
+        }
+
         if (!isSelectingTarget || targetConfirmed || enemy == null || !enemy.IsAlive)
             return;
 
@@ -537,6 +574,18 @@ public class BattleManager : MonoBehaviour
 
     private void OnCancelAction()
     {
+        if (isChoosingSkill)
+        {
+            CancelSkillSelectionToActionMenu();
+            return;
+        }
+
+        if (isSelectingSkillTarget)
+        {
+            ReturnToSkillUI();
+            return;
+        }
+
         if (isChoosingItem)
         {
             CancelItemSelectionToActionMenu();
@@ -670,6 +719,14 @@ public class BattleManager : MonoBehaviour
 
     private void OnPlayerItemTargetSelected(UnitBattle target)
     {
+        if (isSelectingSkillTarget &&
+            skillBeingUsed != null &&
+            skillBeingUsed.Targeting == SkillData.TargetType.SingleAlly)
+        {
+            ConfirmSkillTarget(target);
+            return;
+        }
+
         if (!isSelectingItemTarget || target == null || !target.IsAlive || itemBeingUsed == null)
             return;
 
@@ -688,6 +745,15 @@ public class BattleManager : MonoBehaviour
 
     private void OnPlayerItemTargetHoverEntered(UnitBattle target)
     {
+        if (isSelectingSkillTarget &&
+            skillBeingUsed != null &&
+            skillBeingUsed.Targeting == SkillData.TargetType.SingleAlly)
+        {
+            if (target != null && target.IsAlive)
+                SetPlayerItemTargetIndicator(target);
+            return;
+        }
+
         if (!isSelectingItemTarget || target == null || !target.IsAlive)
             return;
 
@@ -698,6 +764,14 @@ public class BattleManager : MonoBehaviour
 
     private void OnPlayerItemTargetHoverExited(UnitBattle target)
     {
+        if (isSelectingSkillTarget &&
+            skillBeingUsed != null &&
+            skillBeingUsed.Targeting == SkillData.TargetType.SingleAlly)
+        {
+            SetPlayerItemTargetIndicator(null);
+            return;
+        }
+
         if (!isSelectingItemTarget || selectedItemTarget != target)
             return;
 
@@ -800,6 +874,358 @@ public class BattleManager : MonoBehaviour
         battleHUD.ShowActionMenu();
     }
 
+    private void BeginBattleSkillSelection()
+    {
+        if (skillUI == null)
+        {
+            Debug.LogWarning("BattleManager could not find a SkillUI in the Battle scene.");
+            battleHUD.ShowActionMenu();
+            return;
+        }
+
+        isChoosingSkill = true;
+        isSelectingSkillTarget = false;
+        skillBeingUsed = null;
+        skillUI.OpenSkillUI(currentActingUnit != null ? currentActingUnit.UnitData : null);
+        battleHUD.ShowCancelButton();
+    }
+
+    private void OnBattleSkillSelected(SkillData skill)
+    {
+        if (!isChoosingSkill ||
+            isExecutingSkill ||
+            skill == null ||
+            currentActingUnit == null ||
+            currentState != BattleState.PlayerTurn)
+            return;
+
+        if (!currentActingUnit.CanPaySkillCost(skill))
+        {
+            DialogueManager.Instance?.ShowFormattedPopup(
+                DialogueManager.Instance.Messages.skillCannotUse,
+                ("unit", currentActingUnit.name),
+                ("skill", skill.SkillName));
+            return;
+        }
+
+        skillBeingUsed = skill;
+        isChoosingSkill = false;
+        skillUI.CloseSkillUI();
+
+        switch (skill.Targeting)
+        {
+            case SkillData.TargetType.Self:
+                StartCoroutine(ExecutePlayerSkill(skill, new List<UnitBattle> { currentActingUnit }));
+                break;
+            case SkillData.TargetType.AllAllies:
+                StartCoroutine(ExecutePlayerSkill(skill, GetLivingUnits(playerBattleUnits)));
+                break;
+            case SkillData.TargetType.AllEnemies:
+                StartCoroutine(ExecutePlayerSkill(skill, GetLivingUnits(enemyBattleUnits)));
+                break;
+            case SkillData.TargetType.SingleAlly:
+                BeginSkillTargetSelection(true);
+                break;
+            case SkillData.TargetType.SingleEnemy:
+                BeginSkillTargetSelection(false);
+                break;
+        }
+    }
+
+    private void BeginSkillTargetSelection(bool targetsAllies)
+    {
+        isSelectingSkillTarget = true;
+        ClearPlayerTurnIndicators();
+        ClearTargetIndicator();
+
+        if (targetsAllies)
+            SetPlayerItemTargetingEnabled(true);
+        else
+            SetEnemyTargetingEnabled(true);
+
+        battleHUD.ShowCancelButton();
+    }
+
+    private void ConfirmSkillTarget(UnitBattle target)
+    {
+        if (!isSelectingSkillTarget ||
+            isExecutingSkill ||
+            target == null ||
+            !target.IsAlive ||
+            skillBeingUsed == null)
+            return;
+
+        SkillData confirmedSkill = skillBeingUsed;
+        StopSkillTargetSelection();
+        StartCoroutine(ExecutePlayerSkill(confirmedSkill, new List<UnitBattle> { target }));
+    }
+
+    private void StopSkillTargetSelection()
+    {
+        isSelectingSkillTarget = false;
+        SetEnemyTargetingEnabled(false);
+        SetPlayerItemTargetingEnabled(false);
+        SetTargetIndicator(null);
+        SetPlayerItemTargetIndicator(null);
+        battleHUD.HideCancelButton();
+    }
+
+    private void ReturnToSkillUI()
+    {
+        StopSkillTargetSelection();
+        skillBeingUsed = null;
+        isChoosingSkill = true;
+        skillUI?.OpenSkillUI(currentActingUnit != null ? currentActingUnit.UnitData : null);
+        battleHUD.ShowCancelButton();
+    }
+
+    public void CloseSkillUI()
+    {
+        skillUI?.CloseSkillUI();
+    }
+
+    private void CancelSkillSelectionToActionMenu()
+    {
+        isChoosingSkill = false;
+        isSelectingSkillTarget = false;
+        skillBeingUsed = null;
+        CloseSkillUI();
+        SetEnemyTargetingEnabled(false);
+        SetPlayerItemTargetingEnabled(false);
+        ClearTargetIndicator();
+        ClearPlayerTurnIndicators();
+
+        if (currentActingUnit != null)
+            currentActingUnit.SetTargeted(true);
+
+        battleHUD.HideCancelButton();
+        battleHUD.ShowActionMenu();
+    }
+
+    private IEnumerator ExecutePlayerSkill(SkillData skill, List<UnitBattle> targets)
+    {
+        if (skill == null ||
+            currentActingUnit == null ||
+            targets == null ||
+            targets.Count == 0 ||
+            !currentActingUnit.CanPaySkillCost(skill))
+        {
+            CancelSkillSelectionToActionMenu();
+            yield break;
+        }
+
+        isExecutingSkill = true;
+        UnitBattle caster = currentActingUnit;
+        caster.PaySkillCost(skill);
+
+        yield return DialogueManager.Instance.ShowFormattedPopupAndWait(
+            DialogueManager.Instance.Messages.unitSkill,
+            ("unit", caster.name),
+            ("skill", skill.SkillName));
+
+        bool hasDamageEffect = HasEffect(skill, SkillData.EffectType.Damage);
+        if (hasDamageEffect)
+            caster.PlayAttack();
+
+        yield return ApplySkillEffects(skill, caster, targets);
+        yield return RemoveUnitsDefeatedBySkill();
+
+        isExecutingSkill = false;
+        skillBeingUsed = null;
+        ClearTargetIndicator();
+        ClearPlayerTurnIndicators();
+
+        if (IsBattleOver())
+            yield break;
+
+        turnOrderManager.CompleteCurrentTurn();
+        ProcessNextTurn();
+    }
+
+    private IEnumerator ApplySkillEffects(
+        SkillData skill,
+        UnitBattle caster,
+        List<UnitBattle> targets)
+    {
+        foreach (SkillData.SkillEffect effect in skill.Effects)
+        {
+            if (effect == null ||
+                effect.Recipient != SkillData.EffectRecipient.Caster)
+                continue;
+
+            if (Random.value > effect.SuccessChance)
+            {
+                yield return ShowSkillMissPopup(caster, skill, caster);
+                continue;
+            }
+
+            yield return ApplySkillEffect(effect, caster);
+        }
+
+        foreach (UnitBattle target in targets)
+        {
+            if (target == null || !target.IsAlive)
+                continue;
+
+            foreach (SkillData.SkillEffect effect in skill.Effects)
+            {
+                if (effect == null ||
+                    effect.Recipient != SkillData.EffectRecipient.Target)
+                    continue;
+
+                if (Random.value > effect.SuccessChance)
+                {
+                    yield return ShowSkillMissPopup(caster, skill, target);
+                    continue;
+                }
+
+                yield return ApplySkillEffect(effect, target);
+            }
+        }
+    }
+
+    private IEnumerator ShowSkillMissPopup(
+        UnitBattle caster,
+        SkillData skill,
+        UnitBattle target)
+    {
+        string casterName = caster != null ? caster.name : "Unit";
+        string targetName = target != null ? target.name : "target";
+
+        yield return DialogueManager.Instance.ShowFormattedPopupAndWait(
+            DialogueManager.Instance.Messages.skillMiss,
+            ("unit", casterName),
+            ("skill", skill != null ? skill.SkillName : "skill"),
+            ("target", targetName));
+    }
+
+    private IEnumerator ApplySkillEffect(SkillData.SkillEffect effect, UnitBattle target)
+    {
+        int amount = GetSkillEffectAmount(effect, target);
+
+        switch (effect.Type)
+        {
+            case SkillData.EffectType.Damage:
+                int damage = effect.ValueType == SkillData.ValueType.Flat
+                    ? Mathf.Max(0, amount - target.Defense)
+                    : amount;
+                target.PlayHurt();
+                yield return target.SetHPAnimated(target.CurrentHP - damage);
+                break;
+            case SkillData.EffectType.HealHP:
+                yield return target.SetHPAnimated(target.CurrentHP + amount);
+                break;
+            case SkillData.EffectType.HealMP:
+                yield return target.SetMPAnimated(target.CurrentMP + amount);
+                break;
+            case SkillData.EffectType.IncreaseAttack:
+                target.IncreaseAttack(amount);
+                break;
+            case SkillData.EffectType.IncreaseDefense:
+                target.IncreaseDefense(amount);
+                break;
+            case SkillData.EffectType.IncreaseSpeed:
+                target.IncreaseSpeed(amount);
+                break;
+            case SkillData.EffectType.DecreaseAttack:
+                target.DecreaseAttack(amount);
+                break;
+            case SkillData.EffectType.DecreaseDefense:
+                target.DecreaseDefense(amount);
+                break;
+            case SkillData.EffectType.DecreaseSpeed:
+                target.DecreaseSpeed(amount);
+                break;
+        }
+    }
+
+    private int GetSkillEffectAmount(SkillData.SkillEffect effect, UnitBattle target)
+    {
+        if (effect.ValueType == SkillData.ValueType.Flat)
+            return Mathf.RoundToInt(effect.Value);
+
+        float baseValue;
+        switch (effect.Type)
+        {
+            case SkillData.EffectType.Damage:
+            case SkillData.EffectType.HealHP:
+                baseValue = target.MaxHP;
+                break;
+            case SkillData.EffectType.HealMP:
+                baseValue = target.MaxMP;
+                break;
+            case SkillData.EffectType.IncreaseAttack:
+            case SkillData.EffectType.DecreaseAttack:
+                baseValue = target.Attack;
+                break;
+            case SkillData.EffectType.IncreaseDefense:
+            case SkillData.EffectType.DecreaseDefense:
+                baseValue = target.BaseDefense;
+                break;
+            case SkillData.EffectType.IncreaseSpeed:
+            case SkillData.EffectType.DecreaseSpeed:
+                baseValue = target.Speed;
+                break;
+            default:
+                baseValue = 0f;
+                break;
+        }
+
+        return Mathf.CeilToInt(baseValue * effect.Value / 100f);
+    }
+
+    private IEnumerator RemoveUnitsDefeatedBySkill()
+    {
+        List<UnitBattle> defeatedUnits = new();
+        defeatedUnits.AddRange(playerBattleUnits.FindAll(unit => unit != null && !unit.IsAlive));
+        defeatedUnits.AddRange(enemyBattleUnits.FindAll(unit => unit != null && !unit.IsAlive));
+
+        foreach (UnitBattle defeated in defeatedUnits)
+        {
+            string unitName = defeated.name;
+            defeated.PlayDie();
+
+            yield return DialogueManager.Instance.ShowFormattedPopupAndWait(
+                DialogueManager.Instance.Messages.unitDie,
+                ("unit", unitName));
+
+            RemoveDefeatedUnit(defeated);
+            turnOrderManager.RemoveUnit(defeated);
+            Destroy(defeated.gameObject);
+        }
+
+        if (enemyBattleUnits.Count == 0)
+        {
+            currentState = BattleState.Win;
+            yield return DialogueManager.Instance.ShowPopupAndWait(
+                DialogueManager.Instance.Messages.victory);
+            BattleRelay.MarkCurrentEncounterDefeated();
+            SceneManager.LoadScene("Gameplay");
+        }
+        else if (playerBattleUnits.Count == 0)
+        {
+            currentState = BattleState.Lose;
+            yield return DialogueManager.Instance.ShowPopupAndWait(
+                DialogueManager.Instance.Messages.defeat);
+        }
+    }
+
+    private List<UnitBattle> GetLivingUnits(List<UnitBattle> units)
+    {
+        return units.FindAll(unit => unit != null && unit.IsAlive);
+    }
+
+    private bool HasEffect(SkillData skill, SkillData.EffectType effectType)
+    {
+        foreach (SkillData.SkillEffect effect in skill.Effects)
+        {
+            if (effect != null && effect.Type == effectType)
+                return true;
+        }
+
+        return false;
+    }
+
     private IEnumerator ExecuteItemSequence(UnitBattle actingUnit)
     {
         string unitName = actingUnit != null ? actingUnit.name : "Unit";
@@ -813,12 +1239,11 @@ public class BattleManager : MonoBehaviour
     private IEnumerator ExecuteSkillSequence(UnitBattle actingUnit, UnitBattle target)
     {
         string unitName = actingUnit != null ? actingUnit.name : "Unit";
-        string targetName = target != null ? target.name : "target";
 
         yield return DialogueManager.Instance.ShowFormattedPopupAndWait(
             DialogueManager.Instance.Messages.unitSkill,
             ("unit", unitName),
-            ("target", targetName)
+            ("skill", "a skill")
         );
     }
 

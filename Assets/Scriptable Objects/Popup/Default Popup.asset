@@ -23,7 +23,9 @@ MonoBehaviour:
   itemUsed: '{unit} used {item}!'
   unitItem: '{unit} tried to use an item, but items are not ready yet.'
   itemAttributes: '{unit}''s {attributes} increased by {amount}!'
-  unitSkill: '{unit} tried to use a skill, but skills are not ready yet.'
+  unitSkill: '{unit} uses {skill}!'
+  skillMiss: '{unit}''s {skill} missed {target}!'
+  skillCannotUse: '{unit} does not have enough HP or MP to use {skill}.'
   fleeAttempt: The party is trying to flee...
   escapeSuccess: Successfully escaped!
   escapeFailed: Couldn't escape!
