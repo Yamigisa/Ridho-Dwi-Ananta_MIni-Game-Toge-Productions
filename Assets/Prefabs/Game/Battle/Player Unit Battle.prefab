@@ -1313,6 +1313,7 @@ MonoBehaviour:
   hpSlider: {fileID: 821029733171133938}
   mpSlider: {fileID: 2033317223516080869}
   uiImage: {fileID: 326395572662531376}
+  selectionBackground: {fileID: 8392449189503538084}
   spriteRenderer: {fileID: 0}
 --- !u!1 &6633734172759523202
 GameObject:

@@ -33,7 +33,12 @@ public class BattleManager : MonoBehaviour
     private UnitBattle currentActingUnit;
     public UnitBattle CurrentActingUnit => currentActingUnit;
     private UnitBattle selectedEnemyTarget;
+    private UnitBattle confirmedEnemyTarget;
+    private UnitBattle selectedItemTarget;
+    private ItemData itemBeingUsed;
     private bool isSelectingTarget;
+    private bool isChoosingItem;
+    private bool isSelectingItemTarget;
     private bool targetConfirmed;
     private bool targetSelectionCanceled;
     private bool subscribedToDialogueEvents;
@@ -49,16 +54,41 @@ public class BattleManager : MonoBehaviour
         SubscribeDialogueEvents();
     }
 
+    private void Update()
+    {
+        if (!isChoosingItem && !isSelectingItemTarget)
+            return;
+
+        if (Input.GetKeyDown(KeyCode.Escape) || Input.GetMouseButtonDown(1))
+            OnCancelAction();
+    }
+
     private void OnDestroy()
     {
         battleHUD.OnActionSelected -= OnPlayerAction;
         battleHUD.OnCancelSelected -= OnCancelAction;
 
+        if (Inventory.Instance != null)
+        {
+            Inventory.Instance.ItemUseRequested -= OnBattleItemSelected;
+            Inventory.Instance.SetKeyboardToggleEnabled(true);
+        }
+
         if (subscribedToDialogueEvents && DialogueManager.Instance != null)
             DialogueManager.Instance.OnPopupVisibilityChanged -= HandlePopupVisibilityChanged;
 
         foreach (UnitBattle enemy in enemyBattleUnits)
+        {
             enemy.OnSelected -= OnEnemyTargetSelected;
+            enemy.OnHoverEntered -= OnEnemyTargetHoverEntered;
+        }
+
+        foreach (UnitBattle player in playerBattleUnits)
+        {
+            player.OnSelected -= OnPlayerItemTargetSelected;
+            player.OnHoverEntered -= OnPlayerItemTargetHoverEntered;
+            player.OnHoverExited -= OnPlayerItemTargetHoverExited;
+        }
     }
 
     private void Start()
@@ -71,6 +101,8 @@ public class BattleManager : MonoBehaviour
         playerBattleUnits = battleStations.SpawnPlayerUnits(BattleRelay.PlayerUnits);
         enemyBattleUnits = battleStations.SpawnEnemyUnits(BattleRelay.EnemyUnits);
         SubscribeEnemyTargetCallbacks();
+        SubscribePlayerItemTargetCallbacks();
+        SubscribeInventoryEvents();
 
         turnOrderManager.Initialize(playerBattleUnits, enemyBattleUnits);
 
@@ -136,9 +168,7 @@ public class BattleManager : MonoBehaviour
                 StartCoroutine(HandleDefendSequence());
                 break;
             case BattleAction.Item:
-                // open item submenu
-                turnOrderManager.CompleteCurrentTurn();
-                ProcessNextTurn();
+                BeginBattleItemSelection();
                 break;
             case BattleAction.Skill:
                 // open skill submenu
@@ -240,7 +270,10 @@ public class BattleManager : MonoBehaviour
             );
 
             if (enemyBattleUnits.Contains(actingUnit))
+            {
                 actingUnit.OnSelected -= OnEnemyTargetSelected;
+                actingUnit.OnHoverEntered -= OnEnemyTargetHoverEntered;
+            }
 
             allies.Remove(actingUnit);
             turnOrderManager.RemoveUnit(actingUnit);
@@ -300,7 +333,7 @@ public class BattleManager : MonoBehaviour
             yield break;
         }
 
-        target = selectedEnemyTarget;
+        target = confirmedEnemyTarget;
         StopEnemyTargetSelection();
 
         if (target == null || !target.IsAlive)
@@ -397,7 +430,10 @@ public class BattleManager : MonoBehaviour
     private void RemoveDefeatedUnit(UnitBattle unit)
     {
         if (enemyBattleUnits.Remove(unit))
+        {
             unit.OnSelected -= OnEnemyTargetSelected;
+            unit.OnHoverEntered -= OnEnemyTargetHoverEntered;
+        }
         else
             playerBattleUnits.Remove(unit);
     }
@@ -413,6 +449,7 @@ public class BattleManager : MonoBehaviour
         targetConfirmed = false;
         targetSelectionCanceled = false;
         selectedEnemyTarget = defaultTarget;
+        confirmedEnemyTarget = null;
 
         SetEnemyTargetingEnabled(true);
         SetTargetIndicator(defaultTarget);
@@ -430,19 +467,37 @@ public class BattleManager : MonoBehaviour
     private void SubscribeEnemyTargetCallbacks()
     {
         foreach (UnitBattle enemy in enemyBattleUnits)
+        {
             enemy.OnSelected += OnEnemyTargetSelected;
+            enemy.OnHoverEntered += OnEnemyTargetHoverEntered;
+        }
+    }
+
+    private void SubscribePlayerItemTargetCallbacks()
+    {
+        foreach (UnitBattle player in playerBattleUnits)
+        {
+            player.OnSelected += OnPlayerItemTargetSelected;
+            player.OnHoverEntered += OnPlayerItemTargetHoverEntered;
+            player.OnHoverExited += OnPlayerItemTargetHoverExited;
+        }
     }
 
     private void OnEnemyTargetSelected(UnitBattle enemy)
     {
-        if (!isSelectingTarget || enemy == null || !enemy.IsAlive)
+        if (!isSelectingTarget || targetConfirmed || enemy == null || !enemy.IsAlive)
             return;
 
-        if (selectedEnemyTarget == enemy)
-        {
-            targetConfirmed = true;
+        selectedEnemyTarget = enemy;
+        confirmedEnemyTarget = enemy;
+        SetTargetIndicator(enemy);
+        targetConfirmed = true;
+    }
+
+    private void OnEnemyTargetHoverEntered(UnitBattle enemy)
+    {
+        if (!isSelectingTarget || targetConfirmed || enemy == null || !enemy.IsAlive)
             return;
-        }
 
         selectedEnemyTarget = enemy;
         SetTargetIndicator(enemy);
@@ -482,6 +537,18 @@ public class BattleManager : MonoBehaviour
 
     private void OnCancelAction()
     {
+        if (isChoosingItem)
+        {
+            CancelItemSelectionToActionMenu();
+            return;
+        }
+
+        if (isSelectingItemTarget)
+        {
+            ReturnToItemInventory();
+            return;
+        }
+
         if (!isSelectingTarget)
             return;
 
@@ -491,6 +558,7 @@ public class BattleManager : MonoBehaviour
     private void ClearTargetIndicator()
     {
         selectedEnemyTarget = null;
+        confirmedEnemyTarget = null;
         SetTargetIndicator(null);
     }
 
@@ -551,6 +619,186 @@ public class BattleManager : MonoBehaviour
     #endregion
 
     #region Item & Skill
+
+    private void SubscribeInventoryEvents()
+    {
+        if (Inventory.Instance == null)
+        {
+            Debug.LogWarning("BattleManager could not find the persistent Inventory.");
+            return;
+        }
+
+        Inventory.Instance.ItemUseRequested -= OnBattleItemSelected;
+        Inventory.Instance.ItemUseRequested += OnBattleItemSelected;
+        Inventory.Instance.SetKeyboardToggleEnabled(false);
+        Inventory.Instance.CloseItemPanel();
+    }
+
+    private void BeginBattleItemSelection()
+    {
+        if (Inventory.Instance == null)
+        {
+            Debug.LogWarning("Cannot use an item because no Inventory exists.");
+            battleHUD.ShowActionMenu();
+            return;
+        }
+
+        itemBeingUsed = null;
+        selectedItemTarget = null;
+        isChoosingItem = true;
+        isSelectingItemTarget = false;
+
+        Inventory.Instance.OpenItemPanel();
+        battleHUD.ShowCancelButton();
+    }
+
+    private void OnBattleItemSelected(ItemData itemData)
+    {
+        if (!isChoosingItem || itemData == null || currentState != BattleState.PlayerTurn)
+            return;
+
+        itemBeingUsed = itemData;
+        isChoosingItem = false;
+        isSelectingItemTarget = true;
+        selectedItemTarget = null;
+
+        Inventory.Instance.CloseItemPanel();
+        ClearPlayerTurnIndicators();
+        SetPlayerItemTargetingEnabled(true);
+        battleHUD.ShowCancelButton();
+    }
+
+    private void OnPlayerItemTargetSelected(UnitBattle target)
+    {
+        if (!isSelectingItemTarget || target == null || !target.IsAlive || itemBeingUsed == null)
+            return;
+
+        if (!itemBeingUsed.Use(target))
+        {
+            ShowItemCannotUsePopup(target, itemBeingUsed);
+            return;
+        }
+
+        ItemData usedItem = itemBeingUsed;
+        StopPlayerItemTargeting();
+        Inventory.Instance.RemoveItem(usedItem, 1);
+        Inventory.Instance.ClearItemSelection();
+        StartCoroutine(CompletePlayerItemUse(target, usedItem));
+    }
+
+    private void OnPlayerItemTargetHoverEntered(UnitBattle target)
+    {
+        if (!isSelectingItemTarget || target == null || !target.IsAlive)
+            return;
+
+        selectedItemTarget = target;
+        SetPlayerItemTargetIndicator(target);
+        target.ShowItemPreview(itemBeingUsed);
+    }
+
+    private void OnPlayerItemTargetHoverExited(UnitBattle target)
+    {
+        if (!isSelectingItemTarget || selectedItemTarget != target)
+            return;
+
+        target.ClearItemPreview();
+        selectedItemTarget = null;
+        SetPlayerItemTargetIndicator(null);
+    }
+
+    private IEnumerator CompletePlayerItemUse(UnitBattle target, ItemData usedItem)
+    {
+        string unitName = target.UnitData != null
+            ? target.UnitData.unitName
+            : target.name;
+
+        yield return DialogueManager.Instance.ShowFormattedPopupAndWait(
+            DialogueManager.Instance.Messages.itemUsed,
+            ("unit", unitName),
+            ("item", usedItem.ItemName)
+        );
+
+        ClearPlayerTurnIndicators();
+        turnOrderManager.CompleteCurrentTurn();
+        ProcessNextTurn();
+    }
+
+    private void SetPlayerItemTargetingEnabled(bool isEnabled)
+    {
+        foreach (UnitBattle player in playerBattleUnits)
+            player.SetTargetable(isEnabled && player.IsAlive);
+    }
+
+    private void SetPlayerItemTargetIndicator(UnitBattle target)
+    {
+        foreach (UnitBattle player in playerBattleUnits)
+        {
+            if (player != target)
+                player.ClearItemPreview();
+
+            player.SetTargeted(player == target, false);
+        }
+    }
+
+    private void ShowItemCannotUsePopup(UnitBattle target, ItemData item)
+    {
+        if (DialogueManager.Instance == null ||
+            DialogueManager.Instance.Messages == null)
+            return;
+
+        string unitName = target.UnitData != null
+            ? target.UnitData.unitName
+            : target.name;
+
+        DialogueManager.Instance.ShowFormattedPopup(
+            DialogueManager.Instance.Messages.itemCannotUse,
+            ("unit", unitName),
+            ("item", item.ItemName));
+    }
+
+    private void StopPlayerItemTargeting()
+    {
+        isSelectingItemTarget = false;
+        isChoosingItem = false;
+        SetPlayerItemTargetingEnabled(false);
+        SetPlayerItemTargetIndicator(null);
+        selectedItemTarget = null;
+        itemBeingUsed = null;
+        battleHUD.HideCancelButton();
+        Inventory.Instance?.CloseItemPanel();
+    }
+
+    private void ReturnToItemInventory()
+    {
+        SetPlayerItemTargetingEnabled(false);
+        SetPlayerItemTargetIndicator(null);
+        selectedItemTarget = null;
+        itemBeingUsed = null;
+        isSelectingItemTarget = false;
+        isChoosingItem = true;
+
+        Inventory.Instance?.OpenItemPanel();
+        battleHUD.ShowCancelButton();
+    }
+
+    private void CancelItemSelectionToActionMenu()
+    {
+        isChoosingItem = false;
+        isSelectingItemTarget = false;
+        itemBeingUsed = null;
+        selectedItemTarget = null;
+
+        Inventory.Instance?.CloseItemPanel();
+        Inventory.Instance?.ClearItemSelection();
+        SetPlayerItemTargetingEnabled(false);
+        ClearPlayerTurnIndicators();
+
+        if (currentActingUnit != null)
+            currentActingUnit.SetTargeted(true);
+
+        battleHUD.HideCancelButton();
+        battleHUD.ShowActionMenu();
+    }
 
     private IEnumerator ExecuteItemSequence(UnitBattle actingUnit)
     {

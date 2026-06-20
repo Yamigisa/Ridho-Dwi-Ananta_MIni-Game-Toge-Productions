@@ -1,9 +1,10 @@
 using System;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class ItemBar : MonoBehaviour
+public class ItemBar : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
     [SerializeField] private Image itemImage;
     [SerializeField] private TextMeshProUGUI itemNameText;
@@ -16,6 +17,8 @@ public class ItemBar : MonoBehaviour
 
     public ItemData ItemData => itemData;
     public event Action<ItemBar> Clicked;
+    public event Action<ItemBar> HoverEntered;
+    public event Action<ItemBar> HoverExited;
 
     private void Awake()
     {
@@ -52,9 +55,21 @@ public class ItemBar : MonoBehaviour
         Clicked?.Invoke(this);
     }
 
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        HoverEntered?.Invoke(this);
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        HoverExited?.Invoke(this);
+    }
+
     private void OnDestroy()
     {
         itemBarButton.onClick.RemoveListener(HandleClick);
         Clicked = null;
+        HoverEntered = null;
+        HoverExited = null;
     }
 }

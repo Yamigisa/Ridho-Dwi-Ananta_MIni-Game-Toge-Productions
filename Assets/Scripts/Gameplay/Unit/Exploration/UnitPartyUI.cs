@@ -44,6 +44,8 @@ public class UnitPartyUI : MonoBehaviour
             unitParty.InitializeUnitBattle(playerUnits.Units[i], true);
             unitParty.SetTargetable(true);
             unitParty.OnSelected += HandleUnitClicked;
+            unitParty.OnHoverEntered += HandleUnitHoverEntered;
+            unitParty.OnHoverExited += HandleUnitHoverExited;
 
             spawnedUnits[i] = unitParty;
         }
@@ -65,7 +67,11 @@ public class UnitPartyUI : MonoBehaviour
             foreach (UnitBattle unit in spawnedUnits)
             {
                 if (unit != null)
+                {
                     unit.OnSelected -= HandleUnitClicked;
+                    unit.OnHoverEntered -= HandleUnitHoverEntered;
+                    unit.OnHoverExited -= HandleUnitHoverExited;
+                }
             }
         }
 
@@ -87,31 +93,45 @@ public class UnitPartyUI : MonoBehaviour
 
     private void HandleUnitClicked(UnitBattle clickedUnit)
     {
-        if (itemBeingUsed == null)
+        if (itemBeingUsed == null || clickedUnit == null)
             return;
 
-        if (selectedUnit == clickedUnit)
-        {
-            ApplyItemTo(clickedUnit);
+        ApplyItemTo(clickedUnit);
+    }
+
+    private void HandleUnitHoverEntered(UnitBattle hoveredUnit)
+    {
+        if (itemBeingUsed == null || hoveredUnit == null)
             return;
-        }
 
         if (selectedUnit != null)
             selectedUnit.SetTargeted(false, false);
 
-        selectedUnit = clickedUnit;
+        selectedUnit = hoveredUnit;
         selectedUnit.SetTargeted(true, false);
+        selectedUnit.ShowItemPreview(itemBeingUsed);
+    }
+
+    private void HandleUnitHoverExited(UnitBattle hoveredUnit)
+    {
+        if (selectedUnit != hoveredUnit)
+            return;
+
+        selectedUnit.ClearItemPreview();
+        selectedUnit.SetTargeted(false, false);
+        selectedUnit = null;
     }
 
     private void ApplyItemTo(UnitBattle target)
     {
         if (!itemBeingUsed.Use(target))
         {
-            Debug.Log($"{itemBeingUsed.ItemName} cannot currently be used on {target.name}.");
+            ShowItemCannotUsePopup(target, itemBeingUsed);
             return;
         }
 
         Inventory.Instance.RemoveItem(itemBeingUsed, 1);
+        Inventory.Instance.ClearItemSelection();
         ShowItemUsedPopup(target, itemBeingUsed);
 
         ClosePartyUI();
@@ -135,6 +155,22 @@ public class UnitPartyUI : MonoBehaviour
             DialogueManager.Instance.Messages.itemUsed,
             ("unit", unitName),
             ("item", usedItem.ItemName));
+    }
+
+    private void ShowItemCannotUsePopup(UnitBattle target, ItemData item)
+    {
+        if (DialogueManager.Instance == null ||
+            DialogueManager.Instance.Messages == null)
+            return;
+
+        string unitName = target.UnitData != null
+            ? target.UnitData.unitName
+            : target.name;
+
+        DialogueManager.Instance.ShowFormattedPopup(
+            DialogueManager.Instance.Messages.itemCannotUse,
+            ("unit", unitName),
+            ("item", item.ItemName));
     }
 
 }

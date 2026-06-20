@@ -824,6 +824,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Inventory
   itemPanel: {fileID: 1706028519}
+  itemDescriptionText: {fileID: 4046281}
   itemBarPrefab: {fileID: 6923216591842410780, guid: 0f1580a8c78f72e4ca57bdc457c73015, type: 3}
   itemBarContent: {fileID: 1697965272}
 --- !u!1 &303290290
@@ -1083,7 +1084,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &311129334
 Transform:
   m_ObjectHideFlags: 0

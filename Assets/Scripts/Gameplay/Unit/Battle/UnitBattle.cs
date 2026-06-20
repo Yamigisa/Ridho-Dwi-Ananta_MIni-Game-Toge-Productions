@@ -7,7 +7,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class UnitBattle : MonoBehaviour, IPointerClickHandler
+public class UnitBattle : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
 {
     [Header("Unit Battle UI")]
     [SerializeField] private TextMeshProUGUI nameText;
@@ -19,6 +19,7 @@ public class UnitBattle : MonoBehaviour, IPointerClickHandler
 
     [Header("For Player Unit ONLY")]
     [SerializeField] private Image uiImage;
+    [SerializeField] private Image selectionBackground;
 
     [Header("For Enemy Unit ONLY")]
     [SerializeField] private SpriteRenderer spriteRenderer;
@@ -26,6 +27,10 @@ public class UnitBattle : MonoBehaviour, IPointerClickHandler
     [Header("Selection Highlight")]
     [SerializeField] private Color targetedColor = Color.yellow;
     [SerializeField] private float targetedScaleMultiplier = 1.12f;
+
+    [Header("Item Preview")]
+    [SerializeField] private Color hpGhostColor = new Color(0.3f, 1f, 0.45f, 0.65f);
+    [SerializeField] private Color mpGhostColor = new Color(0.3f, 0.7f, 1f, 0.65f);
 
     [Header("Stat Bar Animation")]
     [SerializeField] private float hpBarAnimationDuration = 0.5f;
@@ -44,13 +49,15 @@ public class UnitBattle : MonoBehaviour, IPointerClickHandler
     private UnitRuntimeState.State runtimeState;
     private Animator animator;
     private Color defaultSpriteColor = Color.white;
-    private Color defaultUIImageColor = Color.white;
+    private Color defaultSelectionBackgroundColor = Color.white;
     private Vector3 defaultScale;
     private Coroutine hpBarCoroutine;
     private Coroutine mpBarCoroutine;
     private RectTransform cardRectTransform;
     private Image damageFlashOverlay;
     private Sequence damageFeedbackSequence;
+    private Image hpGhostFill;
+    private Image mpGhostFill;
     private Vector2 cardPositionBeforeShake;
     private bool hasDamageFeedbackPosition;
     private Vector3 enemyPositionBeforeShake;
@@ -72,6 +79,8 @@ public class UnitBattle : MonoBehaviour, IPointerClickHandler
     public bool IsAlive => CurrentHP > 0;
     public bool IsTargetable { get; private set; }
     public event Action<UnitBattle> OnSelected;
+    public event Action<UnitBattle> OnHoverEntered;
+    public event Action<UnitBattle> OnHoverExited;
 
     private void Awake()
     {
@@ -89,15 +98,18 @@ public class UnitBattle : MonoBehaviour, IPointerClickHandler
 
         if (uiImage != null)
         {
-            defaultUIImageColor = uiImage.color;
             cardRectTransform = transform as RectTransform;
             CreateDamageFlashOverlay();
         }
+
+        if (selectionBackground != null)
+            defaultSelectionBackgroundColor = selectionBackground.color;
     }
 
     private void OnDisable()
     {
         ResetDamageFeedback();
+        ClearItemPreview();
     }
 
     public void InitializeUnitBattle(UnitData unitData, bool usePersistentState = false)
@@ -307,17 +319,72 @@ public class UnitBattle : MonoBehaviour, IPointerClickHandler
         if (spriteRenderer != null)
             spriteRenderer.color = isTargeted ? targetedColor : defaultSpriteColor;
 
-        if (uiImage != null)
-            uiImage.color = isTargeted ? targetedColor : defaultUIImageColor;
+        if (selectionBackground != null)
+            selectionBackground.color = isTargeted
+                ? targetedColor
+                : defaultSelectionBackgroundColor;
 
         transform.localScale = isTargeted && changeScale
             ? defaultScale * targetedScaleMultiplier
             : defaultScale;
     }
 
+    public void ShowItemPreview(ItemData itemData)
+    {
+        ClearItemPreview();
+
+        if (itemData == null || !IsAlive)
+            return;
+
+        int projectedHP = itemData.GetProjectedHP(this);
+        int projectedMP = itemData.GetProjectedMP(this);
+
+        if (projectedHP > CurrentHP && MaxHP > 0)
+        {
+            hpGhostFill = CreateGhostFill(
+                hpSlider,
+                GetHPPercent(),
+                (float)projectedHP / MaxHP,
+                hpGhostColor,
+                "HP Ghost Fill");
+        }
+
+        if (projectedMP > CurrentMP && MaxMP > 0)
+        {
+            mpGhostFill = CreateGhostFill(
+                mpSlider,
+                GetMPPercent(),
+                (float)projectedMP / MaxMP,
+                mpGhostColor,
+                "MP Ghost Fill");
+        }
+    }
+
+    public void ClearItemPreview()
+    {
+        if (hpGhostFill != null)
+            Destroy(hpGhostFill.gameObject);
+
+        if (mpGhostFill != null)
+            Destroy(mpGhostFill.gameObject);
+
+        hpGhostFill = null;
+        mpGhostFill = null;
+    }
+
     private void OnMouseDown()
     {
         HandleSelectionClick();
+    }
+
+    private void OnMouseEnter()
+    {
+        HandleHoverEntered();
+    }
+
+    private void OnMouseExit()
+    {
+        HandleHoverExited();
     }
 
     public void OnPointerClick(PointerEventData eventData)
@@ -328,10 +395,32 @@ public class UnitBattle : MonoBehaviour, IPointerClickHandler
         HandleSelectionClick();
     }
 
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        HandleHoverEntered();
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        HandleHoverExited();
+    }
+
     private void HandleSelectionClick()
     {
         if (IsTargetable)
             OnSelected?.Invoke(this);
+    }
+
+    private void HandleHoverEntered()
+    {
+        if (IsTargetable)
+            OnHoverEntered?.Invoke(this);
+    }
+
+    private void HandleHoverExited()
+    {
+        if (IsTargetable)
+            OnHoverExited?.Invoke(this);
     }
 
     private void EnsureSelectionCollider()
@@ -361,6 +450,37 @@ public class UnitBattle : MonoBehaviour, IPointerClickHandler
     {
         if (slider != null)
             slider.value = value;
+    }
+
+    private Image CreateGhostFill(
+        Slider slider,
+        float currentPercent,
+        float projectedPercent,
+        Color color,
+        string objectName)
+    {
+        if (slider == null || slider.fillRect == null || slider.fillRect.parent == null)
+            return null;
+
+        GameObject ghostObject = new GameObject(
+            objectName,
+            typeof(RectTransform),
+            typeof(CanvasRenderer),
+            typeof(Image));
+
+        RectTransform ghostRect = ghostObject.GetComponent<RectTransform>();
+        ghostRect.SetParent(slider.fillRect.parent, false);
+        ghostRect.anchorMin = new Vector2(Mathf.Clamp01(currentPercent), 0f);
+        ghostRect.anchorMax = new Vector2(Mathf.Clamp01(projectedPercent), 1f);
+        ghostRect.offsetMin = Vector2.zero;
+        ghostRect.offsetMax = Vector2.zero;
+        ghostRect.SetAsLastSibling();
+
+        Image ghostImage = ghostObject.GetComponent<Image>();
+        ghostImage.color = color;
+        ghostImage.raycastTarget = false;
+
+        return ghostImage;
     }
 
     private IEnumerator AnimateSlider(Slider slider, float targetValue, float duration, bool isHP)

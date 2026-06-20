@@ -17,6 +17,7 @@ public class PopupMessages : ScriptableObject
 
     [Header("Battle - Items")]
     public string itemUsed = "{unit} used {item}!";
+    public string itemCannotUse = "{item} cannot currently be used on {unit}.";
     public string unitItem = "{unit} tried to use an item, but items are not ready yet.";
     public string itemAttributes = "{unit}'s {attributes} increased by {amount}!";
 

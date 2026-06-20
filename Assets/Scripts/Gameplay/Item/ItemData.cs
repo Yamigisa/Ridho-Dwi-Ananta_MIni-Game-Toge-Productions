@@ -115,6 +115,46 @@ public class ItemData : ScriptableObject
         return true;
     }
 
+    public int GetProjectedHP(UnitBattle target)
+    {
+        if (target == null)
+            return 0;
+
+        int projectedHP = target.CurrentHP;
+        for (int i = 0; i < attributes.Count; i++)
+        {
+            AttributeValue attribute = attributes[i];
+            if (attribute == null ||
+                attribute.Attribute != Attribute.HealHP ||
+                attribute.Value <= 0f)
+                continue;
+
+            projectedHP += GetAmount(attribute, target);
+        }
+
+        return Mathf.Clamp(projectedHP, 0, target.MaxHP);
+    }
+
+    public int GetProjectedMP(UnitBattle target)
+    {
+        if (target == null)
+            return 0;
+
+        int projectedMP = target.CurrentMP;
+        for (int i = 0; i < attributes.Count; i++)
+        {
+            AttributeValue attribute = attributes[i];
+            if (attribute == null ||
+                attribute.Attribute != Attribute.HealMP ||
+                attribute.Value <= 0f)
+                continue;
+
+            projectedMP += GetAmount(attribute, target);
+        }
+
+        return Mathf.Clamp(projectedMP, 0, target.MaxMP);
+    }
+
     private static int GetAmount(AttributeValue attribute, UnitBattle target)
     {
         if (attribute.ValueType == ValueType.Flat)

@@ -552,6 +552,7 @@ MonoBehaviour:
   hpSlider: {fileID: 2064331873328838554}
   mpSlider: {fileID: 7978258166085379798}
   uiImage: {fileID: 8622482852894109278}
+  selectionBackground: {fileID: 2245012471728627875}
   spriteRenderer: {fileID: 0}
   targetedColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
   targetedScaleMultiplier: 1.12

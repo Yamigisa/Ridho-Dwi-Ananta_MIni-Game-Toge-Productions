@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -7,19 +8,37 @@ public class Inventory : MonoBehaviour
 {
     [Header("Inventory Panel")]
     [SerializeField] private GameObject itemPanel;
+    [SerializeField] private TextMeshProUGUI itemDescriptionText;
 
     [Header("Item Bar UI")]
     [SerializeField] private ItemBar itemBarPrefab;
     [SerializeField] private RectTransform itemBarContent;
 
     private readonly List<InventoryItem> items = new List<InventoryItem>();
+    private bool allowKeyboardToggle = true;
+    private ItemBar selectedItemBar;
 
     public static Inventory Instance { get; private set; }
     public event Action<ItemData> ItemUseRequested;
 
     private void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
         Instance = this;
+        DontDestroyOnLoad(gameObject);
+
+        Canvas inventoryCanvas = GetComponentInChildren<Canvas>();
+        if (inventoryCanvas != null)
+        {
+            inventoryCanvas.overrideSorting = true;
+            inventoryCanvas.sortingOrder = 100;
+        }
+
         CloseItemPanel();
     }
 
@@ -33,6 +52,9 @@ public class Inventory : MonoBehaviour
 
     private void Update()
     {
+        if (!allowKeyboardToggle)
+            return;
+
         if (Keyboard.current == null || !Keyboard.current.iKey.wasPressedThisFrame)
             return;
 
@@ -52,6 +74,20 @@ public class Inventory : MonoBehaviour
     {
         if (itemPanel != null)
             itemPanel.SetActive(false);
+    }
+
+    public void SetKeyboardToggleEnabled(bool isEnabled)
+    {
+        allowKeyboardToggle = isEnabled;
+    }
+
+    public void ClearItemSelection()
+    {
+        if (selectedItemBar != null)
+            selectedItemBar.SetSelected(false);
+
+        selectedItemBar = null;
+        SetItemDescription(null);
     }
 
     public void PickUpItem(ItemData itemData, int amount = 1)
@@ -84,6 +120,10 @@ public class Inventory : MonoBehaviour
         }
 
         items.Remove(inventoryItem);
+
+        if (selectedItemBar == inventoryItem.itemBar)
+            selectedItemBar = null;
+
         Destroy(inventoryItem.itemBar.gameObject);
     }
 
@@ -94,6 +134,8 @@ public class Inventory : MonoBehaviour
 
         itemBar.InitializeItemBar(inventoryItem.itemData);
         itemBar.Clicked += HandleItemBarClicked;
+        itemBar.HoverEntered += HandleItemBarHoverEntered;
+        itemBar.HoverExited += HandleItemBarHoverExited;
         itemBar.SetAmount(inventoryItem.amount);
     }
 
@@ -109,6 +151,33 @@ public class Inventory : MonoBehaviour
             return;
 
         ItemUseRequested?.Invoke(clickedItem.itemData);
+    }
+
+    private void HandleItemBarHoverEntered(ItemBar hoveredItemBar)
+    {
+        if (hoveredItemBar == null)
+            return;
+
+        if (selectedItemBar != null && selectedItemBar != hoveredItemBar)
+            selectedItemBar.SetSelected(false);
+
+        selectedItemBar = hoveredItemBar;
+        selectedItemBar.SetSelected(true);
+        SetItemDescription(selectedItemBar.ItemData);
+    }
+
+    private void HandleItemBarHoverExited(ItemBar hoveredItemBar)
+    {
+        if (selectedItemBar != hoveredItemBar)
+            return;
+
+        ClearItemSelection();
+    }
+
+    private void SetItemDescription(ItemData itemData)
+    {
+        if (itemDescriptionText != null)
+            itemDescriptionText.text = itemData != null ? itemData.Description : string.Empty;
     }
 }
 
