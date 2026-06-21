@@ -15,6 +15,8 @@ GameObject:
   - component: {fileID: 1312561156013459735}
   - component: {fileID: 274058261415197001}
   - component: {fileID: 5498489123551368726}
+  - component: {fileID: 6042067886965708588}
+  - component: {fileID: 6130640321169624657}
   m_Layer: 0
   m_Name: Base NPC
   m_TagString: Untagged
@@ -74,7 +76,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
+  m_Offset: {x: 0, y: 0.1}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -84,7 +86,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 3, y: 3}
+  m_Size: {x: 0.7, y: 1}
   m_EdgeRadius: 0
 --- !u!114 &2959602779959480534
 MonoBehaviour:
@@ -99,8 +101,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitInteractable
   interactionCollider: {fileID: 7548550377234309183}
-  interactionRange: {x: 3, y: 3}
-  interactionOffset: {x: 0, y: 0}
+  interactionPrompt: Talk
+  interactionRange: {x: 0.7, y: 1}
+  interactionOffset: {x: 0, y: 0.1}
   onPlayerEnterRange:
     m_PersistentCalls:
       m_Calls:
@@ -167,7 +170,7 @@ Rigidbody2D:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3129208481565427032}
-  m_BodyType: 0
+  m_BodyType: 1
   m_Simulated: 1
   m_UseFullKinematicContacts: 0
   m_UseAutoMass: 0
@@ -185,7 +188,7 @@ Rigidbody2D:
   m_Interpolate: 0
   m_SleepingMode: 1
   m_CollisionDetection: 0
-  m_Constraints: 0
+  m_Constraints: 4
 --- !u!114 &274058261415197001
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -198,6 +201,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5d0cca744ab12ac4b81ffbaac833ab74, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitMovement
+  moveSpeed: 10
 --- !u!114 &5498489123551368726
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -210,6 +214,59 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0573712870dbc974da3e9a9498d6f314, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitCutscene
+--- !u!114 &6042067886965708588
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3129208481565427032}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e52de21a22b6dd44c9cc19f810c65059, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Timeline::UnityEngine.Timeline.SignalReceiver
+  m_Events:
+    m_Signals:
+    - {fileID: 11400000, guid: 2981b1f3fcf4bfa40aedebea5dc2f94f, type: 2}
+    m_Events:
+    - m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 5498489123551368726}
+          m_TargetAssemblyTypeName: UnitCutscene, Assembly-CSharp
+          m_MethodName: Move
+          m_Mode: 5
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 12,0
+            m_BoolArgument: 0
+          m_CallState: 2
+--- !u!114 &6130640321169624657
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3129208481565427032}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4de847ddbd734088970758505fd4c5dc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UnitAnimator
+  animator: {fileID: 7179521957173438913}
+  startingDirection: {x: 0, y: -1}
+  moveXParameter: MoveX
+  moveYParameter: MoveY
+  lastMoveXParameter: LastMoveX
+  lastMoveYParameter: LastMoveY
+  isMovingParameter: IsMoving
+  attackParameter: Attack
+  hurtParameter: Hurt
+  deathParameter: Death
+  interactParameter: Interact
 --- !u!1 &7282270087776092863
 GameObject:
   m_ObjectHideFlags: 0
@@ -311,6 +368,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4574429075799198748}
   - component: {fileID: 2787002305023890440}
+  - component: {fileID: 7179521957173438913}
   m_Layer: 0
   m_Name: Visual
   m_TagString: Untagged
@@ -378,11 +436,11 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingLayerID: -514705383
+  m_SortingLayer: 2
+  m_SortingOrder: 1
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
+  m_Sprite: {fileID: -1647424148, guid: 7567e3807c1fe104c916a6931fde7ce5, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -392,6 +450,28 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!95 &7179521957173438913
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7605407050417061638}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 98dafc0234a25ac46b6a4fe9252355a0, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &7612514786994581209
 GameObject:
   m_ObjectHideFlags: 0
@@ -458,7 +538,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
+  m_Offset: {x: 0, y: 0.1}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -468,5 +548,5 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 1, y: 1}
+  m_Size: {x: 0.35, y: 0.65}
   m_EdgeRadius: 0

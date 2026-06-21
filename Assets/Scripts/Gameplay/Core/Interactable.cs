@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -7,6 +8,7 @@ public class Interactable : MonoBehaviour
     [SerializeField] private BoxCollider2D interactionCollider;
 
     [Header("Interaction Settings")]
+    [SerializeField] private string interactionPrompt = "Interact";
     [SerializeField] private Vector2 interactionRange = new Vector2(1.5f, 1.5f);
     [SerializeField] private Vector2 interactionOffset;
 
@@ -16,6 +18,9 @@ public class Interactable : MonoBehaviour
     [SerializeField] private UnityEvent<GameObject> onInteract;
 
     private bool canInteract = false;
+    public event Action<GameObject> Interacted;
+
+    public string InteractionPrompt => interactionPrompt;
     public Vector2 InteractionRange => interactionRange;
     public Vector2 InteractionCenter => (Vector2)transform.position + interactionOffset;
 
@@ -56,6 +61,7 @@ public class Interactable : MonoBehaviour
             return;
 
         onInteract?.Invoke(interactor);
+        Interacted?.Invoke(interactor);
     }
 
     private void OnDrawGizmosSelected()

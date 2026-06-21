@@ -1,11 +1,30 @@
 using System.Collections.Generic;
 using System.Linq;
+using TMPro;
 using UnityEngine;
 
 public class PlayerInteractor : MonoBehaviour
 {
+    [Header("Interaction Prompt")]
+    [SerializeField] private TextMeshProUGUI promptText;
+    [SerializeField] private string promptFormat = "Press E to {0}";
+
     private readonly List<Interactable> interactablesInRange = new();
     private Interactable currentTarget;
+
+    private void Awake()
+    {
+        if (promptText == null)
+        {
+            Debug.LogWarning(
+                "PlayerInteractor has no interaction prompt text assigned.",
+                this
+            );
+            return;
+        }
+
+        HidePrompt();
+    }
 
     public void OnEnterRange(Interactable interactable)
     {
@@ -28,8 +47,37 @@ public class PlayerInteractor : MonoBehaviour
 
     private void RefreshTarget()
     {
+        interactablesInRange.RemoveAll(interactable => interactable == null);
+
         currentTarget = interactablesInRange
             .OrderBy(i => (i.InteractionCenter - (Vector2)transform.position).sqrMagnitude)
             .FirstOrDefault();
+
+        RefreshPrompt();
     }
+
+    private void RefreshPrompt()
+    {
+        if (promptText == null)
+            return;
+
+        if (currentTarget == null)
+        {
+            HidePrompt();
+            return;
+        }
+
+        promptText.text = string.Format(
+            promptFormat,
+            currentTarget.InteractionPrompt
+        );
+        promptText.gameObject.SetActive(true);
+    }
+
+    private void HidePrompt()
+    {
+        if (promptText != null)
+            promptText.gameObject.SetActive(false);
+    }
+
 }

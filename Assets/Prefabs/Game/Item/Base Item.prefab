@@ -110,6 +110,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Interactable
   interactionCollider: {fileID: 6118888977074397973}
+  interactionPrompt: Pick up
   interactionRange: {x: 1.5, y: 1.5}
   interactionOffset: {x: 0, y: 0}
   onPlayerEnterRange:
