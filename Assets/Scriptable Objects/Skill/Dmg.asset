@@ -23,5 +23,5 @@ MonoBehaviour:
     recipient: 0
     valueType: 0
     value: 5
-    duration: 0
+    duration: 99
     successChance: 1

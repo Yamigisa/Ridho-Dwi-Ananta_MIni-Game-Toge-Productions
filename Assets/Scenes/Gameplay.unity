@@ -387,6 +387,8 @@ GameObject:
   - component: {fileID: 122768226}
   - component: {fileID: 122768227}
   - component: {fileID: 122768228}
+  - component: {fileID: 122768229}
+  - component: {fileID: 122768230}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -462,7 +464,7 @@ Transform:
   m_GameObject: {fileID: 122768218}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: -5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -481,6 +483,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5d0cca744ab12ac4b81ffbaac833ab74, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitMovement
+  moveSpeed: 0
 --- !u!50 &122768222
 Rigidbody2D:
   serializedVersion: 5
@@ -620,6 +623,63 @@ MonoBehaviour:
   partyName: Player
   units:
   - {fileID: 11400000, guid: 99f68a451d851774fb410ad60e5fa631, type: 2}
+--- !u!114 &122768229
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 122768218}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e52de21a22b6dd44c9cc19f810c65059, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Timeline::UnityEngine.Timeline.SignalReceiver
+  m_Events:
+    m_Signals:
+    - {fileID: 11400000, guid: 3a86d6d815032a04ab44aa80aac6606f, type: 2}
+    - {fileID: 11400000, guid: 2981b1f3fcf4bfa40aedebea5dc2f94f, type: 2}
+    m_Events:
+    - m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 122768230}
+          m_TargetAssemblyTypeName: UnitCutscene, Assembly-CSharp
+          m_MethodName: MoveAndWait
+          m_Mode: 5
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 0,5
+            m_BoolArgument: 0
+          m_CallState: 2
+    - m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 122768230}
+          m_TargetAssemblyTypeName: UnitCutscene, Assembly-CSharp
+          m_MethodName: Move
+          m_Mode: 5
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 12,0
+            m_BoolArgument: 0
+          m_CallState: 2
+--- !u!114 &122768230
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 122768218}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0573712870dbc974da3e9a9498d6f314, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UnitCutscene
 --- !u!1 &162322485
 GameObject:
   m_ObjectHideFlags: 0
@@ -1084,7 +1144,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &311129334
 Transform:
   m_ObjectHideFlags: 0
@@ -1308,6 +1368,142 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &610091592
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 610091594}
+  - component: {fileID: 610091593}
+  - component: {fileID: 610091595}
+  - component: {fileID: 610091596}
+  - component: {fileID: 610091597}
+  m_Layer: 0
+  m_Name: Timeline
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!320 &610091593
+PlayableDirector:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 610091592}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_PlayableAsset: {fileID: 11400000, guid: edea4b273cf8b3147923b0992cc52c27, type: 2}
+  m_InitialState: 0
+  m_WrapMode: 2
+  m_DirectorUpdateMode: 1
+  m_InitialTime: 0
+  m_SceneBindings:
+  - key: {fileID: -8764791785421553134, guid: edea4b273cf8b3147923b0992cc52c27, type: 2}
+    value: {fileID: 610091596}
+  - key: {fileID: 3511686550986083296, guid: edea4b273cf8b3147923b0992cc52c27, type: 2}
+    value: {fileID: 122768229}
+  - key: {fileID: -7143381756810280136, guid: edea4b273cf8b3147923b0992cc52c27, type: 2}
+    value: {fileID: 1744856206}
+  m_ExposedReferences:
+    m_References: []
+--- !u!4 &610091594
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 610091592}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &610091595
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 610091592}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 356a85066eb3d154d84ea4e0a22ab7c7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DialogueTrigger
+  dialogueBlockName: 
+--- !u!114 &610091596
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 610091592}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e52de21a22b6dd44c9cc19f810c65059, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Timeline::UnityEngine.Timeline.SignalReceiver
+  m_Events:
+    m_Signals:
+    - {fileID: 11400000, guid: 3a86d6d815032a04ab44aa80aac6606f, type: 2}
+    - {fileID: 11400000, guid: 92057569b5ecff54b90d2f6f89c39278, type: 2}
+    - {fileID: 11400000, guid: 1fd2f658d2755124b9cacadc59ecfa73, type: 2}
+    m_Events:
+    - m_PersistentCalls:
+        m_Calls: []
+    - m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 610091597}
+          m_TargetAssemblyTypeName: TimelineManager, Assembly-CSharp
+          m_MethodName: LoadScene
+          m_Mode: 5
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: Battle
+            m_BoolArgument: 0
+          m_CallState: 2
+    - m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 610091595}
+          m_TargetAssemblyTypeName: DialogueTrigger, Assembly-CSharp
+          m_MethodName: TriggerDialogueAndPauseTimeline
+          m_Mode: 5
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: PlayerEntrance
+            m_BoolArgument: 0
+          m_CallState: 2
+--- !u!114 &610091597
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 610091592}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f44c4207397741a89cb4bfd60ceae5ad, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TimelineManager
+  cutscenes:
+  - id: PlayerEntrance
+    director: {fileID: 610091593}
+    playOnlyOnce: 1
+  autoPlayCutsceneId: PlayerEntrance
 --- !u!4 &637577326 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2799728096101578742, guid: 052d74503d279f041ab8fd0c009c9a6d, type: 3}
@@ -1969,6 +2165,10 @@ GameObject:
   - component: {fileID: 1680918532}
   - component: {fileID: 1680918533}
   - component: {fileID: 1680918534}
+  - component: {fileID: 1680918535}
+  - component: {fileID: 1680918537}
+  - component: {fileID: 1680918536}
+  - component: {fileID: 1680918538}
   m_Layer: 0
   m_Name: Flowchart
   m_TagString: Untagged
@@ -1989,18 +2189,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   version: 1
-  scrollPos: {x: 497.11478, y: 7.7116146}
+  scrollPos: {x: 636.1146, y: -16.839275}
   variablesScrollPos: {x: 0, y: 0}
   variablesExpanded: 1
   blockViewHeight: 400
-  zoom: 0.9099998
+  zoom: 1
   scrollViewRect:
     serializedVersion: 2
     x: -343
     y: -340
     width: 1114
     height: 859
-  selectedBlocks: []
+  selectedBlocks:
+  - {fileID: 1680918535}
   selectedCommands: []
   variables:
   - {fileID: 1680918532}
@@ -2180,6 +2381,116 @@ MonoBehaviour:
   stopVoiceover: 1
   waitForVO: 0
   setSayDialog: {fileID: 0}
+--- !u!114 &1680918535
+MonoBehaviour:
+  m_ObjectHideFlags: 2
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1680918525}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3d3d73aef2cfc4f51abf34ac00241f60, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fungus::Fungus.Block
+  nodeRect:
+    serializedVersion: 2
+    x: -396.126
+    y: 84.65627
+    width: 135.416
+    height: 40
+  tint: {r: 1, g: 1, b: 1, a: 1}
+  useCustomTint: 0
+  itemId: 10
+  blockName: PlayerEntrance
+  description: 
+  eventHandler: {fileID: 0}
+  commandList:
+  - {fileID: 1680918537}
+  - {fileID: 1680918536}
+  - {fileID: 1680918538}
+  suppressAllAutoSelections: 0
+--- !u!114 &1680918536
+MonoBehaviour:
+  m_ObjectHideFlags: 2
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1680918525}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec422cd568a9c4a31ad7c36d0572b9da, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fungus::Fungus.Say
+  itemId: 8
+  indentLevel: 0
+  storyText: I'm sick of waiting for you
+  description: 
+  character: {fileID: 0}
+  portrait: {fileID: 0}
+  voiceOverClip: {fileID: 0}
+  showAlways: 1
+  showCount: 1
+  extendPrevious: 0
+  fadeWhenDone: 1
+  waitForClick: 1
+  stopVoiceover: 1
+  waitForVO: 0
+  setSayDialog: {fileID: 0}
+--- !u!114 &1680918537
+MonoBehaviour:
+  m_ObjectHideFlags: 2
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1680918525}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec422cd568a9c4a31ad7c36d0572b9da, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fungus::Fungus.Say
+  itemId: 7
+  indentLevel: 0
+  storyText: You're here!
+  description: 
+  character: {fileID: 0}
+  portrait: {fileID: 0}
+  voiceOverClip: {fileID: 0}
+  showAlways: 1
+  showCount: 1
+  extendPrevious: 0
+  fadeWhenDone: 1
+  waitForClick: 1
+  stopVoiceover: 1
+  waitForVO: 0
+  setSayDialog: {fileID: 0}
+--- !u!114 &1680918538
+MonoBehaviour:
+  m_ObjectHideFlags: 2
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1680918525}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec422cd568a9c4a31ad7c36d0572b9da, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fungus::Fungus.Say
+  itemId: 9
+  indentLevel: 0
+  storyText: 'Let''s hurry '
+  description: 
+  character: {fileID: 0}
+  portrait: {fileID: 0}
+  voiceOverClip: {fileID: 0}
+  showAlways: 1
+  showCount: 1
+  extendPrevious: 0
+  fadeWhenDone: 1
+  waitForClick: 1
+  stopVoiceover: 1
+  waitForVO: 0
+  setSayDialog: {fileID: 0}
 --- !u!1 &1697965271
 GameObject:
   m_ObjectHideFlags: 0
@@ -2309,6 +2620,52 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1744856199 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3129208481565427032, guid: 052d74503d279f041ab8fd0c009c9a6d, type: 3}
+  m_PrefabInstance: {fileID: 2935695234021762406}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1744856203 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5498489123551368726, guid: 052d74503d279f041ab8fd0c009c9a6d, type: 3}
+  m_PrefabInstance: {fileID: 2935695234021762406}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1744856199}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0573712870dbc974da3e9a9498d6f314, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UnitCutscene
+--- !u!114 &1744856206
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1744856199}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e52de21a22b6dd44c9cc19f810c65059, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Timeline::UnityEngine.Timeline.SignalReceiver
+  m_Events:
+    m_Signals:
+    - {fileID: 11400000, guid: 2981b1f3fcf4bfa40aedebea5dc2f94f, type: 2}
+    m_Events:
+    - m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 1744856203}
+          m_TargetAssemblyTypeName: UnitCutscene, Assembly-CSharp
+          m_MethodName: Move
+          m_Mode: 5
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 12,0
+            m_BoolArgument: 0
+          m_CallState: 2
 --- !u!1 &1843917226
 GameObject:
   m_ObjectHideFlags: 0
@@ -2705,6 +3062,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 162322486}
     m_Modifications:
+    - target: {fileID: 274058261415197001, guid: 052d74503d279f041ab8fd0c009c9a6d, type: 3}
+      propertyPath: moveSpeed
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 1312561156013459735, guid: 052d74503d279f041ab8fd0c009c9a6d, type: 3}
+      propertyPath: m_BodyType
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1312561156013459735, guid: 052d74503d279f041ab8fd0c009c9a6d, type: 3}
+      propertyPath: m_Constraints
+      value: 4
+      objectReference: {fileID: 0}
     - target: {fileID: 2799728096101578742, guid: 052d74503d279f041ab8fd0c009c9a6d, type: 3}
       propertyPath: m_LocalPosition.x
       value: 5
@@ -2752,7 +3121,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 3129208481565427032, guid: 052d74503d279f041ab8fd0c009c9a6d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1744856206}
   m_SourcePrefab: {fileID: 100100000, guid: 052d74503d279f041ab8fd0c009c9a6d, type: 3}
 --- !u!1001 &8123152892829536132
 PrefabInstance:
@@ -2884,14 +3256,15 @@ SceneRoots:
   - {fileID: 1855435160}
   - {fileID: 162322486}
   - {fileID: 311129334}
+  - {fileID: 8123152892829536132}
   - {fileID: 502372083}
   - {fileID: 122768220}
-  - {fileID: 1310419429}
   - {fileID: 1728619452}
+  - {fileID: 1310419429}
   - {fileID: 2136853567}
+  - {fileID: 486377206}
+  - {fileID: 285765620}
   - {fileID: 674257252}
   - {fileID: 1680918530}
-  - {fileID: 486377206}
   - {fileID: 2126884766}
-  - {fileID: 285765620}
-  - {fileID: 8123152892829536132}
+  - {fileID: 610091594}

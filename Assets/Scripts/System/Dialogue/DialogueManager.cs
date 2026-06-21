@@ -17,6 +17,8 @@ public class DialogueManager : MonoBehaviour
     [SerializeField] private string popupVariableName = "PopupText";
 
     public static DialogueManager Instance { get; private set; }
+    public bool IsDialoguePlaying => flowchart != null && flowchart.HasExecutingBlocks();
+
     public event Action<bool> OnPopupVisibilityChanged;
     private bool isPopupVisible;
     private int popupSequenceDepth;
