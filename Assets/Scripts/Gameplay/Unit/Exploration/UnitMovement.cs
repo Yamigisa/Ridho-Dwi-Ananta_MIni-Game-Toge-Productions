@@ -4,7 +4,7 @@ using UnityEngine;
 public class UnitMovement : MonoBehaviour
 {
     [Header("IF Unit has no unit data, set default move speed")]
-    [SerializeField, Min(0f)] private float moveSpeed = 10f;
+    [SerializeField, Min(0f)] private float moveSpeed = 1f;
     public float MoveSpeed => moveSpeed;
 
     private float stoppingDistance = 0.05f;

@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.Events;
 
 [RequireComponent(typeof(BoxCollider2D))]
+[DisallowMultipleComponent]
 public class Interactable : MonoBehaviour
 {
     [SerializeField] private BoxCollider2D interactionCollider;
@@ -20,17 +21,18 @@ public class Interactable : MonoBehaviour
     private bool canInteract = false;
     public event Action<GameObject> Interacted;
 
+    protected bool CanInteract => canInteract;
     public string InteractionPrompt => interactionPrompt;
     public Vector2 InteractionRange => interactionRange;
     public Vector2 InteractionCenter => (Vector2)transform.position + interactionOffset;
 
-    private void Awake()
+    protected virtual void Awake()
     {
         interactionCollider = GetComponent<BoxCollider2D>();
         ApplyColliderSettings();
     }
 
-    private void OnTriggerEnter2D(Collider2D other)
+    protected virtual void OnTriggerEnter2D(Collider2D other)
     {
         if (other.CompareTag("Player"))
         {
@@ -43,7 +45,7 @@ public class Interactable : MonoBehaviour
         }
     }
 
-    private void OnTriggerExit2D(Collider2D other)
+    protected virtual void OnTriggerExit2D(Collider2D other)
     {
         if (other.CompareTag("Player"))
         {
@@ -55,7 +57,7 @@ public class Interactable : MonoBehaviour
         }
     }
 
-    public void Interact(GameObject interactor)
+    public virtual void Interact(GameObject interactor)
     {
         if (!canInteract)
             return;
@@ -70,7 +72,7 @@ public class Interactable : MonoBehaviour
         Gizmos.DrawWireCube(InteractionCenter, interactionRange);
     }
 
-    private void OnValidate()
+    protected virtual void OnValidate()
     {
         interactionRange.x = Mathf.Max(0.01f, interactionRange.x);
         interactionRange.y = Mathf.Max(0.01f, interactionRange.y);
