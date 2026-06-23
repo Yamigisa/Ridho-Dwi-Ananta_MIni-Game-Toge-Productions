@@ -15,6 +15,7 @@ public class DialogueManager : MonoBehaviour
 
     [SerializeField] private string popupBlockName = "PopupMessage";
     [SerializeField] private string popupVariableName = "PopupText";
+    [SerializeField, Min(1)] private int flowchartInitializationFrames = 10;
 
     public static DialogueManager Instance { get; private set; }
     public bool IsDialoguePlaying => flowchart != null && flowchart.HasExecutingBlocks();
@@ -33,7 +34,6 @@ public class DialogueManager : MonoBehaviour
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
-        FindSceneFlowchart();
     }
 
     private void OnEnable()
@@ -48,15 +48,17 @@ public class DialogueManager : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        FindSceneFlowchart();
+        flowchart = null;
     }
 
     public void PlayDialogue(string blockName)
     {
-        if (!CanExecuteBlock(blockName))
-            return;
+        StartCoroutine(PlayDialogueWhenReady(blockName, false));
+    }
 
-        flowchart.ExecuteBlock(blockName);
+    public IEnumerator PlayDialogueAndWait(string blockName)
+    {
+        yield return PlayDialogueWhenReady(blockName, true);
     }
 
     public void ShowPopup(string message)
@@ -159,34 +161,55 @@ public class DialogueManager : MonoBehaviour
         yield return new WaitForSeconds(0.3f);
     }
 
-    private void FindSceneFlowchart()
+    private IEnumerator PlayDialogueWhenReady(string blockName, bool waitUntilFinished)
     {
-        Flowchart[] flowcharts = FindObjectsByType<Flowchart>(FindObjectsSortMode.None);
-        flowchart = flowcharts.Length > 0 ? flowcharts[0] : null;
-    }
-
-    private bool CanShowPopup()
-    {
-        return TryFindPopupFlowchart(out _);
-    }
-
-    private bool CanExecuteBlock(string blockName)
-    {
-        FindSceneFlowchart();
-
-        if (flowchart == null)
+        if (string.IsNullOrWhiteSpace(blockName))
         {
-            Debug.LogWarning($"No Flowchart found for block {blockName}.");
-            return false;
+            Debug.LogWarning("Cannot play dialogue without a block name.");
+            yield break;
         }
 
-        if (!flowchart.HasBlock(blockName))
+        Flowchart targetFlowchart = null;
+
+        for (int frame = 0; frame < flowchartInitializationFrames; frame++)
+        {
+            if (TryFindFlowchartWithBlock(blockName, out targetFlowchart))
+                break;
+
+            yield return null;
+        }
+
+        if (targetFlowchart == null)
         {
             Debug.LogWarning($"Block {blockName} does not exist.");
-            return false;
+            yield break;
         }
 
-        return true;
+        flowchart = targetFlowchart;
+        targetFlowchart.ExecuteBlock(blockName);
+
+        if (waitUntilFinished)
+            yield return WaitForDialogueToFinish(targetFlowchart);
+    }
+
+    private bool TryFindFlowchartWithBlock(
+        string blockName,
+        out Flowchart targetFlowchart)
+    {
+        Flowchart[] flowcharts =
+            FindObjectsByType<Flowchart>(FindObjectsSortMode.None);
+
+        foreach (Flowchart candidate in flowcharts)
+        {
+            if (candidate.HasBlock(blockName))
+            {
+                targetFlowchart = candidate;
+                return true;
+            }
+        }
+
+        targetFlowchart = null;
+        return false;
     }
 
     private bool TryFindPopupFlowchart(out Flowchart popupFlowchart)

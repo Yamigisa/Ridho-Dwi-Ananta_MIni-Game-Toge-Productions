@@ -45,9 +45,7 @@ public class DialogueTrigger : MonoBehaviour
         }
 
         playableDirector.Pause();
-        DialogueManager.Instance.PlayDialogue(blockName);
-
-        yield return DialogueManager.Instance.WaitForDialogueToFinish();
+        yield return DialogueManager.Instance.PlayDialogueAndWait(blockName);
 
         playableDirector.Resume();
         dialogueTimelineRoutine = null;

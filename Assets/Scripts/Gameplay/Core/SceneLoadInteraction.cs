@@ -11,8 +11,9 @@ public class SceneLoadInteraction : Interactable
     [SerializeField] private Vector2 playerSpawnOffset;
 
     public string InteractionId => interactionId;
+    public Vector2 PlayerSpawnOffset => playerSpawnOffset;
     public Vector3 PlayerSpawnPosition =>
-        transform.position + (Vector3)playerSpawnOffset;
+        transform.TransformPoint(playerSpawnOffset);
 
     public void LoadScene(string sceneName)
     {

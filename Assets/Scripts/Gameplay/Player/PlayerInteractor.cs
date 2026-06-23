@@ -11,6 +11,7 @@ public class PlayerInteractor : MonoBehaviour
 
     private readonly List<Interactable> interactablesInRange = new();
     private Interactable currentTarget;
+    private bool wasInteractionLocked;
 
     private void Awake()
     {
@@ -24,6 +25,21 @@ public class PlayerInteractor : MonoBehaviour
         }
 
         HidePrompt();
+    }
+
+    private void Update()
+    {
+        bool isLocked = IsInteractionLocked();
+
+        if (isLocked == wasInteractionLocked)
+            return;
+
+        wasInteractionLocked = isLocked;
+
+        if (isLocked)
+            HidePrompt();
+        else
+            RefreshPrompt();
     }
 
     public void OnEnterRange(Interactable interactable)
@@ -42,6 +58,9 @@ public class PlayerInteractor : MonoBehaviour
 
     public void TryInteract()
     {
+        if (IsInteractionLocked())
+            return;
+
         currentTarget?.Interact(gameObject);
     }
 
@@ -61,7 +80,7 @@ public class PlayerInteractor : MonoBehaviour
         if (promptText == null)
             return;
 
-        if (currentTarget == null)
+        if (currentTarget == null || IsInteractionLocked())
         {
             HidePrompt();
             return;
@@ -80,4 +99,16 @@ public class PlayerInteractor : MonoBehaviour
             promptText.gameObject.SetActive(false);
     }
 
+    private bool IsInteractionLocked()
+    {
+        bool dialogueIsPlaying =
+            DialogueManager.Instance != null &&
+            DialogueManager.Instance.IsDialoguePlaying;
+
+        bool cutsceneIsPlaying =
+            TimelineManager.Instance != null &&
+            TimelineManager.Instance.IsCutscenePlaying;
+
+        return dialogueIsPlaying || cutsceneIsPlaying;
+    }
 }
