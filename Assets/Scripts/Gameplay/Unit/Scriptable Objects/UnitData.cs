@@ -23,5 +23,37 @@ public class UnitData : ScriptableObject
 
     [Header("Skills)")]
     [SerializeField] private List<SkillData> skills = new();
-    public IReadOnlyList<SkillData> Skills => skills;
+    private readonly List<SkillData> addedSkills = new();
+
+    public IReadOnlyList<SkillData> Skills
+    {
+        get
+        {
+            List<SkillData> allSkills = new(skills);
+
+            foreach (SkillData skill in addedSkills)
+            {
+                if (skill != null && !allSkills.Contains(skill))
+                    allSkills.Add(skill);
+            }
+
+            return allSkills;
+        }
+    }
+
+    public IReadOnlyList<SkillData> AddedSkills => addedSkills;
+
+    public bool AddSkill(SkillData skill)
+    {
+        if (skill == null || skills.Contains(skill) || addedSkills.Contains(skill))
+            return false;
+
+        addedSkills.Add(skill);
+        return true;
+    }
+
+    public bool RemoveAddedSkill(SkillData skill)
+    {
+        return skill != null && addedSkills.Remove(skill);
+    }
 }

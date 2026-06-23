@@ -1,0 +1,349 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
+
+public class UnitSaveData : MonoBehaviour
+{
+    [Serializable]
+    private class SavedData
+    {
+        public bool existsInWorld = true;
+        public string sceneName;
+        public string locationId;
+        public Vector3 position;
+        public int level;
+        public int currentHP;
+        public int currentMP;
+        public int attack;
+        public int defense;
+        public int speed;
+        public List<string> addedSkillNames = new();
+    }
+
+    [Serializable]
+    private class SavedIdList
+    {
+        public List<string> ids = new();
+    }
+
+    private const string PlayerPrefsPrefix = "UnitSaveData.";
+    private const string DefeatedEncountersKey =
+        PlayerPrefsPrefix + "DefeatedEncounters";
+    private static readonly HashSet<string> loadedUnitStateIds = new();
+
+    [Header("Identity")]
+    [SerializeField] private string saveID;
+    [SerializeField] private bool generateIDFromSceneHierarchy = true;
+    private UnitData unitData;
+
+    private bool existsInWorld = true;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void InitializeStatics()
+    {
+        loadedUnitStateIds.Clear();
+        BattleRelay.EncounterDefeated -= HandleEncounterDefeated;
+        BattleRelay.EncounterDefeated += HandleEncounterDefeated;
+        RestoreDefeatedEncounters();
+    }
+
+    private void Awake()
+    {
+        if (generateIDFromSceneHierarchy)
+            saveID = BuildSceneHierarchyID(transform);
+
+        if (unitData == null &&
+            TryGetComponent(out UnitExploration exploration))
+        {
+            unitData = exploration.GetUnitData();
+        }
+    }
+
+    private void Start()
+    {
+        Load();
+    }
+
+    public void Save()
+    {
+        if (!HasSaveID())
+            return;
+
+        SaveDataTransaction.SetString(
+            GetPlayerPrefsKey(saveID),
+            JsonUtility.ToJson(CreateSavedData())
+        );
+        SaveDataTransaction.Save();
+    }
+
+    public void Load()
+    {
+        if (!HasSaveID())
+            return;
+
+        string key = GetPlayerPrefsKey(saveID);
+        if (!SaveDataTransaction.HasKey(key))
+        {
+            Save();
+            return;
+        }
+
+        SavedData savedData =
+            JsonUtility.FromJson<SavedData>(
+                SaveDataTransaction.GetString(key)
+            );
+
+        if (savedData == null)
+            return;
+
+        existsInWorld = savedData.existsInWorld;
+        if (!existsInWorld)
+        {
+            gameObject.SetActive(false);
+            Destroy(gameObject);
+            return;
+        }
+
+        if (savedData.sceneName == gameObject.scene.name)
+            RestorePosition(savedData.position);
+
+        if (loadedUnitStateIds.Add(saveID))
+            RestoreUnitState(savedData);
+    }
+
+    public void SetExistsInWorld(bool exists)
+    {
+        existsInWorld = exists;
+        Save();
+
+        if (!exists)
+            gameObject.SetActive(false);
+    }
+
+    public bool AddSkill(SkillData skill)
+    {
+        if (unitData == null || !unitData.AddSkill(skill))
+            return false;
+
+        Save();
+        return true;
+    }
+
+    public void SetLevel(int level)
+    {
+        if (unitData == null)
+            return;
+
+        unitData.level = Mathf.Max(1, level);
+        Save();
+    }
+
+    public static bool IsSavedInWorld(string id)
+    {
+        SavedData savedData = ReadSavedData(id);
+        return savedData == null || savedData.existsInWorld;
+    }
+
+    public static void SetSavedExistsInWorld(string id, bool exists)
+    {
+        if (string.IsNullOrWhiteSpace(id))
+            return;
+
+        SavedData savedData = ReadSavedData(id) ?? new SavedData();
+        savedData.existsInWorld = exists;
+        WriteSavedData(id, savedData);
+    }
+
+    public static string GetSavedLocation(string id, string defaultLocation)
+    {
+        SavedData savedData = ReadSavedData(id);
+
+        return savedData == null ||
+               string.IsNullOrWhiteSpace(savedData.locationId)
+            ? defaultLocation
+            : savedData.locationId;
+    }
+
+    public static void SetSavedLocation(string id, string locationId)
+    {
+        if (string.IsNullOrWhiteSpace(id))
+            return;
+
+        SavedData savedData = ReadSavedData(id) ?? new SavedData();
+        savedData.locationId = locationId;
+        WriteSavedData(id, savedData);
+    }
+
+    public static void DeleteSavedData(string id)
+    {
+        if (string.IsNullOrWhiteSpace(id))
+            return;
+
+        SaveDataTransaction.DeleteKey(GetPlayerPrefsKey(id));
+        loadedUnitStateIds.Remove(id);
+        SaveDataTransaction.Save();
+    }
+
+    private SavedData CreateSavedData()
+    {
+        SavedData savedData = new()
+        {
+            existsInWorld = existsInWorld,
+            sceneName = gameObject.scene.name,
+            position = transform.position
+        };
+
+        if (unitData == null)
+            return savedData;
+
+        savedData.level = unitData.level;
+
+        UnitRuntimeState.State state = UnitRuntimeState.GetOrCreate(unitData);
+        savedData.currentHP = state.currentHP;
+        savedData.currentMP = state.currentMP;
+        savedData.attack = state.attack;
+        savedData.defense = state.defense;
+        savedData.speed = state.speed;
+        savedData.addedSkillNames =
+            unitData.AddedSkills.Select(skill => skill.SkillName).ToList();
+
+        return savedData;
+    }
+
+    private void RestorePosition(Vector3 position)
+    {
+        transform.position = position;
+
+        if (TryGetComponent(out Rigidbody2D body))
+        {
+            body.position = position;
+            body.linearVelocity = Vector2.zero;
+        }
+    }
+
+    private void RestoreUnitState(SavedData savedData)
+    {
+        if (unitData == null)
+            return;
+
+        if (savedData.level > 0)
+            unitData.level = savedData.level;
+
+        UnitRuntimeState.State state = UnitRuntimeState.GetOrCreate(unitData);
+        state.currentHP = savedData.currentHP;
+        state.currentMP = savedData.currentMP;
+        state.attack = savedData.attack;
+        state.defense = savedData.defense;
+        state.speed = savedData.speed;
+
+        SkillData[] loadedSkills = Resources.FindObjectsOfTypeAll<SkillData>();
+        foreach (string skillName in savedData.addedSkillNames)
+        {
+            SkillData skill = loadedSkills.FirstOrDefault(
+                candidate => candidate.SkillName == skillName
+            );
+
+            if (skill != null)
+                unitData.AddSkill(skill);
+        }
+    }
+
+    private static void HandleEncounterDefeated(string encounterId)
+    {
+        SetSavedExistsInWorld(encounterId, false);
+
+        SavedIdList savedIds = ReadDefeatedEncounterIds();
+        if (!savedIds.ids.Contains(encounterId))
+        {
+            savedIds.ids.Add(encounterId);
+            SaveDataTransaction.SetString(
+                DefeatedEncountersKey,
+                JsonUtility.ToJson(savedIds)
+            );
+            SaveDataTransaction.Save();
+        }
+    }
+
+    private static void RestoreDefeatedEncounters()
+    {
+        SavedIdList savedIds = ReadDefeatedEncounterIds();
+
+        foreach (string encounterId in savedIds.ids)
+            BattleRelay.RestoreDefeatedEncounter(encounterId);
+    }
+
+    private static SavedIdList ReadDefeatedEncounterIds()
+    {
+        if (!SaveDataTransaction.HasKey(DefeatedEncountersKey))
+            return new SavedIdList();
+
+        return JsonUtility.FromJson<SavedIdList>(
+                   SaveDataTransaction.GetString(
+                       DefeatedEncountersKey
+                   )
+               ) ??
+               new SavedIdList();
+    }
+
+    private bool HasSaveID()
+    {
+        if (!string.IsNullOrWhiteSpace(saveID))
+            return true;
+
+        Debug.LogWarning($"{name} has no UnitSaveData Save ID.", this);
+        return false;
+    }
+
+    private static string BuildSceneHierarchyID(Transform target)
+    {
+        string path = target.GetSiblingIndex().ToString();
+        Transform current = target;
+
+        while (current.parent != null)
+        {
+            current = current.parent;
+            path = $"{current.GetSiblingIndex()}/{path}";
+        }
+
+        return $"{target.gameObject.scene.path}:{path}";
+    }
+
+    private static SavedData ReadSavedData(string id)
+    {
+        if (string.IsNullOrWhiteSpace(id))
+            return null;
+
+        string key = GetPlayerPrefsKey(id);
+        return SaveDataTransaction.HasKey(key)
+            ? JsonUtility.FromJson<SavedData>(
+                SaveDataTransaction.GetString(key)
+              )
+            : null;
+    }
+
+    private static void WriteSavedData(string id, SavedData savedData)
+    {
+        SaveDataTransaction.SetString(
+            GetPlayerPrefsKey(id),
+            JsonUtility.ToJson(savedData)
+        );
+        SaveDataTransaction.Save();
+    }
+
+    private static string GetPlayerPrefsKey(string id)
+    {
+        return PlayerPrefsPrefix + id.Trim();
+    }
+
+    private void OnDestroy()
+    {
+        if (gameObject.activeSelf)
+            Save();
+    }
+
+    private void OnApplicationQuit()
+    {
+        Save();
+    }
+}

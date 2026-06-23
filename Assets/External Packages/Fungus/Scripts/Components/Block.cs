@@ -271,11 +271,15 @@ namespace Fungus
 
                 // Skip disabled commands, comments and labels
                 while (i < commandList.Count &&
-                      (!commandList[i].enabled || 
+                      (commandList[i] == null ||
+                       !commandList[i].enabled ||
                         commandList[i].GetType() == typeof(Comment) ||
                         commandList[i].GetType() == typeof(Label)))
                 {
-                    i = commandList[i].CommandIndex + 1;
+                    if (commandList[i] == null)
+                        i++;
+                    else
+                        i = commandList[i].CommandIndex + 1;
                 }
 
                 if (i >= commandList.Count)
@@ -313,19 +317,23 @@ namespace Fungus
                 command.ExecutingIconTimer = Time.realtimeSinceStartup + FungusConstants.ExecutingIconFadeTime;
                 BlockSignals.DoCommandExecute(this, command, i, commandList.Count);
 
-#if UNITY_EDITOR
                 try
                 {
                     command.Execute();
                 }
-                catch (Exception)
+                catch (Exception exception)
                 {
-                    Debug.LogError("Rethrowing Exception thrown by:" + command.GetLocationIdentifier());
+                    Debug.LogError(
+                        "Exception thrown by: " +
+                        command.GetLocationIdentifier() +
+                        "\n" +
+                        exception
+                    );
+
+                    command.IsExecuting = false;
+                    ReturnToIdle();
                     throw;
                 }
-#else
-                command.Execute();
-#endif
 
                 // Wait until the executing command sets another command to jump to via Command.Continue()
                 while (jumpToCommandIndex == -1)

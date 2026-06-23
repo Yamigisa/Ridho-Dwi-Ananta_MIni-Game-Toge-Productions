@@ -38,6 +38,13 @@ public class SceneLoadInteraction : Interactable
         }
 
         SceneTransitionState.SetDestination(destinationInteractionId);
+
+        if (NewTimelineManager.Instance != null &&
+            NewTimelineManager.IsAnyCutscenePlaying)
+        {
+            NewTimelineManager.Instance.CompleteTimeline();
+        }
+
         SceneManager.LoadScene(sceneName);
     }
 

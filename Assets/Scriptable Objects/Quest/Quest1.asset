@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 15491dd6749ad5d46bd7644b540d26d4, type: 3}
+  m_Name: Quest1
+  m_EditorClassIdentifier: Assembly-CSharp::QuestSO
+  questId: Quest1
+  displayName: Get healing potion
+  startAfterCutsceneId: House 1
+  targetGameObject: {fileID: 3129208481565427032, guid: 052d74503d279f041ab8fd0c009c9a6d, type: 3}
+  dialogueOptions:
+  - stage: 1
+    flowchartBlockId: OngoingQuest1
+  - stage: 2
+    flowchartBlockId: FinishedQuest1
+  requirementType: 0
+  requiredItem: {fileID: 11400000, guid: 90902ff8afd7bf442abac47f914cb270, type: 2}
+  requiredItemAmount: 1
+  requiredMonster: {fileID: 0}
+  requiredMonsterAmount: 1

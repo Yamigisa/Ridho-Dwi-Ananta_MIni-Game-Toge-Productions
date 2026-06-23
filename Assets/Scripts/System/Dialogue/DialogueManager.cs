@@ -18,11 +18,15 @@ public class DialogueManager : MonoBehaviour
     [SerializeField, Min(1)] private int flowchartInitializationFrames = 10;
 
     public static DialogueManager Instance { get; private set; }
-    public bool IsDialoguePlaying => flowchart != null && flowchart.HasExecutingBlocks();
+    public bool IsDialoguePlaying =>
+        activeDialogueRequests > 0 ||
+        IsDialogueUiBusy(flowchart);
 
     public event Action<bool> OnPopupVisibilityChanged;
     private bool isPopupVisible;
     private int popupSequenceDepth;
+    private int activeDialogueRequests;
+    private float dialogueIdleTime;
 
     private void Awake()
     {
@@ -49,16 +53,44 @@ public class DialogueManager : MonoBehaviour
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         flowchart = null;
+        activeDialogueRequests = 0;
+        dialogueIdleTime = 0f;
+    }
+
+    private void Update()
+    {
+        if (activeDialogueRequests <= 0)
+        {
+            dialogueIdleTime = 0f;
+            return;
+        }
+
+        if (IsDialogueUiBusy(flowchart))
+        {
+            dialogueIdleTime = 0f;
+            return;
+        }
+
+        dialogueIdleTime += Time.unscaledDeltaTime;
+
+        // If a third-party dialogue coroutine throws, Unity can terminate it
+        // before our request counter unwinds. Release the stale gameplay lock
+        // once Fungus and its menu have both remained idle.
+        if (dialogueIdleTime >= 0.5f)
+        {
+            activeDialogueRequests = 0;
+            dialogueIdleTime = 0f;
+        }
     }
 
     public void PlayDialogue(string blockName)
     {
-        StartCoroutine(PlayDialogueWhenReady(blockName, false));
+        StartCoroutine(PlayDialogueWhenReady(blockName));
     }
 
     public IEnumerator PlayDialogueAndWait(string blockName)
     {
-        yield return PlayDialogueWhenReady(blockName, true);
+        yield return PlayDialogueWhenReady(blockName);
     }
 
     public void ShowPopup(string message)
@@ -155,13 +187,51 @@ public class DialogueManager : MonoBehaviour
     {
         yield return null; // let the block actually start
 
-        while (targetFlowchart != null && targetFlowchart.HasExecutingBlocks())
-            yield return null;
+        float idleTime = 0f;
 
-        yield return new WaitForSeconds(0.3f);
+        // Fungus briefly has no executing block when a menu option hands off
+        // to its target block. Require a short continuously-idle window so
+        // that gap cannot release gameplay input.
+        while (idleTime < 0.1f)
+        {
+            if (IsDialogueUiBusy(targetFlowchart))
+                idleTime = 0f;
+            else
+                idleTime += Time.unscaledDeltaTime;
+
+            yield return null;
+        }
+
+        yield return new WaitForSecondsRealtime(0.2f);
     }
 
-    private IEnumerator PlayDialogueWhenReady(string blockName, bool waitUntilFinished)
+    private static bool IsDialogueUiBusy(Flowchart targetFlowchart)
+    {
+        if (targetFlowchart != null && targetFlowchart.HasExecutingBlocks())
+            return true;
+
+        MenuDialog menuDialog = MenuDialog.ActiveMenuDialog;
+        return menuDialog != null &&
+               menuDialog.IsActive() &&
+               menuDialog.DisplayedOptionsCount > 0;
+    }
+
+    private IEnumerator PlayDialogueWhenReady(string blockName)
+    {
+        activeDialogueRequests++;
+
+        try
+        {
+            yield return RunDialogueWhenReady(blockName);
+        }
+        finally
+        {
+            activeDialogueRequests = Mathf.Max(0, activeDialogueRequests - 1);
+            dialogueIdleTime = 0f;
+        }
+    }
+
+    private IEnumerator RunDialogueWhenReady(string blockName)
     {
         if (string.IsNullOrWhiteSpace(blockName))
         {
@@ -187,9 +257,7 @@ public class DialogueManager : MonoBehaviour
 
         flowchart = targetFlowchart;
         targetFlowchart.ExecuteBlock(blockName);
-
-        if (waitUntilFinished)
-            yield return WaitForDialogueToFinish(targetFlowchart);
+        yield return WaitForDialogueToFinish(targetFlowchart);
     }
 
     private bool TryFindFlowchartWithBlock(

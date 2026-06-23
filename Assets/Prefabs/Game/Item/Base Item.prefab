@@ -9,9 +9,10 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8397913055930934996}
-  - component: {fileID: 5748414867044644637}
   - component: {fileID: 6118888977074397973}
+  - component: {fileID: 5748414867044644637}
   - component: {fileID: 499385033715457557}
+  - component: {fileID: 8598780920683423568}
   m_Layer: 0
   m_Name: Base Item
   m_TagString: Untagged
@@ -36,21 +37,6 @@ Transform:
   - {fileID: 8965257429320276156}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &5748414867044644637
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4295215231006488905}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6c45cc7db7c7295459e28e5bee2fba02, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ItemWorld
-  itemData: {fileID: 11400000, guid: 90902ff8afd7bf442abac47f914cb270, type: 2}
-  spriteRenderer: {fileID: 5966442146690765860}
-  itemAmount: 1
 --- !u!61 &6118888977074397973
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -95,8 +81,23 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 1.5, y: 1.5}
+  m_Size: {x: 0.25, y: 0.25}
   m_EdgeRadius: 0
+--- !u!114 &5748414867044644637
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4295215231006488905}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6c45cc7db7c7295459e28e5bee2fba02, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ItemWorld
+  itemData: {fileID: 11400000, guid: 90902ff8afd7bf442abac47f914cb270, type: 2}
+  spriteRenderer: {fileID: 5966442146690765860}
+  itemAmount: 1
 --- !u!114 &499385033715457557
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -111,7 +112,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Interactable
   interactionCollider: {fileID: 6118888977074397973}
   interactionPrompt: Pick up
-  interactionRange: {x: 1.5, y: 1.5}
+  interactionRange: {x: 0.25, y: 0.25}
   interactionOffset: {x: 0, y: 0}
   onPlayerEnterRange:
     m_PersistentCalls:
@@ -134,6 +135,19 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+--- !u!114 &8598780920683423568
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4295215231006488905}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fdc57a65bafb1ca44be3eb5b57eb2d6a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ItemWorldSaveData
+  itemInstanceId: 1983d646-4455-4d5d-840c-6f41f801859d
 --- !u!1 &6188614314740929612
 GameObject:
   m_ObjectHideFlags: 0
@@ -215,7 +229,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
+  m_Sprite: {fileID: 1232179201, guid: 113b8dfa5daf1c84392574ab27716fb2, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -301,5 +315,5 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 1, y: 1}
+  m_Size: {x: 0.15, y: 0.15}
   m_EdgeRadius: 0

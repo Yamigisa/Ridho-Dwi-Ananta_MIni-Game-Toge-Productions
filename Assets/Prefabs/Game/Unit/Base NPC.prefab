@@ -11,12 +11,13 @@ GameObject:
   - component: {fileID: 2799728096101578742}
   - component: {fileID: 7548550377234309183}
   - component: {fileID: 2959602779959480534}
-  - component: {fileID: 5849443596723853111}
   - component: {fileID: 1312561156013459735}
   - component: {fileID: 274058261415197001}
+  - component: {fileID: 6640057417916845221}
   - component: {fileID: 5498489123551368726}
   - component: {fileID: 6042067886965708588}
   - component: {fileID: 6130640321169624657}
+  - component: {fileID: 7349980547350759612}
   m_Layer: 0
   m_Name: Base NPC
   m_TagString: Untagged
@@ -136,32 +137,7 @@ MonoBehaviour:
         m_CallState: 2
   onInteract:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 5849443596723853111}
-        m_TargetAssemblyTypeName: DialogueTrigger, Assembly-CSharp
-        m_MethodName: TriggerDialogue
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
---- !u!114 &5849443596723853111
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3129208481565427032}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 356a85066eb3d154d84ea4e0a22ab7c7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DialogueTrigger
-  dialogueBlockName: Test Block
+      m_Calls: []
 --- !u!50 &1312561156013459735
 Rigidbody2D:
   serializedVersion: 5
@@ -201,7 +177,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5d0cca744ab12ac4b81ffbaac833ab74, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitMovement
-  moveSpeed: 10
+  moveSpeed: 1
+--- !u!114 &6640057417916845221
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3129208481565427032}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ad6142e0919ded43a8945a48a73cce5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UnitExploration
+  unitData: {fileID: 11400000, guid: 155270a9232948ab9d6b76dd96da491b, type: 2}
 --- !u!114 &5498489123551368726
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -234,14 +223,14 @@ MonoBehaviour:
         m_Calls:
         - m_Target: {fileID: 5498489123551368726}
           m_TargetAssemblyTypeName: UnitCutscene, Assembly-CSharp
-          m_MethodName: Move
+          m_MethodName: MoveXThenYAndWait
           m_Mode: 5
           m_Arguments:
             m_ObjectArgument: {fileID: 0}
             m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
             m_IntArgument: 0
             m_FloatArgument: 0
-            m_StringArgument: 12,0
+            m_StringArgument: 1.5,2
             m_BoolArgument: 0
           m_CallState: 2
 --- !u!114 &6130640321169624657
@@ -267,6 +256,20 @@ MonoBehaviour:
   hurtParameter: Hurt
   deathParameter: Death
   interactParameter: Interact
+--- !u!114 &7349980547350759612
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3129208481565427032}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86bd2fb3e50b473eac78f9972addfd3e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UnitSaveData
+  saveID: NPC 1
+  generateIDFromSceneHierarchy: 0
 --- !u!1 &7282270087776092863
 GameObject:
   m_ObjectHideFlags: 0
@@ -436,9 +439,9 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: -514705383
-  m_SortingLayer: 2
-  m_SortingOrder: 1
+  m_SortingLayerID: 1594199179
+  m_SortingLayer: 1
+  m_SortingOrder: -1
   m_MaskInteraction: 0
   m_Sprite: {fileID: -1647424148, guid: 7567e3807c1fe104c916a6931fde7ce5, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}

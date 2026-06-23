@@ -185,6 +185,7 @@ GameObject:
   - component: {fileID: 8011140569558295902}
   - component: {fileID: 4266663504800192092}
   - component: {fileID: 1646637125594629357}
+  - component: {fileID: 7923726804412261740}
   m_Layer: 0
   m_Name: Base Enemy
   m_TagString: Untagged
@@ -345,4 +346,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ad6142e0919ded43a8945a48a73cce5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ExplorationUnit
+  unitData: {fileID: 11400000, guid: c5bc1c6215f1dda4f970023e2757da49, type: 2}
+--- !u!114 &7923726804412261740
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8523825015589583736}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86bd2fb3e50b473eac78f9972addfd3e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UnitSaveData
+  saveID: 
+  generateIDFromSceneHierarchy: 1
   unitData: {fileID: 11400000, guid: c5bc1c6215f1dda4f970023e2757da49, type: 2}

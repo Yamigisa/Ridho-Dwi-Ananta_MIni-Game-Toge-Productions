@@ -43,8 +43,7 @@ public class PlayerController : MonoBehaviour
             DialogueManager.Instance.IsDialoguePlaying;
 
         bool cutsceneIsPlaying =
-            TimelineManager.Instance != null &&
-            TimelineManager.Instance.IsCutscenePlaying;
+            NewTimelineManager.IsAnyCutscenePlaying;
 
         return dialogueIsPlaying || cutsceneIsPlaying;
     }

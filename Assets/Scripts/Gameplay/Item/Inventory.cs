@@ -20,6 +20,8 @@ public class Inventory : MonoBehaviour
 
     public static Inventory Instance { get; private set; }
     public event Action<ItemData> ItemUseRequested;
+    public event Action InventoryChanged;
+    public IReadOnlyList<InventoryItem> Items => items;
 
     private void Awake()
     {
@@ -48,6 +50,7 @@ public class Inventory : MonoBehaviour
             Instance = null;
 
         ItemUseRequested = null;
+        InventoryChanged = null;
     }
 
     private void Update()
@@ -92,6 +95,9 @@ public class Inventory : MonoBehaviour
 
     public void PickUpItem(ItemData itemData, int amount = 1)
     {
+        if (itemData == null || amount <= 0)
+            return;
+
         InventoryItem inventoryItem = FindItem(itemData);
         if (inventoryItem == null)
         {
@@ -104,6 +110,8 @@ public class Inventory : MonoBehaviour
             inventoryItem.amount += amount;
             inventoryItem.itemBar.SetAmount(inventoryItem.amount);
         }
+
+        InventoryChanged?.Invoke();
     }
 
     public void RemoveItem(ItemData itemData, int amount = 1)
@@ -116,6 +124,7 @@ public class Inventory : MonoBehaviour
         if (inventoryItem.amount > 0)
         {
             inventoryItem.itemBar.SetAmount(inventoryItem.amount);
+            InventoryChanged?.Invoke();
             return;
         }
 
@@ -125,6 +134,29 @@ public class Inventory : MonoBehaviour
             selectedItemBar = null;
 
         Destroy(inventoryItem.itemBar.gameObject);
+        InventoryChanged?.Invoke();
+    }
+
+    public int GetItemAmount(ItemData itemData)
+    {
+        InventoryItem inventoryItem = FindItem(itemData);
+        return inventoryItem != null ? inventoryItem.amount : 0;
+    }
+
+    public bool HasItem(ItemData itemData, int amount = 1)
+    {
+        return itemData != null &&
+               amount > 0 &&
+               GetItemAmount(itemData) >= amount;
+    }
+
+    public bool TryRemoveItem(ItemData itemData, int amount = 1)
+    {
+        if (!HasItem(itemData, amount))
+            return false;
+
+        RemoveItem(itemData, amount);
+        return true;
     }
 
     private void AddItemBar(InventoryItem inventoryItem)

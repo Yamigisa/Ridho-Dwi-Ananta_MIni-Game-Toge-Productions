@@ -447,6 +447,7 @@ public class BattleManager : MonoBehaviour
     {
         if (enemyBattleUnits.Remove(unit))
         {
+            BattleRelay.MarkUnitDefeated(unit.UnitData);
             unit.OnSelected -= OnEnemyTargetSelected;
             unit.OnHoverEntered -= OnEnemyTargetHoverEntered;
         }
