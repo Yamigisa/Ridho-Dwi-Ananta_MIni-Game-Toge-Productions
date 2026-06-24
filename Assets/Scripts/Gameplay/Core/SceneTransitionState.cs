@@ -67,9 +67,10 @@ public static class SceneTransitionState
             yield break;
         }
 
-        player.transform.SetParent(destination.transform, false);
-        player.transform.localPosition = destination.PlayerSpawnOffset;
-        player.transform.localRotation = Quaternion.identity;
+        player.transform.SetPositionAndRotation(
+            destination.PlayerSpawnPosition,
+            Quaternion.identity
+        );
 
         Vector3 spawnPosition = player.transform.position;
 

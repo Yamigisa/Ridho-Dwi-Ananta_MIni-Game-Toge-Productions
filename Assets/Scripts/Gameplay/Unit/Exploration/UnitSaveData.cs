@@ -19,6 +19,8 @@ public class UnitSaveData : MonoBehaviour
         public int defense;
         public int speed;
         public List<string> addedSkillNames = new();
+        public bool hasPartyData;
+        public List<string> partyUnitIds = new();
     }
 
     [Serializable]
@@ -36,8 +38,10 @@ public class UnitSaveData : MonoBehaviour
     [SerializeField] private string saveID;
     [SerializeField] private bool generateIDFromSceneHierarchy = true;
     private UnitData unitData;
+    private UnitBattleParty battleParty;
 
     private bool existsInWorld = true;
+    private bool isRestoringParty;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void InitializeStatics()
@@ -58,6 +62,14 @@ public class UnitSaveData : MonoBehaviour
         {
             unitData = exploration.GetUnitData();
         }
+
+        TryGetComponent(out battleParty);
+    }
+
+    private void OnEnable()
+    {
+        if (battleParty != null)
+            battleParty.PartyChanged += HandlePartyChanged;
     }
 
     private void Start()
@@ -110,6 +122,8 @@ public class UnitSaveData : MonoBehaviour
 
         if (loadedUnitStateIds.Add(saveID))
             RestoreUnitState(savedData);
+
+        RestoreParty(savedData);
     }
 
     public void SetExistsInWorld(bool exists)
@@ -208,6 +222,15 @@ public class UnitSaveData : MonoBehaviour
         savedData.addedSkillNames =
             unitData.AddedSkills.Select(skill => skill.SkillName).ToList();
 
+        if (battleParty != null)
+        {
+            savedData.hasPartyData = true;
+            savedData.partyUnitIds = battleParty.Units
+                .Where(unit => unit != null)
+                .Select(GetUnitId)
+                .ToList();
+        }
+
         return savedData;
     }
 
@@ -220,6 +243,42 @@ public class UnitSaveData : MonoBehaviour
             body.position = position;
             body.linearVelocity = Vector2.zero;
         }
+    }
+
+    private void RestoreParty(SavedData savedData)
+    {
+        if (battleParty == null ||
+            !savedData.hasPartyData ||
+            savedData.partyUnitIds == null)
+        {
+            return;
+        }
+
+        Dictionary<string, UnitData> loadedUnits = BuildLoadedUnitLookup();
+        List<UnitData> restoredUnits = new();
+
+        foreach (string unitId in savedData.partyUnitIds)
+        {
+            if (loadedUnits.TryGetValue(unitId, out UnitData unit))
+                restoredUnits.Add(unit);
+        }
+
+        isRestoringParty = true;
+
+        try
+        {
+            battleParty.SetUnits(restoredUnits);
+        }
+        finally
+        {
+            isRestoringParty = false;
+        }
+    }
+
+    private void HandlePartyChanged()
+    {
+        if (!isRestoringParty)
+            Save();
     }
 
     private void RestoreUnitState(SavedData savedData)
@@ -334,6 +393,33 @@ public class UnitSaveData : MonoBehaviour
     private static string GetPlayerPrefsKey(string id)
     {
         return PlayerPrefsPrefix + id.Trim();
+    }
+
+    private static Dictionary<string, UnitData> BuildLoadedUnitLookup()
+    {
+        Dictionary<string, UnitData> unitsById = new();
+        UnitData[] loadedUnits = Resources.FindObjectsOfTypeAll<UnitData>();
+
+        foreach (UnitData unitData in loadedUnits)
+        {
+            if (unitData == null)
+                continue;
+
+            unitsById[GetUnitId(unitData)] = unitData;
+        }
+
+        return unitsById;
+    }
+
+    private static string GetUnitId(UnitData unitData)
+    {
+        return unitData.name.Trim();
+    }
+
+    private void OnDisable()
+    {
+        if (battleParty != null)
+            battleParty.PartyChanged -= HandlePartyChanged;
     }
 
     private void OnDestroy()

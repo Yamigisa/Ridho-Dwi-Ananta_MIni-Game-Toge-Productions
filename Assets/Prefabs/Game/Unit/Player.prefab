@@ -458,7 +458,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitSaveData
   saveID: Player
-  generateIDFromSceneHierarchy: 1
+  generateIDFromSceneHierarchy: 0
 --- !u!114 &4065914842258653464
 MonoBehaviour:
   m_ObjectHideFlags: 0

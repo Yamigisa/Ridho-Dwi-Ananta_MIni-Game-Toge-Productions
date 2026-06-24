@@ -2720,7 +2720,8 @@ GameObject:
   - component: {fileID: 1912488775579752176}
   - component: {fileID: 1827756388121867113}
   - component: {fileID: 9104204704111485843}
-  - component: {fileID: 6662738966042550493}
+  - component: {fileID: 2338671525920100083}
+  - component: {fileID: 6258266387679453526}
   m_Layer: 0
   m_Name: Flowchart
   m_TagString: Untagged
@@ -2756,11 +2757,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   version: 1
-  scrollPos: {x: 617.9537, y: -42.4229}
+  scrollPos: {x: 678.3996, y: 11.7571945}
   variablesScrollPos: {x: 0, y: 0}
   variablesExpanded: 1
   blockViewHeight: 400
-  zoom: 0.8200002
+  zoom: 0.7300002
   scrollViewRect:
     serializedVersion: 2
     x: -343
@@ -2770,7 +2771,7 @@ MonoBehaviour:
   selectedBlocks:
   - {fileID: 7506475064496895193}
   selectedCommands:
-  - {fileID: 6662738966042550493}
+  - {fileID: 6258266387679453526}
   variables:
   - {fileID: 606303563600329058}
   description: 
@@ -3028,8 +3029,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Fungus::Fungus.Block
   nodeRect:
     serializedVersion: 2
-    x: -35.64071
-    y: 33.843414
+    x: -38.928413
+    y: 32.74753
     width: 158.488
     height: 40
   tint: {r: 1, g: 1, b: 1, a: 1}
@@ -3152,7 +3153,7 @@ MonoBehaviour:
   storyText: What a cliche.
   description: 
   character: {fileID: 3001718634143410893}
-  portrait: {fileID: 0}
+  portrait: {fileID: -422712755, guid: ace4fa4b18255eb4590d7954a34565f1, type: 3}
   voiceOverClip: {fileID: 0}
   showAlways: 1
   showCount: 1
@@ -3771,7 +3772,7 @@ MonoBehaviour:
   nodeRect:
     serializedVersion: 2
     x: 305.4608
-    y: 171.44728
+    y: 172.4229
     width: 143.176
     height: 40
   tint: {r: 1, g: 1, b: 1, a: 1}
@@ -3784,7 +3785,8 @@ MonoBehaviour:
   - {fileID: 1912488775579752176}
   - {fileID: 1827756388121867113}
   - {fileID: 9104204704111485843}
-  - {fileID: 6662738966042550493}
+  - {fileID: 2338671525920100083}
+  - {fileID: 6258266387679453526}
   suppressAllAutoSelections: 0
 --- !u!114 &5164838404489120754
 MonoBehaviour:
@@ -4042,7 +4044,7 @@ MonoBehaviour:
   stopVoiceover: 1
   waitForVO: 0
   setSayDialog: {fileID: 0}
---- !u!114 &6662738966042550493
+--- !u!114 &2338671525920100083
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -4054,7 +4056,63 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 95d9ff288f3904c05ada7ac9c9a075bb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Fungus::Fungus.InvokeEvent
-  itemId: 67
+  itemId: 69
+  indentLevel: 0
+  description: 
+  delay: 0
+  invokeType: 0
+  staticEvent:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 2161989927732913173}
+        m_TargetAssemblyTypeName: UnitBattleParty, Assembly-CSharp
+        m_MethodName: AddToPlayerParty
+        m_Mode: 2
+        m_Arguments:
+          m_ObjectArgument: {fileID: 11400000, guid: 155270a9232948ab9d6b76dd96da491b, type: 2}
+          m_ObjectArgumentAssemblyTypeName: UnitData, Assembly-CSharp
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  booleanParameter:
+    booleanRef: {fileID: 0}
+    booleanVal: 0
+  booleanEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  integerParameter:
+    integerRef: {fileID: 0}
+    integerVal: 0
+  integerEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  floatParameter:
+    floatRef: {fileID: 0}
+    floatVal: 0
+  floatEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  stringParameter:
+    stringRef: {fileID: 0}
+    stringVal: 
+  stringEvent:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &6258266387679453526
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7902330532056941556}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95d9ff288f3904c05ada7ac9c9a075bb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fungus::Fungus.InvokeEvent
+  itemId: 71
   indentLevel: 0
   description: 
   delay: 0
@@ -4337,6 +4395,17 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 3383575166685328332, guid: 16d52aa5dc1b0e94493132ee09df4dd1, type: 3}
   m_PrefabInstance: {fileID: 2769122661759902989}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &2161989927732913173 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4065914842258653464, guid: 16d52aa5dc1b0e94493132ee09df4dd1, type: 3}
+  m_PrefabInstance: {fileID: 2769122661759902989}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 661f43c23cb4d734d93a6725b3682d50, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UnitBattleParty
 --- !u!1001 &3897189614520068858
 PrefabInstance:
   m_ObjectHideFlags: 0

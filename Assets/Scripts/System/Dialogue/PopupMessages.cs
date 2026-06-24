@@ -41,4 +41,5 @@ public class PopupMessages : ScriptableObject
 
     [Header("Exploration")]
     public string itemPickedUp = "Picked up {item}!";
+    public string unitJoinedParty = "{unit} joined the party!";
 }
