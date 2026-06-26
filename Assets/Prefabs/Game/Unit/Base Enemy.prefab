@@ -88,6 +88,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7403411444996226541}
   - component: {fileID: 8975132018068231504}
+  - component: {fileID: 8113205100897778268}
   m_Layer: 0
   m_Name: Visual
   m_TagString: Untagged
@@ -155,12 +156,12 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
+  m_SortingLayerID: -514705383
+  m_SortingLayer: 2
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
-  m_Color: {r: 0.78867924, g: 0.28422216, b: 0.28422216, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -169,6 +170,28 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!95 &8113205100897778268
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6587602961350733626}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: e75d81ce414b96c4294a8ff393b29b4b, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &8523825015589583736
 GameObject:
   m_ObjectHideFlags: 0
@@ -186,6 +209,7 @@ GameObject:
   - component: {fileID: 4266663504800192092}
   - component: {fileID: 1646637125594629357}
   - component: {fileID: 7923726804412261740}
+  - component: {fileID: 5770485631362254853}
   m_Layer: 0
   m_Name: Base Enemy
   m_TagString: Untagged
@@ -298,6 +322,7 @@ MonoBehaviour:
   partyName: Base Enemy
   units:
   - {fileID: 11400000, guid: c5bc1c6215f1dda4f970023e2757da49, type: 2}
+  - {fileID: 11400000, guid: c5bc1c6215f1dda4f970023e2757da49, type: 2}
 --- !u!114 &8246070432577929577
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -334,6 +359,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5d0cca744ab12ac4b81ffbaac833ab74, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitMovement
+  moveSpeed: 1
 --- !u!114 &1646637125594629357
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -361,4 +387,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::UnitSaveData
   saveID: 
   generateIDFromSceneHierarchy: 1
-  unitData: {fileID: 11400000, guid: c5bc1c6215f1dda4f970023e2757da49, type: 2}
+--- !u!114 &5770485631362254853
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8523825015589583736}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4de847ddbd734088970758505fd4c5dc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UnitAnimator
+  animator: {fileID: 8113205100897778268}
+  startingDirection: {x: 0, y: -1}
+  moveXParameter: MoveX
+  moveYParameter: MoveY
+  lastMoveXParameter: LastMoveX
+  lastMoveYParameter: LastMoveY
+  isMovingParameter: IsMoving
+  attackParameter: Attack
+  hurtParameter: Hurt
+  deathParameter: Death
+  interactParameter: Interact

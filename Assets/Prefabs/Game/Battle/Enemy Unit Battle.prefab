@@ -74,6 +74,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8706706074805380264}
   - component: {fileID: 7506402407102897290}
+  - component: {fileID: 6142389054617371021}
   m_Layer: 0
   m_Name: Enemy Unit Battle
   m_TagString: Untagged
@@ -118,6 +119,29 @@ MonoBehaviour:
   mpSlider: {fileID: 0}
   uiImage: {fileID: 0}
   spriteRenderer: {fileID: 6456157734247230808}
+--- !u!114 &6142389054617371021
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 440731969057398221}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4de847ddbd734088970758505fd4c5dc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UnitAnimator
+  animator: {fileID: 3126537425059161948}
+  startingDirection: {x: 0, y: -1}
+  moveXParameter: MoveX
+  moveYParameter: MoveY
+  lastMoveXParameter: LastMoveX
+  lastMoveYParameter: LastMoveY
+  isMovingParameter: IsMoving
+  attackParameter: Attack
+  hurtParameter: Hurt
+  deathParameter: Death
+  interactParameter: Interact
 --- !u!1 &1957594419502439888
 GameObject:
   m_ObjectHideFlags: 0
@@ -203,6 +227,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4515366441028854665}
   - component: {fileID: 6456157734247230808}
+  - component: {fileID: 3126537425059161948}
   m_Layer: 0
   m_Name: Enemy Sprite Renderer
   m_TagString: Untagged
@@ -284,6 +309,28 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!95 &3126537425059161948
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2555468046965968772}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: e75d81ce414b96c4294a8ff393b29b4b, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &2574670357071270698
 GameObject:
   m_ObjectHideFlags: 0

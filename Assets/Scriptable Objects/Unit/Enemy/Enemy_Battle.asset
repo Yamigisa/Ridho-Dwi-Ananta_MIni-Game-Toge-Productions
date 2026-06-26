@@ -20,4 +20,4 @@ MonoBehaviour:
   baseAttack: 1
   baseDefense: 1
   baseSpeed: 1
-  battleAnimator: {fileID: 0}
+  battleAnimator: {fileID: 9100000, guid: 98dafc0234a25ac46b6a4fe9252355a0, type: 2}

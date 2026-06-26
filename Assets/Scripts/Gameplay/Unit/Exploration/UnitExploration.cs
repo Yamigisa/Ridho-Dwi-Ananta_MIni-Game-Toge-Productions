@@ -5,10 +5,12 @@ public class UnitExploration : MonoBehaviour
 {
     [SerializeField] private UnitData unitData;
     private UnitMovement movement;
+    private UnitAnimator unitAnimator;
 
     private void Awake()
     {
         movement = GetComponent<UnitMovement>();
+        unitAnimator = GetComponent<UnitAnimator>();
     }
 
     private void Start()
@@ -21,6 +23,7 @@ public class UnitExploration : MonoBehaviour
     {
         unitData = data;
         movement.SetMoveSpeed(data.explorationData.moveSpeed);
+        unitAnimator?.ApplyUnitDataAnimatorController(data);
     }
 
     public UnitData GetUnitData() => unitData;

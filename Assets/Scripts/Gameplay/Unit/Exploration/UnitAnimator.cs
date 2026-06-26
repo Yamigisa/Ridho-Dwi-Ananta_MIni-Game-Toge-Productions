@@ -1,7 +1,7 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(UnitMovement))]
 public class UnitAnimator : MonoBehaviour
 {
     [Header("References")]
@@ -23,10 +23,16 @@ public class UnitAnimator : MonoBehaviour
     [SerializeField] private string deathParameter = "Death";
     [SerializeField] private string interactParameter = "Interact";
 
-    private readonly HashSet<int> availableParameters = new();
+    private readonly Dictionary<int, AnimatorControllerParameterType> availableParameters = new();
 
     private UnitMovement movement;
+    private UnitExploration unitExploration;
+    private UnitBattle unitBattle;
     private Vector2 lastMoveDirection;
+    private Coroutine attackBoolPulse;
+    private Coroutine hurtBoolPulse;
+    private Coroutine deathBoolPulse;
+    private Coroutine interactBoolPulse;
 
     private int moveX;
     private int moveY;
@@ -40,10 +46,11 @@ public class UnitAnimator : MonoBehaviour
 
     private void Awake()
     {
-        movement = GetComponent<UnitMovement>();
+        TryGetComponent(out movement);
+        TryGetComponent(out unitExploration);
+        TryGetComponent(out unitBattle);
 
-        if (animator == null)
-            animator = GetComponentInChildren<Animator>();
+        EnsureAnimator();
 
         lastMoveDirection =
             startingDirection.sqrMagnitude > 0f
@@ -51,13 +58,29 @@ public class UnitAnimator : MonoBehaviour
                 : Vector2.down;
 
         CacheParameterHashes();
+        ApplyUnitDataAnimatorController(unitExploration != null ? unitExploration.GetUnitData() : null);
         CacheAnimatorParameters();
         UpdateFacingParameters(lastMoveDirection);
     }
 
+    private void Start()
+    {
+        ApplyBattleAnimatorController(unitBattle != null ? unitBattle.UnitData : null);
+    }
+
+    public void ApplyUnitDataAnimatorController(UnitData unitData)
+    {
+        ApplyAnimatorController(unitData != null ? unitData.explorationAnimator : null, false);
+    }
+
+    public void ApplyBattleAnimatorController(UnitData unitData)
+    {
+        ApplyAnimatorController(unitData != null ? unitData.battleData?.battleAnimator : null, true);
+    }
+
     private void Update()
     {
-        if (animator == null)
+        if (animator == null || movement == null)
             return;
 
         Vector2 moveDirection = movement.MoveDirection;
@@ -107,22 +130,53 @@ public class UnitAnimator : MonoBehaviour
 
     public void PlayAttack()
     {
-        SetTrigger(attack);
+        SetActionTrigger(attack, ref attackBoolPulse);
     }
 
     public void PlayHurt()
     {
-        SetTrigger(hurt);
+        SetActionTrigger(hurt, ref hurtBoolPulse);
     }
 
     public void PlayDeath()
     {
-        SetTrigger(death);
+        SetActionTrigger(death, ref deathBoolPulse);
+    }
+
+    public void PlayDie()
+    {
+        PlayDeath();
     }
 
     public void PlayInteract()
     {
-        SetTrigger(interact);
+        SetActionTrigger(interact, ref interactBoolPulse);
+    }
+
+    private void EnsureAnimator()
+    {
+        if (animator == null)
+            animator = GetComponentInChildren<Animator>();
+    }
+
+    private void ApplyAnimatorController(RuntimeAnimatorController controller, bool replaceExisting)
+    {
+        if (controller == null)
+            return;
+
+        EnsureAnimator();
+
+        if (animator == null)
+            return;
+
+        if (!replaceExisting && animator.runtimeAnimatorController != null)
+            return;
+
+        if (animator.runtimeAnimatorController != controller)
+            animator.runtimeAnimatorController = controller;
+
+        CacheAnimatorParameters();
+        UpdateFacingParameters(lastMoveDirection);
     }
 
     private void CacheParameterHashes()
@@ -146,7 +200,7 @@ public class UnitAnimator : MonoBehaviour
             return;
 
         foreach (AnimatorControllerParameter parameter in animator.parameters)
-            availableParameters.Add(parameter.nameHash);
+            availableParameters[parameter.nameHash] = parameter.type;
     }
 
     private void UpdateFacingParameters(Vector2 direction)
@@ -157,19 +211,47 @@ public class UnitAnimator : MonoBehaviour
 
     private void SetFloat(int parameter, float value)
     {
-        if (animator != null && availableParameters.Contains(parameter))
+        if (animator != null &&
+            availableParameters.TryGetValue(parameter, out AnimatorControllerParameterType parameterType) &&
+            parameterType == AnimatorControllerParameterType.Float)
             animator.SetFloat(parameter, value);
     }
 
     private void SetBool(int parameter, bool value)
     {
-        if (animator != null && availableParameters.Contains(parameter))
+        if (animator != null &&
+            availableParameters.TryGetValue(parameter, out AnimatorControllerParameterType parameterType) &&
+            parameterType == AnimatorControllerParameterType.Bool)
             animator.SetBool(parameter, value);
     }
 
-    private void SetTrigger(int parameter)
+    private void SetActionTrigger(int parameter, ref Coroutine boolPulse)
     {
-        if (animator != null && availableParameters.Contains(parameter))
+        if (animator == null ||
+            !availableParameters.TryGetValue(parameter, out AnimatorControllerParameterType parameterType))
+            return;
+
+        if (parameterType == AnimatorControllerParameterType.Trigger)
+        {
             animator.SetTrigger(parameter);
+            return;
+        }
+
+        if (parameterType == AnimatorControllerParameterType.Bool)
+        {
+            if (boolPulse != null)
+                StopCoroutine(boolPulse);
+
+            boolPulse = StartCoroutine(PulseBool(parameter));
+        }
+    }
+
+    private IEnumerator PulseBool(int parameter)
+    {
+        animator.SetBool(parameter, true);
+        yield return null;
+
+        if (animator != null)
+            animator.SetBool(parameter, false);
     }
 }

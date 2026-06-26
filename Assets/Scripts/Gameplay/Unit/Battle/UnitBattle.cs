@@ -48,6 +48,7 @@ public class UnitBattle : MonoBehaviour, IPointerClickHandler, IPointerEnterHand
     private UnitData unitData;
     private UnitRuntimeState.State runtimeState;
     private Animator animator;
+    private UnitAnimator unitAnimator;
     private Color defaultSpriteColor = Color.white;
     private Color defaultSelectionBackgroundColor = Color.white;
     private Vector3 defaultScale;
@@ -85,6 +86,7 @@ public class UnitBattle : MonoBehaviour, IPointerClickHandler, IPointerEnterHand
     private void Awake()
     {
         TryGetComponent(out animator);
+        TryGetComponent(out unitAnimator);
         defaultScale = transform.localScale;
 
         if (hpSlider != null)
@@ -152,7 +154,9 @@ public class UnitBattle : MonoBehaviour, IPointerClickHandler, IPointerEnterHand
                 Speed = unitBattleData.baseSpeed;
             }
 
-            if (animator != null && unitBattleData.battleAnimator != null)
+            if (unitAnimator != null)
+                unitAnimator.ApplyBattleAnimatorController(unitData);
+            else if (animator != null && unitBattleData.battleAnimator != null)
                 animator.runtimeAnimatorController = unitBattleData.battleAnimator;
         }
 
@@ -469,9 +473,29 @@ public class UnitBattle : MonoBehaviour, IPointerClickHandler, IPointerEnterHand
         boxCollider.isTrigger = true;
     }
 
-    public void PlayAttack() => animator?.SetTrigger("Attack");
-    public void PlayHurt() => animator?.SetTrigger("Hurt");
-    public void PlayDie() => animator?.SetTrigger("Die");
+    public void PlayAttack()
+    {
+        if (unitAnimator != null)
+            unitAnimator.PlayAttack();
+        else
+            animator?.SetTrigger("Attack");
+    }
+
+    public void PlayHurt()
+    {
+        if (unitAnimator != null)
+            unitAnimator.PlayHurt();
+        else
+            animator?.SetTrigger("Hurt");
+    }
+
+    public void PlayDie()
+    {
+        if (unitAnimator != null)
+            unitAnimator.PlayDeath();
+        else
+            animator?.SetTrigger("Death");
+    }
 
     private float GetHPPercent()
     {
