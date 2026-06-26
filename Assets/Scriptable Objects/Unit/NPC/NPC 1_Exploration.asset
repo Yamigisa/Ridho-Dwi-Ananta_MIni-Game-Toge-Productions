@@ -12,4 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 778dd92b964a18046adb1863b35a8399, type: 3}
   m_Name: NPC 1_Exploration
   m_EditorClassIdentifier: Assembly-CSharp::UnitExplorationData
-  moveSpeed: 1
+  moveSpeed: 1.45
+  sprintMultiplier: 1.6
+  acceleration: 12
+  deceleration: 18
+  inputDeadZone: 0.1
+  stopSnapSpeed: 0.04

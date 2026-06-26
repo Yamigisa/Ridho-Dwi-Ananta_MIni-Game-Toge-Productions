@@ -20,4 +20,8 @@ MonoBehaviour:
   baseAttack: 5
   baseDefense: 0
   baseSpeed: 5
+  statMultiplierPerLevel: 1.1
+  baseExpToNextLevel: 3
+  expDropAfterDefeat: 0
+  itemDrops: []
   battleAnimator: {fileID: 0}

@@ -20,4 +20,11 @@ MonoBehaviour:
   baseAttack: 1
   baseDefense: 1
   baseSpeed: 1
-  battleAnimator: {fileID: 9100000, guid: 98dafc0234a25ac46b6a4fe9252355a0, type: 2}
+  statMultiplierPerLevel: 1.1
+  baseExpToNextLevel: 3
+  expDropAfterDefeat: 100
+  itemDrops:
+  - item: {fileID: 11400000, guid: 90902ff8afd7bf442abac47f914cb270, type: 2}
+    amount: 1
+    dropChance: 1
+  battleAnimator: {fileID: 9100000, guid: e75d81ce414b96c4294a8ff393b29b4b, type: 2}

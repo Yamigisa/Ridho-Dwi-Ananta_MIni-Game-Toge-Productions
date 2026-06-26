@@ -16,6 +16,8 @@ public class UnitBattle : MonoBehaviour, IPointerClickHandler, IPointerEnterHand
     [SerializeField] private TextMeshProUGUI levelText;
     [SerializeField] private Slider hpSlider;
     [SerializeField] private Slider mpSlider;
+    [SerializeField] private Slider expSlider;
+    [SerializeField] private TextMeshProUGUI expText;
 
     [Header("For Player Unit ONLY")]
     [SerializeField] private Image uiImage;
@@ -95,6 +97,9 @@ public class UnitBattle : MonoBehaviour, IPointerClickHandler, IPointerEnterHand
         if (mpSlider != null)
             mpSlider.interactable = false;
 
+        if (expSlider != null)
+            expSlider.interactable = false;
+
         if (spriteRenderer != null)
             defaultSpriteColor = spriteRenderer.color;
 
@@ -124,7 +129,7 @@ public class UnitBattle : MonoBehaviour, IPointerClickHandler, IPointerEnterHand
 
         this.unitData = unitData;
         unitBattleData = unitData.battleData;
-        Level = unitData.level;
+        Level = Mathf.Max(0, unitData.level);
 
         if (unitBattleData == null)
         {
@@ -132,12 +137,12 @@ public class UnitBattle : MonoBehaviour, IPointerClickHandler, IPointerEnterHand
         }
         else
         {
-            MaxHP = unitBattleData.baseHP;
-            MaxMP = unitBattleData.baseMP;
-
             if (usePersistentState)
             {
                 runtimeState = UnitRuntimeState.GetOrCreate(unitData);
+                Level = runtimeState.level;
+                MaxHP = runtimeState.maxHP;
+                MaxMP = runtimeState.maxMP;
                 CurrentHP = Mathf.Clamp(runtimeState.currentHP, 0, MaxHP);
                 CurrentMP = Mathf.Clamp(runtimeState.currentMP, 0, MaxMP);
                 Attack = runtimeState.attack;
@@ -147,11 +152,13 @@ public class UnitBattle : MonoBehaviour, IPointerClickHandler, IPointerEnterHand
             else
             {
                 runtimeState = null;
+                MaxHP = UnitRuntimeState.CalculateScaledHP(unitData);
+                MaxMP = UnitRuntimeState.CalculateScaledMP(unitData);
                 CurrentHP = MaxHP;
                 CurrentMP = MaxMP;
-                Attack = unitBattleData.baseAttack;
-                BaseDefense = unitBattleData.baseDefense;
-                Speed = unitBattleData.baseSpeed;
+                Attack = UnitRuntimeState.CalculateScaledAttack(unitData);
+                BaseDefense = UnitRuntimeState.CalculateScaledDefense(unitData);
+                Speed = UnitRuntimeState.CalculateScaledSpeed(unitData);
             }
 
             if (unitAnimator != null)
@@ -171,6 +178,7 @@ public class UnitBattle : MonoBehaviour, IPointerClickHandler, IPointerEnterHand
 
         if (hpText != null) hpText.text = $"{CurrentHP} / {MaxHP}";
         SetSliderImmediate(hpSlider, GetHPPercent());
+        RefreshExperienceUI();
     }
 
     public void SetMP(int value)
@@ -181,6 +189,7 @@ public class UnitBattle : MonoBehaviour, IPointerClickHandler, IPointerEnterHand
 
         if (mpText != null) mpText.text = $"{CurrentMP} / {MaxMP}";
         SetSliderImmediate(mpSlider, GetMPPercent());
+        RefreshExperienceUI();
     }
 
     public int HealHP(int amount)
@@ -326,7 +335,7 @@ public class UnitBattle : MonoBehaviour, IPointerClickHandler, IPointerEnterHand
     private void RefreshUI(UnitData unitData)
     {
         if (nameText != null) nameText.text = unitData != null ? unitData.unitName : string.Empty;
-        if (levelText != null) levelText.text = unitData != null ? $"Lv. {unitData.level}" : string.Empty;
+        if (levelText != null) levelText.text = unitData != null ? $"Lv. {Level}" : string.Empty;
 
         if (uiImage != null && unitData != null && unitData.icon != null)
             uiImage.sprite = unitData.icon;
@@ -341,9 +350,31 @@ public class UnitBattle : MonoBehaviour, IPointerClickHandler, IPointerEnterHand
 
         SetHP(CurrentHP);
         SetMP(CurrentMP);
+        RefreshExperienceUI();
     }
 
     public UnitBattleData GetUnitBattleData() => unitBattleData;
+    public int GetExpReward() => unitBattleData != null ? Mathf.Max(0, unitBattleData.expDropAfterDefeat) : 0;
+
+    public List<ItemDropReward> RollItemDrops()
+    {
+        List<ItemDropReward> rewards = new();
+        if (unitBattleData == null || unitBattleData.itemDrops == null)
+            return rewards;
+
+        foreach (UnitBattleData.ItemDrop drop in unitBattleData.itemDrops)
+        {
+            if (drop == null || drop.Item == null || drop.Amount <= 0)
+                continue;
+
+            if (UnityEngine.Random.value > drop.DropChance)
+                continue;
+
+            rewards.Add(new ItemDropReward(drop.Item, drop.Amount));
+        }
+
+        return rewards;
+    }
 
     public void SetTargetable(bool isTargetable)
     {
@@ -511,6 +542,23 @@ public class UnitBattle : MonoBehaviour, IPointerClickHandler, IPointerEnterHand
     {
         if (slider != null)
             slider.value = value;
+    }
+
+    private void RefreshExperienceUI()
+    {
+        if (expSlider == null && expText == null)
+            return;
+
+        int currentExp = unitData != null ? UnitRuntimeState.GetExperience(unitData) : 0;
+        int requiredExp = unitData != null ? UnitRuntimeState.GetExperienceForNextLevel(unitData) : 0;
+
+        if (expSlider != null)
+            expSlider.value = requiredExp > 0 ? Mathf.Clamp01((float)currentExp / requiredExp) : 0f;
+
+        if (expText != null)
+            expText.text = requiredExp > 0
+                ? $"{currentExp} / {requiredExp} EXP"
+                : string.Empty;
     }
 
     private Image CreateGhostFill(
@@ -732,12 +780,28 @@ public class UnitBattle : MonoBehaviour, IPointerClickHandler, IPointerEnterHand
     }
 }
 
+public readonly struct ItemDropReward
+{
+    public ItemDropReward(ItemData item, int amount)
+    {
+        Item = item;
+        Amount = Mathf.Max(1, amount);
+    }
+
+    public ItemData Item { get; }
+    public int Amount { get; }
+}
+
 public static class UnitRuntimeState
 {
     public sealed class State
     {
+        public int level;
+        public int experience;
         public int currentHP;
         public int currentMP;
+        public int maxHP;
+        public int maxMP;
         public int attack;
         public int defense;
         public int speed;
@@ -750,20 +814,150 @@ public static class UnitRuntimeState
     {
         if (!states.TryGetValue(unitData, out State state))
         {
-            UnitBattleData battleData = unitData.battleData;
-            state = new State
-            {
-                currentHP = battleData != null ? battleData.baseHP : 0,
-                currentMP = battleData != null ? battleData.baseMP : 0,
-                attack = battleData != null ? battleData.baseAttack : 0,
-                defense = battleData != null ? battleData.baseDefense : 0,
-                speed = battleData != null ? battleData.baseSpeed : 0
-            };
-
+            state = CreateInitialState(unitData);
             states.Add(unitData, state);
         }
 
+        EnsureScaledStats(unitData, state);
         return state;
+    }
+
+    public static int GetExperience(UnitData unitData)
+    {
+        return unitData != null ? GetOrCreate(unitData).experience : 0;
+    }
+
+    public static int GetExperienceForNextLevel(UnitData unitData)
+    {
+        if (unitData == null)
+            return 0;
+
+        State state = GetOrCreate(unitData);
+        return GetExperienceRequiredForLevel(unitData, state.level + 1);
+    }
+
+    public static int AddExperience(UnitData unitData, int amount, out int previousLevel, out int newLevel)
+    {
+        previousLevel = 0;
+        newLevel = 0;
+
+        if (unitData == null || amount <= 0)
+            return 0;
+
+        State state = GetOrCreate(unitData);
+        previousLevel = state.level;
+        state.experience += amount;
+
+        while (state.experience >= GetExperienceRequiredForLevel(unitData, state.level + 1))
+        {
+            int requiredExp = GetExperienceRequiredForLevel(unitData, state.level + 1);
+            state.experience -= requiredExp;
+            state.level++;
+            ApplyScaledStats(unitData, state, true);
+        }
+
+        newLevel = state.level;
+        return state.experience;
+    }
+
+    public static int CalculateScaledHP(UnitData unitData)
+    {
+        return CalculateScaledStat(unitData?.battleData?.baseHP ?? 0, GetInitialLevel(unitData), unitData?.battleData);
+    }
+
+    public static int CalculateScaledMP(UnitData unitData)
+    {
+        return CalculateScaledStat(unitData?.battleData?.baseMP ?? 0, GetInitialLevel(unitData), unitData?.battleData);
+    }
+
+    public static int CalculateScaledAttack(UnitData unitData)
+    {
+        return CalculateScaledStat(unitData?.battleData?.baseAttack ?? 0, GetInitialLevel(unitData), unitData?.battleData);
+    }
+
+    public static int CalculateScaledDefense(UnitData unitData)
+    {
+        return CalculateScaledStat(unitData?.battleData?.baseDefense ?? 0, GetInitialLevel(unitData), unitData?.battleData);
+    }
+
+    public static int CalculateScaledSpeed(UnitData unitData)
+    {
+        return CalculateScaledStat(unitData?.battleData?.baseSpeed ?? 0, GetInitialLevel(unitData), unitData?.battleData);
+    }
+
+    private static State CreateInitialState(UnitData unitData)
+    {
+        State state = new State
+        {
+            level = GetInitialLevel(unitData),
+            experience = 0
+        };
+
+        ApplyScaledStats(unitData, state, false);
+        state.currentHP = state.maxHP;
+        state.currentMP = state.maxMP;
+        return state;
+    }
+
+    private static void EnsureScaledStats(UnitData unitData, State state)
+    {
+        if (state == null)
+            return;
+
+        if (state.maxHP <= 0 && state.maxMP <= 0)
+            ApplyScaledStats(unitData, state, false);
+    }
+
+    private static void ApplyScaledStats(UnitData unitData, State state, bool preserveCurrentHPMP)
+    {
+        if (state == null)
+            return;
+
+        int previousMaxHP = state.maxHP;
+        int previousMaxMP = state.maxMP;
+        UnitBattleData battleData = unitData != null ? unitData.battleData : null;
+
+        state.maxHP = CalculateScaledStat(battleData != null ? battleData.baseHP : 0, state.level, battleData);
+        state.maxMP = CalculateScaledStat(battleData != null ? battleData.baseMP : 0, state.level, battleData);
+        state.attack = CalculateScaledStat(battleData != null ? battleData.baseAttack : 0, state.level, battleData);
+        state.defense = CalculateScaledStat(battleData != null ? battleData.baseDefense : 0, state.level, battleData);
+        state.speed = CalculateScaledStat(battleData != null ? battleData.baseSpeed : 0, state.level, battleData);
+
+        if (!preserveCurrentHPMP)
+            return;
+
+        state.currentHP = Mathf.Clamp(
+            state.currentHP + Mathf.Max(0, state.maxHP - previousMaxHP),
+            0,
+            state.maxHP);
+        state.currentMP = Mathf.Clamp(
+            state.currentMP + Mathf.Max(0, state.maxMP - previousMaxMP),
+            0,
+            state.maxMP);
+    }
+
+    private static int CalculateScaledStat(int baseValue, int level, UnitBattleData battleData)
+    {
+        if (baseValue <= 0)
+            return 0;
+
+        float multiplier = battleData != null ? Mathf.Max(1f, battleData.statMultiplierPerLevel) : 1f;
+        int scaledValue = Mathf.RoundToInt(baseValue * Mathf.Pow(multiplier, Mathf.Max(0, level)));
+        return Mathf.Max(1, scaledValue);
+    }
+
+    private static int GetExperienceRequiredForLevel(UnitData unitData, int targetLevel)
+    {
+        UnitBattleData battleData = unitData != null ? unitData.battleData : null;
+        int baseExp = battleData != null ? Mathf.Max(1, battleData.baseExpToNextLevel) : 3;
+        targetLevel = Mathf.Max(1, targetLevel);
+
+        return Mathf.Max(1, Mathf.CeilToInt(baseExp * targetLevel * Mathf.Log(targetLevel + 1)));
+    }
+
+    private static int GetInitialLevel(UnitData unitData)
+    {
+        return unitData != null ? Mathf.Max(0, unitData.level) : 0;
     }
 
     public static void Clear()

@@ -22,7 +22,18 @@ public class UnitExploration : MonoBehaviour
     public void Initialize(UnitData data)
     {
         unitData = data;
-        movement.SetMoveSpeed(data.explorationData.moveSpeed);
+
+        if (data.explorationData != null)
+        {
+            movement.SetMoveSpeed(data.explorationData.moveSpeed);
+            movement.SetSprintMultiplier(data.explorationData.sprintMultiplier);
+            movement.SetMovementFeel(
+                data.explorationData.acceleration,
+                data.explorationData.deceleration,
+                data.explorationData.inputDeadZone,
+                data.explorationData.stopSnapSpeed);
+        }
+
         unitAnimator?.ApplyUnitDataAnimatorController(data);
     }
 

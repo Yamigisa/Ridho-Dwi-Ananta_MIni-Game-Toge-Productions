@@ -8,8 +8,10 @@ public class UnitAI : MonoBehaviour
     private UnitAIData aiData;
 
     private Vector2 wanderOrigin;
+    private Vector2 wanderTarget;
     private float wanderTimer;
     private bool isWandering;
+    private bool hasWanderTarget;
     private Transform playerTarget;
     private bool isChasing;
 
@@ -120,23 +122,28 @@ public class UnitAI : MonoBehaviour
             {
                 movement.Stop();
                 isWandering = false;
+                hasWanderTarget = false;
             }
             else
             {
                 Vector2 randomOffset = Random.insideUnitCircle * aiData.wanderRange;
-                Vector2 target = wanderOrigin + randomOffset;
-                MoveToward(target);
+                wanderTarget = wanderOrigin + randomOffset;
+                hasWanderTarget = true;
+                MoveToward(wanderTarget);
                 isWandering = true;
             }
         }
 
-        if (isWandering && movement.IsMoving)
+        if (isWandering && hasWanderTarget)
         {
-            Vector2 toDestination = (Vector2)transform.position - movement.Destination;
+            MoveToward(wanderTarget);
+
+            Vector2 toDestination = wanderTarget - (Vector2)transform.position;
             if (toDestination.sqrMagnitude < 0.1f)
             {
                 movement.Stop();
                 isWandering = false;
+                hasWanderTarget = false;
                 wanderTimer = aiData.wanderInterval;
             }
         }
@@ -153,6 +160,7 @@ public class UnitAI : MonoBehaviour
         playerTarget = target;
         isChasing = true;
         isWandering = false;
+        hasWanderTarget = false;
         movement.Stop();
     }
 
@@ -160,7 +168,10 @@ public class UnitAI : MonoBehaviour
     {
         playerTarget = null;
         isChasing = false;
+        isWandering = false;
+        hasWanderTarget = false;
         wanderTimer = aiData.wanderInterval;
+        movement.Stop();
     }
 
     private void OnDrawGizmosSelected()

@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 public class Inventory : MonoBehaviour
 {
@@ -22,6 +21,7 @@ public class Inventory : MonoBehaviour
     public event Action<ItemData> ItemUseRequested;
     public event Action InventoryChanged;
     public IReadOnlyList<InventoryItem> Items => items;
+    public bool IsOpen => itemPanel != null && itemPanel.activeSelf;
 
     private void Awake()
     {
@@ -53,20 +53,6 @@ public class Inventory : MonoBehaviour
         InventoryChanged = null;
     }
 
-    private void Update()
-    {
-        if (!allowKeyboardToggle)
-            return;
-
-        if (Keyboard.current == null || !Keyboard.current.iKey.wasPressedThisFrame)
-            return;
-
-        if (itemPanel != null && itemPanel.activeSelf)
-            CloseItemPanel();
-        else
-            OpenItemPanel();
-    }
-
     public void OpenItemPanel()
     {
         if (itemPanel != null)
@@ -77,6 +63,17 @@ public class Inventory : MonoBehaviour
     {
         if (itemPanel != null)
             itemPanel.SetActive(false);
+    }
+
+    public void ToggleItemPanel()
+    {
+        if (!allowKeyboardToggle)
+            return;
+
+        if (IsOpen)
+            CloseItemPanel();
+        else
+            OpenItemPanel();
     }
 
     public void SetKeyboardToggleEnabled(bool isEnabled)

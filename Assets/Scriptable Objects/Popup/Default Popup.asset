@@ -26,6 +26,12 @@ MonoBehaviour:
   unitSkill: '{unit} uses {skill}!'
   skillMiss: '{unit}''s {skill} missed {target}!'
   skillCannotUse: '{unit} does not have enough HP or MP to use {skill}.'
+  skillDamageDealt: '{skill} dealt {amount} damage to {target}!'
+  skillHPRecovered: '{skill} restored {amount} HP to {target}!'
+  skillMPRecovered: '{skill} restored {amount} MP to {target}!'
+  skillStatIncreased: '{skill} raised {target}''s {stat} by {amount}!'
+  skillStatDecreased: '{skill} lowered {target}''s {stat} by {amount}!'
+  skillNoEffect: '{skill} had no effect on {target}.'
   fleeAttempt: The party is trying to flee...
   escapeSuccess: Successfully escaped!
   escapeFailed: Couldn't escape!
@@ -35,4 +41,6 @@ MonoBehaviour:
   victory: Victory!
   defeat: Your party was defeated...
   expGained: Gained {exp} EXP!
+  unitLevelUp: '{unit} leveled up to Lv. {level}!'
   itemPickedUp: Picked up {item}!
+  itemDropReceived: Obtained {amount}x {item}!

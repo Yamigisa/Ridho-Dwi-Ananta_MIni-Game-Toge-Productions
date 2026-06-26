@@ -19,6 +19,9 @@ public class BattleManager : MonoBehaviour
 
     private List<UnitBattle> playerBattleUnits = new();
     private List<UnitBattle> enemyBattleUnits = new();
+    private List<UnitData> playerPartyUnitData = new();
+    private int pendingExpReward;
+    private readonly List<ItemDropReward> pendingItemRewards = new();
 
 
     [Header("Turn Order")]
@@ -116,6 +119,9 @@ public class BattleManager : MonoBehaviour
         SubscribeDialogueEvents();
         battleHUD.HideActionMenu();
 
+        playerPartyUnitData = new List<UnitData>(BattleRelay.PlayerUnits);
+        pendingExpReward = 0;
+        pendingItemRewards.Clear();
         playerBattleUnits = battleStations.SpawnPlayerUnits(BattleRelay.PlayerUnits);
         enemyBattleUnits = battleStations.SpawnEnemyUnits(BattleRelay.EnemyUnits);
         SubscribeEnemyTargetCallbacks();
@@ -419,6 +425,8 @@ public class BattleManager : MonoBehaviour
             {
                 currentState = BattleState.Win;
                 yield return DialogueManager.Instance.ShowPopupAndWait(DialogueManager.Instance.Messages.victory);
+                yield return AwardVictoryExperience();
+                yield return AwardVictoryItemDrops();
                 DialogueManager.Instance.EndPopupSequence();
                 keepPlayerCardsVisibleDuringPopups = previousKeepPlayerCardsVisible;
                 RefreshPlayerCardsForPopupState();
@@ -447,6 +455,8 @@ public class BattleManager : MonoBehaviour
     {
         if (enemyBattleUnits.Remove(unit))
         {
+            pendingExpReward += unit.GetExpReward();
+            AddPendingItemDrops(unit.RollItemDrops());
             BattleRelay.MarkUnitDefeated(unit.UnitData);
             unit.OnSelected -= OnEnemyTargetSelected;
             unit.OnHoverEntered -= OnEnemyTargetHoverEntered;
@@ -1060,7 +1070,7 @@ public class BattleManager : MonoBehaviour
                 continue;
             }
 
-            yield return ApplySkillEffect(effect, caster);
+            yield return ApplySkillEffect(skill, effect, caster);
         }
 
         foreach (UnitBattle target in targets)
@@ -1080,7 +1090,7 @@ public class BattleManager : MonoBehaviour
                     continue;
                 }
 
-                yield return ApplySkillEffect(effect, target);
+                yield return ApplySkillEffect(skill, effect, target);
             }
         }
     }
@@ -1090,8 +1100,8 @@ public class BattleManager : MonoBehaviour
         SkillData skill,
         UnitBattle target)
     {
-        string casterName = caster != null ? caster.name : "Unit";
-        string targetName = target != null ? target.name : "target";
+        string casterName = GetUnitDisplayName(caster);
+        string targetName = GetUnitDisplayName(target);
 
         yield return DialogueManager.Instance.ShowFormattedPopupAndWait(
             DialogueManager.Instance.Messages.skillMiss,
@@ -1100,44 +1110,197 @@ public class BattleManager : MonoBehaviour
             ("target", targetName));
     }
 
-    private IEnumerator ApplySkillEffect(SkillData.SkillEffect effect, UnitBattle target)
+    private IEnumerator ApplySkillEffect(SkillData skill, SkillData.SkillEffect effect, UnitBattle target)
     {
+        if (effect == null || target == null)
+            yield break;
+
         int amount = GetSkillEffectAmount(effect, target);
 
         switch (effect.Type)
         {
             case SkillData.EffectType.Damage:
+            {
+                int beforeHP = target.CurrentHP;
                 int damage = effect.ValueType == SkillData.ValueType.Flat
                     ? Mathf.Max(0, amount - target.Defense)
                     : amount;
                 target.PlayHurt();
                 yield return target.SetHPAnimated(target.CurrentHP - damage);
+                yield return ShowSkillDamagePopup(skill, target, beforeHP - target.CurrentHP);
                 break;
+            }
             case SkillData.EffectType.HealHP:
+            {
+                int beforeHP = target.CurrentHP;
                 yield return target.SetHPAnimated(target.CurrentHP + amount);
+                yield return ShowSkillHPRecoveredPopup(skill, target, target.CurrentHP - beforeHP);
                 break;
+            }
             case SkillData.EffectType.HealMP:
+            {
+                int beforeMP = target.CurrentMP;
                 yield return target.SetMPAnimated(target.CurrentMP + amount);
+                yield return ShowSkillMPRecoveredPopup(skill, target, target.CurrentMP - beforeMP);
                 break;
+            }
             case SkillData.EffectType.IncreaseAttack:
+            {
+                int beforeAttack = target.Attack;
                 target.IncreaseAttack(amount);
+                yield return ShowSkillStatChangedPopup(skill, target, "Attack", target.Attack - beforeAttack, true);
                 break;
+            }
             case SkillData.EffectType.IncreaseDefense:
+            {
+                int beforeDefense = target.BaseDefense;
                 target.IncreaseDefense(amount);
+                yield return ShowSkillStatChangedPopup(skill, target, "Defense", target.BaseDefense - beforeDefense, true);
                 break;
+            }
             case SkillData.EffectType.IncreaseSpeed:
+            {
+                int beforeSpeed = target.Speed;
                 target.IncreaseSpeed(amount);
+                yield return ShowSkillStatChangedPopup(skill, target, "Speed", target.Speed - beforeSpeed, true);
                 break;
+            }
             case SkillData.EffectType.DecreaseAttack:
+            {
+                int beforeAttack = target.Attack;
                 target.DecreaseAttack(amount);
+                yield return ShowSkillStatChangedPopup(skill, target, "Attack", beforeAttack - target.Attack, false);
                 break;
+            }
             case SkillData.EffectType.DecreaseDefense:
+            {
+                int beforeDefense = target.BaseDefense;
                 target.DecreaseDefense(amount);
+                yield return ShowSkillStatChangedPopup(skill, target, "Defense", beforeDefense - target.BaseDefense, false);
                 break;
+            }
             case SkillData.EffectType.DecreaseSpeed:
+            {
+                int beforeSpeed = target.Speed;
                 target.DecreaseSpeed(amount);
+                yield return ShowSkillStatChangedPopup(skill, target, "Speed", beforeSpeed - target.Speed, false);
                 break;
+            }
         }
+    }
+
+    private IEnumerator ShowSkillDamagePopup(SkillData skill, UnitBattle target, int amount)
+    {
+        if (amount <= 0)
+        {
+            yield return ShowSkillNoEffectPopup(skill, target);
+            yield break;
+        }
+
+        yield return ShowSkillEffectPopup(
+            DialogueManager.Instance.Messages.skillDamageDealt,
+            skill,
+            target,
+            ("amount", amount.ToString()));
+    }
+
+    private IEnumerator ShowSkillHPRecoveredPopup(SkillData skill, UnitBattle target, int amount)
+    {
+        if (amount <= 0)
+        {
+            yield return ShowSkillNoEffectPopup(skill, target);
+            yield break;
+        }
+
+        yield return ShowSkillEffectPopup(
+            DialogueManager.Instance.Messages.skillHPRecovered,
+            skill,
+            target,
+            ("amount", amount.ToString()));
+    }
+
+    private IEnumerator ShowSkillMPRecoveredPopup(SkillData skill, UnitBattle target, int amount)
+    {
+        if (amount <= 0)
+        {
+            yield return ShowSkillNoEffectPopup(skill, target);
+            yield break;
+        }
+
+        yield return ShowSkillEffectPopup(
+            DialogueManager.Instance.Messages.skillMPRecovered,
+            skill,
+            target,
+            ("amount", amount.ToString()));
+    }
+
+    private IEnumerator ShowSkillStatChangedPopup(
+        SkillData skill,
+        UnitBattle target,
+        string stat,
+        int amount,
+        bool increased)
+    {
+        if (amount <= 0)
+        {
+            yield return ShowSkillNoEffectPopup(skill, target);
+            yield break;
+        }
+
+        yield return ShowSkillEffectPopup(
+            increased
+                ? DialogueManager.Instance.Messages.skillStatIncreased
+                : DialogueManager.Instance.Messages.skillStatDecreased,
+            skill,
+            target,
+            ("stat", stat),
+            ("amount", amount.ToString()));
+    }
+
+    private IEnumerator ShowSkillNoEffectPopup(SkillData skill, UnitBattle target)
+    {
+        yield return ShowSkillEffectPopup(
+            DialogueManager.Instance.Messages.skillNoEffect,
+            skill,
+            target);
+    }
+
+    private IEnumerator ShowSkillEffectPopup(
+        string template,
+        SkillData skill,
+        UnitBattle target,
+        params (string key, string value)[] replacements)
+    {
+        if (DialogueManager.Instance == null ||
+            DialogueManager.Instance.Messages == null ||
+            string.IsNullOrWhiteSpace(template))
+        {
+            yield break;
+        }
+
+        List<(string key, string value)> allReplacements = new()
+        {
+            ("skill", skill != null ? skill.SkillName : "Skill"),
+            ("target", GetUnitDisplayName(target))
+        };
+
+        if (replacements != null)
+            allReplacements.AddRange(replacements);
+
+        yield return DialogueManager.Instance.ShowFormattedPopupAndWait(
+            template,
+            allReplacements.ToArray());
+    }
+
+    private string GetUnitDisplayName(UnitBattle unit)
+    {
+        if (unit == null)
+            return "target";
+
+        if (unit.UnitData != null && !string.IsNullOrWhiteSpace(unit.UnitData.unitName))
+            return unit.UnitData.unitName;
+
+        return unit.name;
     }
 
     private int GetSkillEffectAmount(SkillData.SkillEffect effect, UnitBattle target)
@@ -1200,6 +1363,8 @@ public class BattleManager : MonoBehaviour
             currentState = BattleState.Win;
             yield return DialogueManager.Instance.ShowPopupAndWait(
                 DialogueManager.Instance.Messages.victory);
+            yield return AwardVictoryExperience();
+            yield return AwardVictoryItemDrops();
             BattleRelay.MarkCurrentEncounterDefeated();
             SceneManager.LoadScene("Gameplay");
         }
@@ -1214,6 +1379,110 @@ public class BattleManager : MonoBehaviour
     private List<UnitBattle> GetLivingUnits(List<UnitBattle> units)
     {
         return units.FindAll(unit => unit != null && unit.IsAlive);
+    }
+
+    private IEnumerator AwardVictoryExperience()
+    {
+        int expReward = Mathf.Max(0, pendingExpReward);
+        if (expReward <= 0 || playerPartyUnitData == null || playerPartyUnitData.Count == 0)
+            yield break;
+
+        pendingExpReward = 0;
+
+        if (DialogueManager.Instance != null && DialogueManager.Instance.Messages != null)
+        {
+            yield return DialogueManager.Instance.ShowFormattedPopupAndWait(
+                DialogueManager.Instance.Messages.expGained,
+                ("exp", expReward.ToString()));
+        }
+
+        foreach (UnitData unitData in playerPartyUnitData)
+        {
+            if (unitData == null)
+                continue;
+
+            UnitRuntimeState.AddExperience(unitData, expReward, out int previousLevel, out int newLevel);
+
+            if (newLevel <= previousLevel ||
+                DialogueManager.Instance == null ||
+                DialogueManager.Instance.Messages == null)
+                continue;
+
+            string unitName = !string.IsNullOrWhiteSpace(unitData.unitName)
+                ? unitData.unitName
+                : unitData.name;
+
+            yield return DialogueManager.Instance.ShowFormattedPopupAndWait(
+                DialogueManager.Instance.Messages.unitLevelUp,
+                ("unit", unitName),
+                ("level", newLevel.ToString()));
+        }
+    }
+
+    private void AddPendingItemDrops(List<ItemDropReward> itemDrops)
+    {
+        if (itemDrops == null || itemDrops.Count == 0)
+            return;
+
+        foreach (ItemDropReward itemDrop in itemDrops)
+        {
+            if (itemDrop.Item == null || itemDrop.Amount <= 0)
+                continue;
+
+            int existingIndex = pendingItemRewards.FindIndex(reward => reward.Item == itemDrop.Item);
+            if (existingIndex >= 0)
+            {
+                ItemDropReward existingReward = pendingItemRewards[existingIndex];
+                pendingItemRewards[existingIndex] = new ItemDropReward(
+                    existingReward.Item,
+                    existingReward.Amount + itemDrop.Amount);
+            }
+            else
+            {
+                pendingItemRewards.Add(itemDrop);
+            }
+        }
+    }
+
+    private IEnumerator AwardVictoryItemDrops()
+    {
+        if (pendingItemRewards.Count == 0)
+            yield break;
+
+        if (Inventory.Instance == null)
+        {
+            Debug.LogWarning("Cannot award battle item drops because no Inventory exists.");
+            pendingItemRewards.Clear();
+            yield break;
+        }
+
+        foreach (ItemDropReward itemReward in pendingItemRewards)
+        {
+            if (itemReward.Item == null || itemReward.Amount <= 0)
+                continue;
+
+            Inventory.Instance.PickUpItem(itemReward.Item, itemReward.Amount);
+
+            if (DialogueManager.Instance == null || DialogueManager.Instance.Messages == null)
+                continue;
+
+            yield return DialogueManager.Instance.ShowFormattedPopupAndWait(
+                DialogueManager.Instance.Messages.itemDropReceived,
+                ("item", GetItemDisplayName(itemReward.Item)),
+                ("amount", itemReward.Amount.ToString()));
+        }
+
+        pendingItemRewards.Clear();
+    }
+
+    private string GetItemDisplayName(ItemData item)
+    {
+        if (item == null)
+            return "item";
+
+        return !string.IsNullOrWhiteSpace(item.ItemName)
+            ? item.ItemName
+            : item.name;
     }
 
     private bool HasEffect(SkillData skill, SkillData.EffectType effectType)

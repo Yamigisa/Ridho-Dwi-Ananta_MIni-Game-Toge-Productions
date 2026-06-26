@@ -25,6 +25,12 @@ public class PopupMessages : ScriptableObject
     public string unitSkill = "{unit} uses {skill}!";
     public string skillMiss = "{unit}'s {skill} missed {target}!";
     public string skillCannotUse = "{unit} does not have enough HP or MP to use {skill}.";
+    public string skillDamageDealt = "{skill} dealt {amount} damage to {target}!";
+    public string skillHPRecovered = "{skill} restored {amount} HP to {target}!";
+    public string skillMPRecovered = "{skill} restored {amount} MP to {target}!";
+    public string skillStatIncreased = "{skill} raised {target}'s {stat} by {amount}!";
+    public string skillStatDecreased = "{skill} lowered {target}'s {stat} by {amount}!";
+    public string skillNoEffect = "{skill} had no effect on {target}.";
 
     [Header("Battle - Escape")]
     public string fleeAttempt = "The party is trying to flee...";
@@ -38,8 +44,10 @@ public class PopupMessages : ScriptableObject
     public string victory = "Victory!";
     public string defeat = "Your party was defeated...";
     public string expGained = "Gained {exp} EXP!";
+    public string unitLevelUp = "{unit} leveled up to Lv. {level}!";
 
     [Header("Exploration")]
     public string itemPickedUp = "Picked up {item}!";
+    public string itemDropReceived = "Obtained {amount}x {item}!";
     public string unitJoinedParty = "{unit} joined the party!";
 }

@@ -12,6 +12,8 @@ public class UnitPartyUI : MonoBehaviour
     private UnitBattle selectedUnit;
     private ItemData itemBeingUsed;
 
+    public bool IsOpen => unitPartyUIPanel != null && unitPartyUIPanel.activeSelf;
+
     private void Start()
     {
         if (Inventory.Instance == null)
@@ -53,14 +55,19 @@ public class UnitPartyUI : MonoBehaviour
 
     public void OpenPartyUI()
     {
+        if (IsOpen)
+            ClosePartyUI();
+
         Inventory.Instance?.CloseItemPanel();
         InitializeParty();
-        unitPartyUIPanel.SetActive(true);
+        if (unitPartyUIPanel != null)
+            unitPartyUIPanel.SetActive(true);
     }
 
     public void ClosePartyUI()
     {
-        unitPartyUIPanel.SetActive(false);
+        if (unitPartyUIPanel != null)
+            unitPartyUIPanel.SetActive(false);
 
         if (spawnedUnits != null)
         {
@@ -75,14 +82,25 @@ public class UnitPartyUI : MonoBehaviour
             }
         }
 
-        for (int i = content.childCount - 1; i >= 0; i--)
+        if (content != null)
         {
-            Destroy(content.GetChild(i).gameObject);
+            for (int i = content.childCount - 1; i >= 0; i--)
+            {
+                Destroy(content.GetChild(i).gameObject);
+            }
         }
 
         spawnedUnits = null;
         selectedUnit = null;
         itemBeingUsed = null;
+    }
+
+    public void TogglePartyUI()
+    {
+        if (IsOpen)
+            ClosePartyUI();
+        else
+            OpenPartyUI();
     }
 
     public void BeginItemUse(ItemData itemData)

@@ -13,3 +13,8 @@ MonoBehaviour:
   m_Name: Player_Exploration
   m_EditorClassIdentifier: Assembly-CSharp::UnitExplorationData
   moveSpeed: 1
+  sprintMultiplier: 1.6
+  acceleration: 20
+  deceleration: 30
+  inputDeadZone: 0.1
+  stopSnapSpeed: 0.04

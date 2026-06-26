@@ -14,10 +14,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::UnitData
   unitName: Player
   level: 0
-  icon: {fileID: 21300000, guid: ea8f56c43254d41728f5ac4e8299b6c9, type: 3}
+  icon: {fileID: -514839073, guid: b055e0beefc4b884587544dc019ed755, type: 3}
   battleData: {fileID: 11400000, guid: d2cd381064978134980fdc87e5254273, type: 2}
   explorationData: {fileID: 11400000, guid: b295676cb0af5284591a97c230a5461f, type: 2}
+  explorationAnimator: {fileID: 0}
   battleAIProfile: {fileID: 0}
   aiData: {fileID: 0}
   skills:
+  - {fileID: 11400000, guid: 44991cb6c9bcd2b41ac6063cea716c38, type: 2}
+  - {fileID: 11400000, guid: e419a452d3a715f43959654cae3287cc, type: 2}
+  - {fileID: 11400000, guid: ce6a0b973c056c343b29bc0950c6f848, type: 2}
+  - {fileID: 11400000, guid: f5ef6e77becff16469bb9196d30ba3c7, type: 2}
+  - {fileID: 11400000, guid: bb7196b7235c9c74aa243cba3b475b88, type: 2}
+  - {fileID: 11400000, guid: cd4a0153f766a5b4ea37acafadff86d1, type: 2}
+  - {fileID: 11400000, guid: 4cc148d7589d18c4eac7d004d0079811, type: 2}
+  - {fileID: 11400000, guid: bb523887b6115c545ba4403cd2362fb5, type: 2}
+  - {fileID: 11400000, guid: 38cbcdb12f643804c90116f28090b17f, type: 2}
   - {fileID: 11400000, guid: 32064d221d114f442a2e04ba5f243f62, type: 2}
+  - {fileID: 11400000, guid: 92c4eeeffbea3f1488f804d2d033704d, type: 2}
+  - {fileID: 11400000, guid: f67895629b7431a41a810243d05da97d, type: 2}

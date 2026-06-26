@@ -161,7 +161,7 @@ Rigidbody2D:
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
-  m_Interpolate: 0
+  m_Interpolate: 1
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 4
@@ -177,7 +177,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5d0cca744ab12ac4b81ffbaac833ab74, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitMovement
-  moveSpeed: 1
+  moveSpeed: 1.45
+  acceleration: 12
+  deceleration: 18
+  inputDeadZone: 0.1
+  stopSnapSpeed: 0.04
+  sprintMultiplier: 1.6
 --- !u!114 &6640057417916845221
 MonoBehaviour:
   m_ObjectHideFlags: 0

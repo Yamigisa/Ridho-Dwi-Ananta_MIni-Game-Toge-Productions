@@ -10,18 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 50384b2775e6ed14a87d85e17c771075, type: 3}
-  m_Name: Dmg
+  m_Name: Mega Heal
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
-  skillName: Damaging skil
-  description: Damages the enemy
-  icon: {fileID: -1062775163, guid: 113b8dfa5daf1c84392574ab27716fb2, type: 3}
+  skillName: Mega Heal
+  description: Heall all allies' health
+  icon: {fileID: -2009107667, guid: 0d71d356fc93a77478aaec5ccbf125e0, type: 3}
   hpCost: 0
-  mpCost: 1
-  targetType: 3
+  mpCost: 3
+  targetType: 2
   effects:
-  - effectType: 0
+  - effectType: 1
     recipient: 0
     valueType: 0
-    value: 5
-    duration: 99
+    value: 10
+    duration: 0
     successChance: 1
