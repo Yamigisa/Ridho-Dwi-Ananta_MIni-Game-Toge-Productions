@@ -101,13 +101,6 @@ public class PlayerInteractor : MonoBehaviour
 
     private bool IsInteractionLocked()
     {
-        bool dialogueIsPlaying =
-            DialogueManager.Instance != null &&
-            DialogueManager.Instance.IsDialoguePlaying;
-
-        bool cutsceneIsPlaying =
-            NewTimelineManager.IsAnyCutscenePlaying;
-
-        return dialogueIsPlaying || cutsceneIsPlaying;
+        return DialogueManager.IsGameplayInputLocked;
     }
 }

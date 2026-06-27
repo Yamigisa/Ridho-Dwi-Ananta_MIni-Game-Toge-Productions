@@ -25,6 +25,12 @@ public class UnitPartyUI : MonoBehaviour
         Inventory.Instance.ItemUseRequested += BeginItemUse;
     }
 
+    private void Update()
+    {
+        if (IsOpen && DialogueManager.IsGameplayInputLocked)
+            ClosePartyUI();
+    }
+
     private void OnDestroy()
     {
         if (Inventory.Instance != null)
@@ -105,6 +111,15 @@ public class UnitPartyUI : MonoBehaviour
 
     public void BeginItemUse(ItemData itemData)
     {
+        if (itemData == null)
+            return;
+
+        if (itemData.IsBattleOnly)
+        {
+            ShowBattleOnlyItemPopup(itemData);
+            return;
+        }
+
         itemBeingUsed = itemData;
         OpenPartyUI();
     }
@@ -142,7 +157,7 @@ public class UnitPartyUI : MonoBehaviour
 
     private void ApplyItemTo(UnitBattle target)
     {
-        if (!itemBeingUsed.Use(target))
+        if (!itemBeingUsed.Use(target, false))
         {
             ShowItemCannotUsePopup(target, itemBeingUsed);
             return;
@@ -188,6 +203,17 @@ public class UnitPartyUI : MonoBehaviour
         DialogueManager.Instance.ShowFormattedPopup(
             DialogueManager.Instance.Messages.itemCannotUse,
             ("unit", unitName),
+            ("item", item.ItemName));
+    }
+
+    private void ShowBattleOnlyItemPopup(ItemData item)
+    {
+        if (DialogueManager.Instance == null ||
+            DialogueManager.Instance.Messages == null)
+            return;
+
+        DialogueManager.Instance.ShowFormattedPopup(
+            DialogueManager.Instance.Messages.itemBattleOnly,
             ("item", item.ItemName));
     }
 

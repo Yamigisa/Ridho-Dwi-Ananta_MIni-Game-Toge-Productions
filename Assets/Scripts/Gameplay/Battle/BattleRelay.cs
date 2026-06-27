@@ -14,14 +14,26 @@ public static class BattleRelay
     public static List<UnitData> EnemyUnits { get; private set; }
     public static string EnemyPartyName { get; private set; }
     public static string CurrentEncounterId { get; private set; }
+    private static string playerReturnScene;
+    private static Vector3 playerReturnPosition;
+    private static bool restorePlayerPositionAfterBattle;
     public static event Action<string> EncounterDefeated;
+    public static event Action<UnitData> UnitDefeated;
 
-    public static void Set(UnitBattleParty player, UnitBattleParty enemy, string encounterId)
+    public static void Set(
+        UnitBattleParty player,
+        UnitBattleParty enemy,
+        string encounterId,
+        string returnScene,
+        Vector3 returnPosition)
     {
         PlayerUnits = new List<UnitData>(player.Units);
         EnemyUnits = new List<UnitData>(enemy.Units);
         EnemyPartyName = enemy.PartyName;
         CurrentEncounterId = encounterId;
+        playerReturnScene = returnScene;
+        playerReturnPosition = returnPosition;
+        restorePlayerPositionAfterBattle = false;
     }
 
     public static void Clear()
@@ -36,6 +48,7 @@ public static class BattleRelay
         if (!string.IsNullOrEmpty(CurrentEncounterId))
         {
             defeatedEncounterIds.Add(CurrentEncounterId);
+            restorePlayerPositionAfterBattle = true;
             EncounterDefeated?.Invoke(CurrentEncounterId);
         }
 
@@ -45,6 +58,28 @@ public static class BattleRelay
     public static void ClearCurrentEncounter()
     {
         CurrentEncounterId = null;
+        restorePlayerPositionAfterBattle = false;
+    }
+
+    public static bool TryConsumePlayerReturnPosition(
+        string sceneName,
+        out Vector3 returnPosition)
+    {
+        if (restorePlayerPositionAfterBattle &&
+            string.Equals(
+                playerReturnScene,
+                sceneName,
+                StringComparison.Ordinal))
+        {
+            returnPosition = playerReturnPosition;
+            restorePlayerPositionAfterBattle = false;
+            playerReturnScene = null;
+            playerReturnPosition = default;
+            return true;
+        }
+
+        returnPosition = default;
+        return false;
     }
 
     public static bool IsEncounterDefeated(string encounterId)
@@ -91,6 +126,7 @@ public static class BattleRelay
         );
 
         SaveDataTransaction.Save();
+        UnitDefeated?.Invoke(unitData);
     }
 
     private static string GetUnitKey(UnitData unitData)

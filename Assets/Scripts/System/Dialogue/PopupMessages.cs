@@ -18,6 +18,7 @@ public class PopupMessages : ScriptableObject
     [Header("Battle - Items")]
     public string itemUsed = "{unit} used {item}!";
     public string itemCannotUse = "{item} cannot currently be used on {unit}.";
+    public string itemBattleOnly = "{item} can only be used in battle.";
     public string unitItem = "{unit} tried to use an item, but items are not ready yet.";
     public string itemAttributes = "{unit}'s {attributes} increased by {amount}!";
 
@@ -42,7 +43,7 @@ public class PopupMessages : ScriptableObject
 
     [Header("Battle - End")]
     public string victory = "Victory!";
-    public string defeat = "Your party was defeated...";
+    public string defeat = "Game Over";
     public string expGained = "Gained {exp} EXP!";
     public string unitLevelUp = "{unit} leveled up to Lv. {level}!";
 

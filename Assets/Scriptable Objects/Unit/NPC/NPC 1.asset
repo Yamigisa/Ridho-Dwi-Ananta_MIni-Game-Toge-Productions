@@ -15,8 +15,8 @@ MonoBehaviour:
   unitName: NPC 1
   level: 1
   icon: {fileID: 0}
-  battleData: {fileID: 0}
+  battleData: {fileID: 11400000, guid: f19c98e0d17246747b82c94f307586ec, type: 2}
   explorationData: {fileID: 11400000, guid: f75b0eac23004ea998d7ea27d7730e13, type: 2}
-  battleAIProfile: {fileID: 0}
+  battleAIProfile: {fileID: 11400000, guid: 40331359a5fa25046bb786e85ea13450, type: 2}
   aiData: {fileID: 0}
   skills: []

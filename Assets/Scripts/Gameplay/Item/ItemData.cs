@@ -5,10 +5,6 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "New Item", menuName = "Items/Item Data")]
 public class ItemData : ScriptableObject
 {
-    public enum Category
-    {
-        Unknown
-    }
 
     public enum Attribute
     {
@@ -31,32 +27,62 @@ public class ItemData : ScriptableObject
         [SerializeField] private Attribute attribute;
         [SerializeField] private ValueType valueType;
         [SerializeField, Min(0f)] private float value;
+        [SerializeField, Tooltip("For HP/MP recovery, repeat this effect at the start of the target's turns during battle.")]
+        private bool repeatEachTurnInBattle;
+        [SerializeField, Min(0), Tooltip("Used by stat boosts and repeating recovery. Set to 0 to last for the entire battle.")]
+        private int duration;
 
         public Attribute Attribute => attribute;
         public ValueType ValueType => valueType;
         public float Value => value;
+        public bool RepeatEachTurnInBattle => repeatEachTurnInBattle;
+        public int Duration => duration;
     }
 
     [Header("Item Info")]
     [SerializeField] private string itemName;
     [SerializeField, TextArea(2, 5)] private string description;
     [SerializeField] private Sprite icon;
-    [SerializeField] private Category category = Category.Unknown;
 
     [SerializeField] private int maxStacks = 99;
+
+    [Header("Usage")]
+    [SerializeField, Tooltip("Quest items can be collected and counted, but cannot be used from the inventory.")]
+    private bool questItem;
+
     [Header("Attributes")]
     [SerializeField] private List<AttributeValue> attributes = new List<AttributeValue>();
 
     public string ItemName => itemName;
     public string Description => description;
     public Sprite Icon => icon;
-    public Category ItemCategory => category;
-    public int MaxStacks => maxStacks;
-    public IReadOnlyList<AttributeValue> Attributes => attributes;
 
-    public bool CanUse(UnitBattle target)
+    public int MaxStacks => maxStacks;
+    public bool IsQuestItem => questItem;
+    public IReadOnlyList<AttributeValue> Attributes => attributes;
+    public bool IsBattleOnly
     {
-        if (target == null || !target.IsAlive)
+        get
+        {
+            for (int i = 0; i < attributes.Count; i++)
+            {
+                AttributeValue attribute = attributes[i];
+                if (attribute != null &&
+                    (IsStatIncrease(attribute.Attribute) ||
+                     attribute.RepeatEachTurnInBattle))
+                    return true;
+            }
+
+            return false;
+        }
+    }
+
+    public bool CanUse(UnitBattle target, bool isInBattle)
+    {
+        if (target == null ||
+            !target.IsAlive ||
+            questItem ||
+            (!isInBattle && IsBattleOnly))
             return false;
 
         for (int i = 0; i < attributes.Count; i++)
@@ -67,8 +93,12 @@ public class ItemData : ScriptableObject
 
             switch (attribute.Attribute)
             {
-                case Attribute.HealHP when target.CurrentHP < target.MaxHP:
-                case Attribute.HealMP when target.CurrentMP < target.MaxMP:
+                case Attribute.HealHP when
+                    target.CurrentHP < target.MaxHP ||
+                    (isInBattle && attribute.RepeatEachTurnInBattle):
+                case Attribute.HealMP when
+                    target.CurrentMP < target.MaxMP ||
+                    (isInBattle && attribute.RepeatEachTurnInBattle):
                 case Attribute.IncreaseAttack:
                 case Attribute.IncreaseDefense:
                 case Attribute.IncreaseSpeed:
@@ -79,9 +109,12 @@ public class ItemData : ScriptableObject
         return false;
     }
 
-    public bool Use(UnitBattle target)
+    public bool Use(
+        UnitBattle target,
+        bool isInBattle,
+        UnitBattle actingUnit = null)
     {
-        if (!CanUse(target))
+        if (!CanUse(target, isInBattle))
             return false;
 
         for (int i = 0; i < attributes.Count; i++)
@@ -96,18 +129,44 @@ public class ItemData : ScriptableObject
             {
                 case Attribute.HealHP:
                     target.HealHP(amount);
+                    if (isInBattle && attribute.RepeatEachTurnInBattle)
+                    {
+                        target.AddRecurringRecovery(
+                            UnitBattle.RecoveryStat.HP,
+                            amount,
+                            attribute.Duration);
+                    }
                     break;
                 case Attribute.HealMP:
                     target.HealMP(amount);
+                    if (isInBattle && attribute.RepeatEachTurnInBattle)
+                    {
+                        target.AddRecurringRecovery(
+                            UnitBattle.RecoveryStat.MP,
+                            amount,
+                            attribute.Duration);
+                    }
                     break;
                 case Attribute.IncreaseAttack:
-                    target.IncreaseAttack(amount);
+                    target.AddTemporaryStatIncrease(
+                        UnitBattle.BattleStat.Attack,
+                        amount,
+                        attribute.Duration,
+                        target == actingUnit);
                     break;
                 case Attribute.IncreaseDefense:
-                    target.IncreaseDefense(amount);
+                    target.AddTemporaryStatIncrease(
+                        UnitBattle.BattleStat.Defense,
+                        amount,
+                        attribute.Duration,
+                        target == actingUnit);
                     break;
                 case Attribute.IncreaseSpeed:
-                    target.IncreaseSpeed(amount);
+                    target.AddTemporaryStatIncrease(
+                        UnitBattle.BattleStat.Speed,
+                        amount,
+                        attribute.Duration,
+                        target == actingUnit);
                     break;
             }
         }
@@ -184,5 +243,12 @@ public class ItemData : ScriptableObject
         }
 
         return Mathf.CeilToInt(baseValue * attribute.Value / 100f);
+    }
+
+    private static bool IsStatIncrease(Attribute attribute)
+    {
+        return attribute == Attribute.IncreaseAttack ||
+               attribute == Attribute.IncreaseDefense ||
+               attribute == Attribute.IncreaseSpeed;
     }
 }

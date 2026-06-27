@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 15491dd6749ad5d46bd7644b540d26d4, type: 3}
+  m_Name: Quest3
+  m_EditorClassIdentifier: Assembly-CSharp::QuestSO
+  questId: Quest2
+  displayName: Kill the last boss
+  startAfterCutsceneId: 
+  startAfterFlowchartBlockName: FinishedQuest2
+  targetGameObject: {fileID: 0}
+  dialogueOptions:
+  - stage: 2
+    flowchartBlockId: FinishedQuest3
+  requirementType: 1
+  requiredItem: {fileID: 0}
+  requiredItemAmount: 1
+  requiredMonster: {fileID: 11400000, guid: c5bc1c6215f1dda4f970023e2757da49, type: 2}
+  requiredMonsterAmount: 1

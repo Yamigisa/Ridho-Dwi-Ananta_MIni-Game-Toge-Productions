@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 778dd92b964a18046adb1863b35a8399, type: 3}
   m_Name: Player_Exploration
   m_EditorClassIdentifier: Assembly-CSharp::UnitExplorationData
+  explorationAnimator: {fileID: 9100000, guid: e13f4901ce493eb4f8119c1cad98409b, type: 2}
   moveSpeed: 1
   sprintMultiplier: 1.6
   acceleration: 20

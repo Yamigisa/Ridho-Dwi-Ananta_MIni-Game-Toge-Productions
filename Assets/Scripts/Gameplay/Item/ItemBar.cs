@@ -32,6 +32,7 @@ public class ItemBar : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 
         itemImage.sprite = itemData.Icon;
         itemNameText.text = itemData.ItemName;
+        itemBarButton.interactable = !itemData.IsQuestItem;
     }
 
     public void SetAmount(int amount)
@@ -52,16 +53,25 @@ public class ItemBar : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 
     private void HandleClick()
     {
+        if (DialogueManager.IsGameplayInputLocked)
+            return;
+
         Clicked?.Invoke(this);
     }
 
     public void OnPointerEnter(PointerEventData eventData)
     {
+        if (DialogueManager.IsGameplayInputLocked)
+            return;
+
         HoverEntered?.Invoke(this);
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
+        if (DialogueManager.IsGameplayInputLocked)
+            return;
+
         HoverExited?.Invoke(this);
     }
 

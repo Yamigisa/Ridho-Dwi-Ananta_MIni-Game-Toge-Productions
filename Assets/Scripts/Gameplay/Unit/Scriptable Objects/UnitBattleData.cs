@@ -16,7 +16,7 @@ public class UnitBattleData : ScriptableObject
         public float DropChance => Mathf.Clamp01(dropChance);
     }
 
-    [Header("Portrait for player card UI")]
+    [Header("Portrait for player parties' card UI")]
     public Sprite portrait;        // for player card UI
     [Header("Sprite for enemy battle (Can leave empty if there is animator)")]
     public Sprite battleSprite;    // for enemy sprite renderer

@@ -41,22 +41,8 @@ public class Initializer : MonoBehaviour
 
     private void LoadMainMenuScene()
     {
-        if (string.IsNullOrEmpty(mainMenuScenePath))
-        {
-            Debug.LogError("Main Menu Scene belum dipilih pada Initializer.");
-            return;
-        }
-
         int sceneBuildIndex =
             SceneUtility.GetBuildIndexByScenePath(mainMenuScenePath);
-
-        if (sceneBuildIndex < 0)
-        {
-            Debug.LogError(
-                $"Scene '{mainMenuScenePath}' belum dimasukkan ke Build Settings."
-            );
-            return;
-        }
 
         SceneManager.LoadScene(sceneBuildIndex);
     }

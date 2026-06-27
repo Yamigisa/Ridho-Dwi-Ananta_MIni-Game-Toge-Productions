@@ -34,10 +34,11 @@ public class UnitExploration : MonoBehaviour
                 data.explorationData.stopSnapSpeed);
         }
 
-        unitAnimator?.ApplyUnitDataAnimatorController(data);
+        unitAnimator?.ApplyExplorationAnimatorController(data.explorationData);
     }
 
     public UnitData GetUnitData() => unitData;
+    public UnitExplorationData GetExplorationData() => unitData?.explorationData;
     public UnitMovement GetMovement() => movement;
     public UnitAIData GetAIData() => unitData?.aiData;
 }

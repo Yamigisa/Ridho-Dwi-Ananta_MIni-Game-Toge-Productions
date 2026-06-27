@@ -3,6 +3,9 @@ using UnityEngine;
 [CreateAssetMenu(menuName = "Units/Exploration Data")]
 public class UnitExplorationData : ScriptableObject
 {
+    [Header("Animation")]
+    public RuntimeAnimatorController explorationAnimator;
+
     [Header("Exploration Stats")]
     [Min(0f)] public float moveSpeed = 2.25f;
     [Min(1f)] public float sprintMultiplier = 1.6f;

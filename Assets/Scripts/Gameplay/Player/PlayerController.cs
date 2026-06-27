@@ -53,14 +53,7 @@ public class PlayerController : MonoBehaviour
 
     private bool GameplayInputIsLocked()
     {
-        bool dialogueIsPlaying =
-            DialogueManager.Instance != null &&
-            DialogueManager.Instance.IsDialoguePlaying;
-
-        bool cutsceneIsPlaying =
-            NewTimelineManager.IsAnyCutscenePlaying;
-
-        return dialogueIsPlaying || cutsceneIsPlaying;
+        return DialogueManager.IsGameplayInputLocked;
     }
 
     private bool MenuIsOpen()

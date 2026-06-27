@@ -32,7 +32,16 @@ public class UnitEncounter : MonoBehaviour
             return;
         }
 
-        BattleRelay.Set(playerParty, enemyBattleParty, encounterId);
+        UnitSaveData playerSaveData =
+            playerParty.GetComponent<UnitSaveData>();
+        playerSaveData?.Save();
+
+        BattleRelay.Set(
+            playerParty,
+            enemyBattleParty,
+            encounterId,
+            gameObject.scene.name,
+            playerParty.transform.position);
         SceneManager.LoadScene("Battle");
     }
 

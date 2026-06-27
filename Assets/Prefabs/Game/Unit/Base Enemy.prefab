@@ -76,7 +76,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 1, y: 1}
+  m_Size: {x: 0.3, y: 0.3}
   m_EdgeRadius: 0
 --- !u!1 &6587602961350733626
 GameObject:
@@ -160,7 +160,7 @@ SpriteRenderer:
   m_SortingLayer: 2
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
+  m_Sprite: {fileID: -1631652605, guid: 3e850ac3f829d4646b94d5ad8aba3620, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -305,7 +305,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 1, y: 1}
+  m_Size: {x: 0.3, y: 0.3}
   m_EdgeRadius: 0
 --- !u!114 &8579024528251917175
 MonoBehaviour:
@@ -319,7 +319,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 661f43c23cb4d734d93a6725b3682d50, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitBattleParty
-  partyName: Base Enemy
+  partyName: Slimes
   units:
   - {fileID: 11400000, guid: c5bc1c6215f1dda4f970023e2757da49, type: 2}
   - {fileID: 11400000, guid: c5bc1c6215f1dda4f970023e2757da49, type: 2}
@@ -414,4 +414,3 @@ MonoBehaviour:
   attackParameter: Attack
   hurtParameter: Hurt
   deathParameter: Death
-  interactParameter: Interact

@@ -24,6 +24,7 @@ public static class SaveDataTransaction
 
     private static readonly Dictionary<string, PendingValue> pending =
         new();
+    private static bool writesBlocked;
 
     public static bool IsActive { get; private set; }
 
@@ -33,6 +34,7 @@ public static class SaveDataTransaction
     {
         pending.Clear();
         IsActive = false;
+        writesBlocked = false;
     }
 
     public static void Begin()
@@ -41,6 +43,7 @@ public static class SaveDataTransaction
             return;
 
         pending.Clear();
+        writesBlocked = false;
         IsActive = true;
     }
 
@@ -75,6 +78,7 @@ public static class SaveDataTransaction
 
         pending.Clear();
         IsActive = false;
+        writesBlocked = false;
         PlayerPrefs.Save();
     }
 
@@ -82,10 +86,14 @@ public static class SaveDataTransaction
     {
         pending.Clear();
         IsActive = false;
+        writesBlocked = true;
     }
 
     public static void SetInt(string key, int value)
     {
+        if (writesBlocked)
+            return;
+
         if (!IsActive)
         {
             PlayerPrefs.SetInt(key, value);
@@ -115,6 +123,9 @@ public static class SaveDataTransaction
 
     public static void SetString(string key, string value)
     {
+        if (writesBlocked)
+            return;
+
         if (!IsActive)
         {
             PlayerPrefs.SetString(key, value);
@@ -154,6 +165,9 @@ public static class SaveDataTransaction
 
     public static void DeleteKey(string key)
     {
+        if (writesBlocked)
+            return;
+
         if (!IsActive)
         {
             PlayerPrefs.DeleteKey(key);
@@ -168,7 +182,7 @@ public static class SaveDataTransaction
 
     public static void Save()
     {
-        if (!IsActive)
+        if (!IsActive && !writesBlocked)
             PlayerPrefs.Save();
     }
 }

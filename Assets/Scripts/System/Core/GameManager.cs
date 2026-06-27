@@ -3,6 +3,10 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
 public class GameManager : MonoBehaviour
 {
     [Header("Panel & Text Field")]
@@ -14,7 +18,6 @@ public class GameManager : MonoBehaviour
     [SerializeField] private Button resumeButton;
     [SerializeField] private Button settingsButton;
     [SerializeField] private Button menuButton;
-    [SerializeField] private Button resetButton;
 
     [Header("Settings UI Field")]
     [SerializeField] private Slider musicSlider;
@@ -31,6 +34,14 @@ public class GameManager : MonoBehaviour
     [SerializeField] private Sprite musicOffSprite;
     [SerializeField] private Sprite sfxOnSprite;
     [SerializeField] private Sprite sfxOffSprite;
+
+    [Header("Scene Navigation")]
+#if UNITY_EDITOR
+    [SerializeField] private SceneAsset menuScene;
+    [SerializeField] private SceneAsset resetGameScene;
+#endif
+    [SerializeField, HideInInspector] private string menuScenePath;
+    [SerializeField, HideInInspector] private string resetGameScenePath;
 
     private bool isGamePaused = false;
 
@@ -51,64 +62,30 @@ public class GameManager : MonoBehaviour
 
     private void OnEnable()
     {
-        if (resumeButton != null)
-            resumeButton.onClick.AddListener(TogglePause);
+        resumeButton.onClick.AddListener(TogglePause);
+        settingsButton.onClick.AddListener(OpenSettings);
+        menuButton.onClick.AddListener(Menu);
+        closeSettingsButton.onClick.AddListener(CloseSettings);
 
-        if (settingsButton != null)
-            settingsButton.onClick.AddListener(OpenSettings);
-
-        if (menuButton != null)
-            menuButton.onClick.AddListener(Menu);
-
-        if (resetButton != null)
-            resetButton.onClick.AddListener(ResetGame);
-
-        if (closeSettingsButton != null)
-            closeSettingsButton.onClick.AddListener(CloseSettings);
-
-        if (musicSlider != null)
-            musicSlider.onValueChanged.AddListener(OnMusicSliderChanged);
-
-        if (sfxSlider != null)
-            sfxSlider.onValueChanged.AddListener(OnSFXSliderChanged);
-
-        if (toggleMusicButton != null)
-            toggleMusicButton.onClick.AddListener(OnToggleMusic);
-
-        if (toggleSFXButton != null)
-            toggleSFXButton.onClick.AddListener(OnToggleSFX);
+        musicSlider.onValueChanged.AddListener(OnMusicSliderChanged);
+        sfxSlider.onValueChanged.AddListener(OnSFXSliderChanged);
+        toggleMusicButton.onClick.AddListener(OnToggleMusic);
+        toggleSFXButton.onClick.AddListener(OnToggleSFX);
 
         RefreshAudioUI();
     }
 
     private void OnDisable()
     {
-        if (resumeButton != null)
-            resumeButton.onClick.RemoveListener(TogglePause);
+        resumeButton.onClick.RemoveListener(TogglePause);
+        settingsButton.onClick.RemoveListener(OpenSettings);
+        menuButton.onClick.RemoveListener(Menu);
+        closeSettingsButton.onClick.RemoveListener(CloseSettings);
 
-        if (settingsButton != null)
-            settingsButton.onClick.RemoveListener(OpenSettings);
-
-        if (menuButton != null)
-            menuButton.onClick.RemoveListener(Menu);
-
-        if (resetButton != null)
-            resetButton.onClick.RemoveListener(ResetGame);
-
-        if (closeSettingsButton != null)
-            closeSettingsButton.onClick.RemoveListener(CloseSettings);
-
-        if (musicSlider != null)
-            musicSlider.onValueChanged.RemoveListener(OnMusicSliderChanged);
-
-        if (sfxSlider != null)
-            sfxSlider.onValueChanged.RemoveListener(OnSFXSliderChanged);
-
-        if (toggleMusicButton != null)
-            toggleMusicButton.onClick.RemoveListener(OnToggleMusic);
-
-        if (toggleSFXButton != null)
-            toggleSFXButton.onClick.RemoveListener(OnToggleSFX);
+        musicSlider.onValueChanged.RemoveListener(OnMusicSliderChanged);
+        sfxSlider.onValueChanged.RemoveListener(OnSFXSliderChanged);
+        toggleMusicButton.onClick.RemoveListener(OnToggleMusic);
+        toggleSFXButton.onClick.RemoveListener(OnToggleSFX);
     }
 
     public void TogglePause()
@@ -122,7 +99,6 @@ public class GameManager : MonoBehaviour
         resumeButton.gameObject.SetActive(true);
         settingsButton.gameObject.SetActive(true);
         menuButton.gameObject.SetActive(true);
-        resetButton.gameObject.SetActive(false);
 
         Time.timeScale = isGamePaused ? 0f : 1f;
     }
@@ -140,7 +116,6 @@ public class GameManager : MonoBehaviour
         resumeButton.gameObject.SetActive(false);
         settingsButton.gameObject.SetActive(false);
         menuButton.gameObject.SetActive(true);
-        resetButton.gameObject.SetActive(true);
 
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
@@ -154,42 +129,33 @@ public class GameManager : MonoBehaviour
 
     private void CloseSettings()
     {
-        if (settingPanel != null)
-            settingPanel.SetActive(false);
+        settingPanel.SetActive(false);
     }
 
     private void OnMusicSliderChanged(float value)
     {
-        if (AudioManager.Instance != null)
-            AudioManager.Instance.SetMusicVolume(value);
+        AudioManager.Instance.SetMusicVolume(value);
     }
 
     private void OnSFXSliderChanged(float value)
     {
-        if (AudioManager.Instance != null)
-            AudioManager.Instance.SetSFXVolume(value);
+        AudioManager.Instance.SetSFXVolume(value);
     }
 
     private void OnToggleMusic()
     {
-        if (AudioManager.Instance == null) return;
-
         AudioManager.Instance.ToggleMusicMute();
         RefreshAudioUI();
     }
 
     private void OnToggleSFX()
     {
-        if (AudioManager.Instance == null) return;
-
         AudioManager.Instance.ToggleSFXMute();
         RefreshAudioUI();
     }
 
     private void RefreshAudioUI()
     {
-        if (AudioManager.Instance == null) return;
-
         musicSlider.SetValueWithoutNotify(AudioManager.Instance.MusicVolume);
         sfxSlider.SetValueWithoutNotify(AudioManager.Instance.SFXVolume);
 
@@ -205,18 +171,43 @@ public class GameManager : MonoBehaviour
         gamePanel.SetActive(false);
         settingPanel.SetActive(false);
 
-        SceneManager.LoadScene("Main Menu");
+        LoadConfiguredScene(menuScenePath, "Menu");
     }
 
-    public void ResetGame()
+    private static void LoadConfiguredScene(
+        string scenePath,
+        string fieldName)
     {
-        Time.timeScale = 1f;
-        isGamePaused = false;
+        if (string.IsNullOrWhiteSpace(scenePath))
+        {
+            Debug.LogError(
+                $"{fieldName} scene is not assigned on GameManager.");
+            return;
+        }
 
-        gamePanel.SetActive(false);
-        settingPanel.SetActive(false);
+        int sceneBuildIndex =
+            SceneUtility.GetBuildIndexByScenePath(scenePath);
 
-        SceneManager.LoadScene("Gameplay");
-        // Add your reset scene / reset gameplay logic here later.
+        if (sceneBuildIndex < 0)
+        {
+            Debug.LogError(
+                $"Scene '{scenePath}' is not included in Build Settings.");
+            return;
+        }
+
+        SceneManager.LoadScene(sceneBuildIndex);
     }
+
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        menuScenePath = menuScene != null
+            ? AssetDatabase.GetAssetPath(menuScene)
+            : string.Empty;
+
+        resetGameScenePath = resetGameScene != null
+            ? AssetDatabase.GetAssetPath(resetGameScene)
+            : string.Empty;
+    }
+#endif
 }

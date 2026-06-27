@@ -23,6 +23,16 @@ public class SkillUI : MonoBehaviour
         CloseSkillUI();
     }
 
+    private void Update()
+    {
+        if (skillUIPanel != null &&
+            skillUIPanel.activeSelf &&
+            DialogueManager.IsGameplayInputLocked)
+        {
+            CloseSkillUI();
+        }
+    }
+
     public void OpenSkillUI(UnitData unitData)
     {
         currentUnit = unitData;

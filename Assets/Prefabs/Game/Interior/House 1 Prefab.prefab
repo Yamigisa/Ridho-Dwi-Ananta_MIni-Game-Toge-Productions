@@ -1376,9 +1376,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NewTimelineManager
   timelineEntries:
-  - id: Timeline2
+  - id: House1
     playableDirector: {fileID: 3625290271468504824}
-  playOnStartId: Timeline2
+  playOnStartId: House1
 --- !u!1 &3755571168478147835
 GameObject:
   m_ObjectHideFlags: 0
@@ -2757,11 +2757,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   version: 1
-  scrollPos: {x: 678.3996, y: 11.7571945}
+  scrollPos: {x: 879.3836, y: -37.399845}
   variablesScrollPos: {x: 0, y: 0}
   variablesExpanded: 1
   blockViewHeight: 400
-  zoom: 0.7300002
+  zoom: 0.6100003
   scrollViewRect:
     serializedVersion: 2
     x: -343
@@ -2770,8 +2770,7 @@ MonoBehaviour:
     height: 859
   selectedBlocks:
   - {fileID: 7506475064496895193}
-  selectedCommands:
-  - {fileID: 6258266387679453526}
+  selectedCommands: []
   variables:
   - {fileID: 606303563600329058}
   description: 
@@ -4275,6 +4274,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Healing Potion
       objectReference: {fileID: 0}
+    - target: {fileID: 5748414867044644637, guid: 3b40c03ab972d4f41a17986cc24b0a8c, type: 3}
+      propertyPath: itemData
+      value: 
+      objectReference: {fileID: 11400000, guid: 0772b65a97addde4689e945ce175da20, type: 2}
     - target: {fileID: 6118888977074397973, guid: 3b40c03ab972d4f41a17986cc24b0a8c, type: 3}
       propertyPath: m_Size.x
       value: 0.69

@@ -23,8 +23,13 @@ public class QuestSO : ScriptableObject
     [Tooltip("Stable ID, defaults to asset name. Used for save data / lookups.")]
     public string questId;
     public string displayName;
+    [TextArea(2, 5)]
+    [Tooltip("Objective text shown in the quest tracker. Leave empty to generate it from the requirement.")]
+    public string description;
     [Tooltip("Optional cutscene ID that starts this quest when the cutscene finishes.")]
     public string startAfterCutsceneId;
+    [Tooltip("Optional Fungus block name that starts this quest when the block finishes.")]
+    public string startAfterFlowchartBlockName;
 
     [Header("Target (optional)")]
     [Tooltip("Drag the unit prefab here if this quest is tied to a specific NPC/monster. Leave empty for a standalone quest with no world target.")]

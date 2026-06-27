@@ -14,6 +14,7 @@ public enum BattleState
 
 public class BattleManager : MonoBehaviour
 {
+
     [Header("Stations")]
     [SerializeField] private BattleStations battleStations;
 
@@ -71,6 +72,9 @@ public class BattleManager : MonoBehaviour
 
     private void Update()
     {
+        if (DialogueManager.IsGameplayInputLocked)
+            return;
+
         if (!isChoosingItem &&
             !isSelectingItemTarget &&
             !isChoosingSkill &&
@@ -154,6 +158,8 @@ public class BattleManager : MonoBehaviour
         UnitBattle next = turnOrderManager.PeekNext();
         if (next == null) return;
 
+        next.ApplyRecurringRecoveryAtTurnStart();
+
         if (playerBattleUnits.Contains(next))
         {
             currentState = BattleState.PlayerTurn;
@@ -215,7 +221,7 @@ public class BattleManager : MonoBehaviour
     {
         if (actingUnit == null || !actingUnit.IsAlive)
         {
-            turnOrderManager.CompleteCurrentTurn();
+            CompleteCurrentTurn();
             ProcessNextTurn();
             yield break;
         }
@@ -269,7 +275,7 @@ public class BattleManager : MonoBehaviour
         if (IsBattleOver())
             yield break;
 
-        turnOrderManager.CompleteCurrentTurn();
+        CompleteCurrentTurn();
         ProcessNextTurn();
     }
 
@@ -314,9 +320,7 @@ public class BattleManager : MonoBehaviour
 
             if (playerBattleUnits.Count == 0)
             {
-                currentState = BattleState.Lose;
-                yield return DialogueManager.Instance.ShowPopupAndWait(DialogueManager.Instance.Messages.defeat);
-                DialogueManager.Instance.EndPopupSequence();
+                yield return ShowGameOverAndReturnToMainMenu();
                 yield break;
             }
         }
@@ -327,7 +331,7 @@ public class BattleManager : MonoBehaviour
                 ("unit", actingUnit.name)
             );
 
-            turnOrderManager.CompleteCurrentTurn();
+            CompleteCurrentTurn();
         }
 
         DialogueManager.Instance.EndPopupSequence();
@@ -370,7 +374,7 @@ public class BattleManager : MonoBehaviour
         if (IsBattleOver())
             yield break;
 
-        turnOrderManager.CompleteCurrentTurn();
+        CompleteCurrentTurn();
         ProcessNextTurn();
     }
 
@@ -437,11 +441,7 @@ public class BattleManager : MonoBehaviour
 
             if (playerBattleUnits.Count == 0)
             {
-                currentState = BattleState.Lose;
-                yield return DialogueManager.Instance.ShowPopupAndWait(DialogueManager.Instance.Messages.defeat);
-                DialogueManager.Instance.EndPopupSequence();
-                keepPlayerCardsVisibleDuringPopups = previousKeepPlayerCardsVisible;
-                RefreshPlayerCardsForPopupState();
+                yield return ShowGameOverAndReturnToMainMenu();
                 yield break;
             }
         }
@@ -488,7 +488,9 @@ public class BattleManager : MonoBehaviour
 
         while (!targetConfirmed && !targetSelectionCanceled)
         {
-            if (Input.GetKeyDown(KeyCode.Escape) || Input.GetMouseButtonDown(1))
+            if (!DialogueManager.IsGameplayInputLocked &&
+                (Input.GetKeyDown(KeyCode.Escape) ||
+                 Input.GetMouseButtonDown(1)))
                 CancelEnemyTargetSelection();
 
             yield return null;
@@ -741,7 +743,7 @@ public class BattleManager : MonoBehaviour
         if (!isSelectingItemTarget || target == null || !target.IsAlive || itemBeingUsed == null)
             return;
 
-        if (!itemBeingUsed.Use(target))
+        if (!itemBeingUsed.Use(target, true, currentActingUnit))
         {
             ShowItemCannotUsePopup(target, itemBeingUsed);
             return;
@@ -804,7 +806,7 @@ public class BattleManager : MonoBehaviour
         );
 
         ClearPlayerTurnIndicators();
-        turnOrderManager.CompleteCurrentTurn();
+        CompleteCurrentTurn();
         ProcessNextTurn();
     }
 
@@ -1049,7 +1051,7 @@ public class BattleManager : MonoBehaviour
         if (IsBattleOver())
             yield break;
 
-        turnOrderManager.CompleteCurrentTurn();
+        CompleteCurrentTurn();
         ProcessNextTurn();
     }
 
@@ -1120,72 +1122,72 @@ public class BattleManager : MonoBehaviour
         switch (effect.Type)
         {
             case SkillData.EffectType.Damage:
-            {
-                int beforeHP = target.CurrentHP;
-                int damage = effect.ValueType == SkillData.ValueType.Flat
-                    ? Mathf.Max(0, amount - target.Defense)
-                    : amount;
-                target.PlayHurt();
-                yield return target.SetHPAnimated(target.CurrentHP - damage);
-                yield return ShowSkillDamagePopup(skill, target, beforeHP - target.CurrentHP);
-                break;
-            }
+                {
+                    int beforeHP = target.CurrentHP;
+                    int damage = effect.ValueType == SkillData.ValueType.Flat
+                        ? Mathf.Max(0, amount - target.Defense)
+                        : amount;
+                    target.PlayHurt();
+                    yield return target.SetHPAnimated(target.CurrentHP - damage);
+                    yield return ShowSkillDamagePopup(skill, target, beforeHP - target.CurrentHP);
+                    break;
+                }
             case SkillData.EffectType.HealHP:
-            {
-                int beforeHP = target.CurrentHP;
-                yield return target.SetHPAnimated(target.CurrentHP + amount);
-                yield return ShowSkillHPRecoveredPopup(skill, target, target.CurrentHP - beforeHP);
-                break;
-            }
+                {
+                    int beforeHP = target.CurrentHP;
+                    yield return target.SetHPAnimated(target.CurrentHP + amount);
+                    yield return ShowSkillHPRecoveredPopup(skill, target, target.CurrentHP - beforeHP);
+                    break;
+                }
             case SkillData.EffectType.HealMP:
-            {
-                int beforeMP = target.CurrentMP;
-                yield return target.SetMPAnimated(target.CurrentMP + amount);
-                yield return ShowSkillMPRecoveredPopup(skill, target, target.CurrentMP - beforeMP);
-                break;
-            }
+                {
+                    int beforeMP = target.CurrentMP;
+                    yield return target.SetMPAnimated(target.CurrentMP + amount);
+                    yield return ShowSkillMPRecoveredPopup(skill, target, target.CurrentMP - beforeMP);
+                    break;
+                }
             case SkillData.EffectType.IncreaseAttack:
-            {
-                int beforeAttack = target.Attack;
-                target.IncreaseAttack(amount);
-                yield return ShowSkillStatChangedPopup(skill, target, "Attack", target.Attack - beforeAttack, true);
-                break;
-            }
+                {
+                    int beforeAttack = target.Attack;
+                    target.IncreaseAttack(amount);
+                    yield return ShowSkillStatChangedPopup(skill, target, "Attack", target.Attack - beforeAttack, true);
+                    break;
+                }
             case SkillData.EffectType.IncreaseDefense:
-            {
-                int beforeDefense = target.BaseDefense;
-                target.IncreaseDefense(amount);
-                yield return ShowSkillStatChangedPopup(skill, target, "Defense", target.BaseDefense - beforeDefense, true);
-                break;
-            }
+                {
+                    int beforeDefense = target.BaseDefense;
+                    target.IncreaseDefense(amount);
+                    yield return ShowSkillStatChangedPopup(skill, target, "Defense", target.BaseDefense - beforeDefense, true);
+                    break;
+                }
             case SkillData.EffectType.IncreaseSpeed:
-            {
-                int beforeSpeed = target.Speed;
-                target.IncreaseSpeed(amount);
-                yield return ShowSkillStatChangedPopup(skill, target, "Speed", target.Speed - beforeSpeed, true);
-                break;
-            }
+                {
+                    int beforeSpeed = target.Speed;
+                    target.IncreaseSpeed(amount);
+                    yield return ShowSkillStatChangedPopup(skill, target, "Speed", target.Speed - beforeSpeed, true);
+                    break;
+                }
             case SkillData.EffectType.DecreaseAttack:
-            {
-                int beforeAttack = target.Attack;
-                target.DecreaseAttack(amount);
-                yield return ShowSkillStatChangedPopup(skill, target, "Attack", beforeAttack - target.Attack, false);
-                break;
-            }
+                {
+                    int beforeAttack = target.Attack;
+                    target.DecreaseAttack(amount);
+                    yield return ShowSkillStatChangedPopup(skill, target, "Attack", beforeAttack - target.Attack, false);
+                    break;
+                }
             case SkillData.EffectType.DecreaseDefense:
-            {
-                int beforeDefense = target.BaseDefense;
-                target.DecreaseDefense(amount);
-                yield return ShowSkillStatChangedPopup(skill, target, "Defense", beforeDefense - target.BaseDefense, false);
-                break;
-            }
+                {
+                    int beforeDefense = target.BaseDefense;
+                    target.DecreaseDefense(amount);
+                    yield return ShowSkillStatChangedPopup(skill, target, "Defense", beforeDefense - target.BaseDefense, false);
+                    break;
+                }
             case SkillData.EffectType.DecreaseSpeed:
-            {
-                int beforeSpeed = target.Speed;
-                target.DecreaseSpeed(amount);
-                yield return ShowSkillStatChangedPopup(skill, target, "Speed", beforeSpeed - target.Speed, false);
-                break;
-            }
+                {
+                    int beforeSpeed = target.Speed;
+                    target.DecreaseSpeed(amount);
+                    yield return ShowSkillStatChangedPopup(skill, target, "Speed", beforeSpeed - target.Speed, false);
+                    break;
+                }
         }
     }
 
@@ -1358,7 +1360,11 @@ public class BattleManager : MonoBehaviour
             Destroy(defeated.gameObject);
         }
 
-        if (enemyBattleUnits.Count == 0)
+        if (playerBattleUnits.Count == 0)
+        {
+            yield return ShowGameOverAndReturnToMainMenu();
+        }
+        else if (enemyBattleUnits.Count == 0)
         {
             currentState = BattleState.Win;
             yield return DialogueManager.Instance.ShowPopupAndWait(
@@ -1368,12 +1374,23 @@ public class BattleManager : MonoBehaviour
             BattleRelay.MarkCurrentEncounterDefeated();
             SceneManager.LoadScene("Gameplay");
         }
-        else if (playerBattleUnits.Count == 0)
+    }
+
+    private IEnumerator ShowGameOverAndReturnToMainMenu()
+    {
+        currentState = BattleState.Lose;
+        battleHUD.HideActionMenu();
+        battleHUD.HideCancelButton();
+
+        if (DialogueManager.Instance != null &&
+            DialogueManager.Instance.Messages != null)
         {
-            currentState = BattleState.Lose;
             yield return DialogueManager.Instance.ShowPopupAndWait(
                 DialogueManager.Instance.Messages.defeat);
+            DialogueManager.Instance.EndPopupSequence();
         }
+
+        GameManager.Instance.Menu();
     }
 
     private List<UnitBattle> GetLivingUnits(List<UnitBattle> units)
@@ -1525,7 +1542,7 @@ public class BattleManager : MonoBehaviour
     {
         yield return ExecutePassSequence(currentActingUnit);
 
-        turnOrderManager.CompleteCurrentTurn();
+        CompleteCurrentTurn();
         ProcessNextTurn();
     }
 
@@ -1551,7 +1568,7 @@ public class BattleManager : MonoBehaviour
     {
         yield return ExecuteDefendSequence(currentActingUnit);
 
-        turnOrderManager.CompleteCurrentTurn();
+        CompleteCurrentTurn();
         ProcessNextTurn();
     }
 
@@ -1600,7 +1617,7 @@ public class BattleManager : MonoBehaviour
             yield return new WaitForSeconds(1f);
 
             DialogueManager.Instance.EndPopupSequence();
-            turnOrderManager.CompleteCurrentTurn();
+            CompleteCurrentTurn();
             ProcessNextTurn();
         }
     }
@@ -1624,6 +1641,14 @@ public class BattleManager : MonoBehaviour
         float chance = 0.5f * speedRatio;
 
         return Mathf.Clamp(chance, 0.1f, 0.95f);
+    }
+
+    private void CompleteCurrentTurn()
+    {
+        if (currentActingUnit != null)
+            currentActingUnit.AdvanceTemporaryStatDurations();
+
+        turnOrderManager.CompleteCurrentTurn();
     }
     #endregion
 }

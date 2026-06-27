@@ -5,7 +5,8 @@ using UnityEngine.Playables;
 
 public class NewTimelineManager : MonoBehaviour
 {
-    private const string PlayerPrefsPrefix = "NewTimelineManager.HasPlayed.";
+    // V2 ignores completion flags written by the previous quit-time bug.
+    private const string PlayerPrefsPrefix = "NewTimelineManager.V2.HasPlayed.";
 
     public static NewTimelineManager Instance { get; private set; }
     public static bool IsAnyCutscenePlaying =>
@@ -21,6 +22,9 @@ public class NewTimelineManager : MonoBehaviour
     private TimelineEntry currentTimelineEntry;
     private PlayableDirector currentPlayableDirector;
     private int pauseRequestCount;
+    private double lastObservedTimelineTime;
+    private double currentTimelineDuration;
+    private bool timelineReachedEnd;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void ResetStatics()
@@ -59,10 +63,37 @@ public class NewTimelineManager : MonoBehaviour
 
     private void OnDestroy()
     {
+        if (currentPlayableDirector != null)
+            SaveDataTransaction.Rollback();
+
         UnsubscribeFromCurrentDirector();
 
         if (Instance == this)
             Instance = null;
+    }
+
+    private void OnApplicationQuit()
+    {
+        if (currentPlayableDirector != null)
+            SaveDataTransaction.Rollback();
+    }
+
+    private void Update()
+    {
+        if (currentPlayableDirector == null)
+            return;
+
+        lastObservedTimelineTime = currentPlayableDirector.time;
+
+        double duration = currentTimelineDuration;
+        if (duration <= 0d)
+            return;
+
+        double frameTolerance =
+            Math.Max(0.001d, Time.unscaledDeltaTime * 2.5d);
+
+        if (lastObservedTimelineTime >= duration - frameTolerance)
+            timelineReachedEnd = true;
     }
 
     public bool PlayTimeline(string id)
@@ -93,9 +124,14 @@ public class NewTimelineManager : MonoBehaviour
         currentTimelineEntry = entry;
         currentPlayableDirector = entry.playableDirector;
         pauseRequestCount = 0;
+        lastObservedTimelineTime = 0d;
+        timelineReachedEnd = false;
+        SaveDataTransaction.Begin();
         currentPlayableDirector.gameObject.SetActive(true);
         currentPlayableDirector.stopped += HandleTimelineStopped;
         currentPlayableDirector.time = 0d;
+        currentTimelineDuration =
+            Math.Max(0d, currentPlayableDirector.duration);
         currentPlayableDirector.Play();
         return true;
     }
@@ -140,6 +176,8 @@ public class NewTimelineManager : MonoBehaviour
             return false;
         }
 
+        timelineReachedEnd = true;
+
         if (currentPlayableDirector.duration > 0d &&
             currentPlayableDirector.time <
             currentPlayableDirector.duration - 0.0001d)
@@ -150,6 +188,7 @@ public class NewTimelineManager : MonoBehaviour
         }
 
         MarkAsPlayed(currentTimelineEntry);
+        SaveDataTransaction.Commit();
         ClearCurrentTimeline(true);
         return true;
     }
@@ -167,8 +206,9 @@ public class NewTimelineManager : MonoBehaviour
             return;
 
         entry.hasPlayed = false;
-        PlayerPrefs.DeleteKey(GetPlayerPrefsKey(entry.id));
-        PlayerPrefs.Save();
+        SaveDataTransaction.DeleteKey(
+            GetPlayerPrefsKey(entry.id));
+        SaveDataTransaction.Save();
 
         if (entry.playableDirector != null)
             entry.playableDirector.gameObject.SetActive(true);
@@ -179,12 +219,19 @@ public class NewTimelineManager : MonoBehaviour
         if (director != currentPlayableDirector)
             return;
 
-        // With Wrap Mode set to None, Unity may reset the director's
-        // time before invoking stopped. Reaching this subscribed callback
-        // means the active Timeline ended naturally. Explicit completion
-        // unsubscribes before calling Stop(), so it cannot double-complete.
-        if (currentTimelineEntry != null)
+        bool completedNaturally =
+            currentTimelineEntry != null &&
+            DidTimelineReachEnd(director);
+
+        if (completedNaturally)
+        {
             MarkAsPlayed(currentTimelineEntry);
+            SaveDataTransaction.Commit();
+        }
+        else
+        {
+            SaveDataTransaction.Rollback();
+        }
 
         ClearCurrentTimeline(false);
     }
@@ -193,8 +240,9 @@ public class NewTimelineManager : MonoBehaviour
     {
         bool wasAlreadyPlayed = entry.hasPlayed;
         entry.hasPlayed = true;
-        PlayerPrefs.SetInt(GetPlayerPrefsKey(entry.id), 1);
-        PlayerPrefs.Save();
+        SaveDataTransaction.SetInt(
+            GetPlayerPrefsKey(entry.id),
+            1);
 
         if (!wasAlreadyPlayed)
             CutsceneFinished?.Invoke(entry.id);
@@ -212,6 +260,9 @@ public class NewTimelineManager : MonoBehaviour
         currentPlayableDirector = null;
         currentTimelineEntry = null;
         pauseRequestCount = 0;
+        lastObservedTimelineTime = 0d;
+        currentTimelineDuration = 0d;
+        timelineReachedEnd = false;
 
         if (stopDirector && director != null)
             director.Stop();
@@ -224,6 +275,23 @@ public class NewTimelineManager : MonoBehaviour
     {
         if (currentPlayableDirector != null)
             currentPlayableDirector.stopped -= HandleTimelineStopped;
+    }
+
+    private bool DidTimelineReachEnd(PlayableDirector director)
+    {
+        if (timelineReachedEnd)
+            return true;
+
+        double duration = currentTimelineDuration;
+        if (duration <= 0d)
+            return false;
+
+        double frameTolerance =
+            Math.Max(0.001d, Time.unscaledDeltaTime * 2.5d);
+
+        return director.time >= duration - frameTolerance ||
+               lastObservedTimelineTime >=
+               duration - frameTolerance;
     }
 
     private TimelineEntry FindTimeline(
@@ -256,7 +324,9 @@ public class NewTimelineManager : MonoBehaviour
 
     private static bool LoadHasPlayed(string id)
     {
-        return PlayerPrefs.GetInt(GetPlayerPrefsKey(id), 0) == 1;
+        return SaveDataTransaction.GetInt(
+            GetPlayerPrefsKey(id),
+            0) == 1;
     }
 
     private static string GetPlayerPrefsKey(string id)

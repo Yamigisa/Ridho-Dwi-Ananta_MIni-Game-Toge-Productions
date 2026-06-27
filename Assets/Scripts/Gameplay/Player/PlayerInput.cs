@@ -47,6 +47,16 @@ public class PlayerInput : MonoBehaviour
 
     private void Update()
     {
+        if (DialogueManager.IsGameplayInputLocked)
+        {
+            MoveInput = Vector2.zero;
+            InteractPressed = false;
+            InventoryPressed = false;
+            PartyPressed = false;
+            SprintHeld = false;
+            return;
+        }
+
         MoveInput = move?.ReadValue<Vector2>() ?? Vector2.zero;
         InteractPressed = interact?.WasPressedThisFrame() ?? false;
         InventoryPressed = inventory?.WasPressedThisFrame() ?? false;

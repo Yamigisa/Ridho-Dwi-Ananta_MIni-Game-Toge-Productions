@@ -19,6 +19,8 @@ public class Interactable : MonoBehaviour
     [SerializeField] private UnityEvent<GameObject> onInteract;
 
     private bool canInteract = false;
+    private GameObject playerInRange;
+    private bool wasGameplayInputLocked;
     public event Action<GameObject> Interacted;
 
     protected bool CanInteract => canInteract;
@@ -30,6 +32,25 @@ public class Interactable : MonoBehaviour
     {
         interactionCollider = GetComponent<BoxCollider2D>();
         ApplyColliderSettings();
+        wasGameplayInputLocked =
+            DialogueManager.IsGameplayInputLocked;
+    }
+
+    private void Update()
+    {
+        bool isLocked = DialogueManager.IsGameplayInputLocked;
+        if (isLocked == wasGameplayInputLocked)
+            return;
+
+        wasGameplayInputLocked = isLocked;
+
+        if (playerInRange == null)
+            return;
+
+        if (isLocked)
+            onPlayerExitRange?.Invoke(playerInRange);
+        else
+            onPlayerEnterRange?.Invoke(playerInRange);
     }
 
     protected virtual void OnTriggerEnter2D(Collider2D other)
@@ -37,11 +58,13 @@ public class Interactable : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             canInteract = true;
+            playerInRange = other.gameObject;
 
             if (other.TryGetComponent<PlayerInteractor>(out var interactor))
                 interactor.OnEnterRange(this);
 
-            onPlayerEnterRange?.Invoke(other.gameObject);
+            if (!DialogueManager.IsGameplayInputLocked)
+                onPlayerEnterRange?.Invoke(other.gameObject);
         }
     }
 
@@ -50,6 +73,7 @@ public class Interactable : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             canInteract = false;
+            playerInRange = null;
             if (other.TryGetComponent<PlayerInteractor>(out var interactor))
                 interactor.OnExitRange(this);
 
@@ -59,7 +83,8 @@ public class Interactable : MonoBehaviour
 
     public virtual void Interact(GameObject interactor)
     {
-        if (!canInteract)
+        if (!canInteract ||
+            DialogueManager.IsGameplayInputLocked)
             return;
 
         onInteract?.Invoke(interactor);

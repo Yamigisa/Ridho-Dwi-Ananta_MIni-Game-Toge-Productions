@@ -23,17 +23,29 @@ public class BattleHUD : MonoBehaviour
 
     private void Awake()
     {
-        attackButton.onClick.AddListener(() => OnActionSelected?.Invoke(BattleAction.Attack));
-        defendButton.onClick.AddListener(() => OnActionSelected?.Invoke(BattleAction.Defend));
-        itemButton.onClick.AddListener(() => OnActionSelected?.Invoke(BattleAction.Item));
-        fleeButton.onClick.AddListener(() => OnActionSelected?.Invoke(BattleAction.Flee));
-        skillButton.onClick.AddListener(() => OnActionSelected?.Invoke(BattleAction.Skill));
-        passButton.onClick.AddListener(() => OnActionSelected?.Invoke(BattleAction.Pass));
+        attackButton.onClick.AddListener(() => SelectAction(BattleAction.Attack));
+        defendButton.onClick.AddListener(() => SelectAction(BattleAction.Defend));
+        itemButton.onClick.AddListener(() => SelectAction(BattleAction.Item));
+        fleeButton.onClick.AddListener(() => SelectAction(BattleAction.Flee));
+        skillButton.onClick.AddListener(() => SelectAction(BattleAction.Skill));
+        passButton.onClick.AddListener(() => SelectAction(BattleAction.Pass));
 
         if (cancelButton != null)
-            cancelButton.onClick.AddListener(() => OnCancelSelected?.Invoke());
+            cancelButton.onClick.AddListener(SelectCancel);
 
         HideCancelButton();
+    }
+
+    private void SelectAction(BattleAction action)
+    {
+        if (!DialogueManager.IsGameplayInputLocked)
+            OnActionSelected?.Invoke(action);
+    }
+
+    private void SelectCancel()
+    {
+        if (!DialogueManager.IsGameplayInputLocked)
+            OnCancelSelected?.Invoke();
     }
 
     public void ShowActionMenu() => actionMenu.SetActive(true);

@@ -21,7 +21,6 @@ public class UnitAnimator : MonoBehaviour
     [SerializeField] private string attackParameter = "Attack";
     [SerializeField] private string hurtParameter = "Hurt";
     [SerializeField] private string deathParameter = "Death";
-    [SerializeField] private string interactParameter = "Interact";
 
     private readonly Dictionary<int, AnimatorControllerParameterType> availableParameters = new();
 
@@ -32,7 +31,6 @@ public class UnitAnimator : MonoBehaviour
     private Coroutine attackBoolPulse;
     private Coroutine hurtBoolPulse;
     private Coroutine deathBoolPulse;
-    private Coroutine interactBoolPulse;
 
     private int moveX;
     private int moveY;
@@ -42,7 +40,6 @@ public class UnitAnimator : MonoBehaviour
     private int attack;
     private int hurt;
     private int death;
-    private int interact;
 
     private void Awake()
     {
@@ -50,7 +47,7 @@ public class UnitAnimator : MonoBehaviour
         TryGetComponent(out unitExploration);
         TryGetComponent(out unitBattle);
 
-        EnsureAnimator();
+        animator = GetComponentInChildren<Animator>();
 
         lastMoveDirection =
             startingDirection.sqrMagnitude > 0f
@@ -58,7 +55,8 @@ public class UnitAnimator : MonoBehaviour
                 : Vector2.down;
 
         CacheParameterHashes();
-        ApplyUnitDataAnimatorController(unitExploration != null ? unitExploration.GetUnitData() : null);
+        ApplyExplorationAnimatorController(
+            unitExploration != null ? unitExploration.GetExplorationData() : null);
         CacheAnimatorParameters();
         UpdateFacingParameters(lastMoveDirection);
     }
@@ -68,9 +66,11 @@ public class UnitAnimator : MonoBehaviour
         ApplyBattleAnimatorController(unitBattle != null ? unitBattle.UnitData : null);
     }
 
-    public void ApplyUnitDataAnimatorController(UnitData unitData)
+    public void ApplyExplorationAnimatorController(UnitExplorationData explorationData)
     {
-        ApplyAnimatorController(unitData != null ? unitData.explorationAnimator : null, false);
+        ApplyAnimatorController(
+            explorationData != null ? explorationData.explorationAnimator : null,
+            false);
     }
 
     public void ApplyBattleAnimatorController(UnitData unitData)
@@ -99,35 +99,6 @@ public class UnitAnimator : MonoBehaviour
         UpdateFacingParameters(lastMoveDirection);
     }
 
-    public void SetFacingDirection(Vector2 direction)
-    {
-        if (direction.sqrMagnitude <= 0f)
-            return;
-
-        lastMoveDirection = direction.normalized;
-        UpdateFacingParameters(lastMoveDirection);
-    }
-
-    public void FaceUp()
-    {
-        SetFacingDirection(Vector2.up);
-    }
-
-    public void FaceDown()
-    {
-        SetFacingDirection(Vector2.down);
-    }
-
-    public void FaceLeft()
-    {
-        SetFacingDirection(Vector2.left);
-    }
-
-    public void FaceRight()
-    {
-        SetFacingDirection(Vector2.right);
-    }
-
     public void PlayAttack()
     {
         SetActionTrigger(attack, ref attackBoolPulse);
@@ -148,23 +119,12 @@ public class UnitAnimator : MonoBehaviour
         PlayDeath();
     }
 
-    public void PlayInteract()
-    {
-        SetActionTrigger(interact, ref interactBoolPulse);
-    }
-
-    private void EnsureAnimator()
-    {
-        if (animator == null)
-            animator = GetComponentInChildren<Animator>();
-    }
-
     private void ApplyAnimatorController(RuntimeAnimatorController controller, bool replaceExisting)
     {
         if (controller == null)
             return;
 
-        EnsureAnimator();
+        animator = GetComponentInChildren<Animator>();
 
         if (animator == null)
             return;
@@ -189,7 +149,6 @@ public class UnitAnimator : MonoBehaviour
         attack = Animator.StringToHash(attackParameter);
         hurt = Animator.StringToHash(hurtParameter);
         death = Animator.StringToHash(deathParameter);
-        interact = Animator.StringToHash(interactParameter);
     }
 
     private void CacheAnimatorParameters()

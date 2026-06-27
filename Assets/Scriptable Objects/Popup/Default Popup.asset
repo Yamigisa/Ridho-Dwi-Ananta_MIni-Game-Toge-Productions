@@ -21,6 +21,8 @@ MonoBehaviour:
   unitPass: '{unit} passed and recovered {hp} HP and {mp} MP.'
   unitGuard: '{unit} guarded and recovered {mp} MP.'
   itemUsed: '{unit} used {item}!'
+  itemCannotUse: '{item} cannot currently be used on {unit}.'
+  itemBattleOnly: '{item} can only be used in battle.'
   unitItem: '{unit} tried to use an item, but items are not ready yet.'
   itemAttributes: '{unit}''s {attributes} increased by {amount}!'
   unitSkill: '{unit} uses {skill}!'
@@ -39,7 +41,7 @@ MonoBehaviour:
   unitFleeSuccess: '{unit} fled!'
   unitFleeFailed: '{unit} couldn''t escape!'
   victory: Victory!
-  defeat: Your party was defeated...
+  defeat: Game Over
   expGained: Gained {exp} EXP!
   unitLevelUp: '{unit} leveled up to Lv. {level}!'
   itemPickedUp: Picked up {item}!

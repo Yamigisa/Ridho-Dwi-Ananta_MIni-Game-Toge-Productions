@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 54854188cd1b1504cafba87fb42c5a61, type: 3}
+  m_Name: Goblin_Battle
+  m_EditorClassIdentifier: Assembly-CSharp::UnitBattleData
+  portrait: {fileID: 0}
+  battleSprite: {fileID: 0}
+  turnOrderIcon: {fileID: 714872673, guid: 41bc5539d0ec84945bd57c11c5124cf9, type: 3}
+  baseHP: 20
+  baseMP: 0
+  baseAttack: 2
+  baseDefense: 2
+  baseSpeed: 2
+  statMultiplierPerLevel: 1.1
+  baseExpToNextLevel: 3
+  expDropAfterDefeat: 100
+  itemDrops:
+  - item: {fileID: 11400000, guid: 90902ff8afd7bf442abac47f914cb270, type: 2}
+    amount: 1
+    dropChance: 1
+  battleAnimator: {fileID: 9100000, guid: 5e4bc9d04c45c454c8a78c6321853433, type: 2}

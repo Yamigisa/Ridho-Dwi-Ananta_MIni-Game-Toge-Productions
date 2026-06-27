@@ -14,7 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::QuestSO
   questId: Quest1
   displayName: Get healing potion
-  startAfterCutsceneId: House 1
+  description: Get the healing potion from a nearby table
+  startAfterCutsceneId: House1
+  startAfterFlowchartBlockName: 
   targetGameObject: {fileID: 3129208481565427032, guid: 052d74503d279f041ab8fd0c009c9a6d, type: 3}
   dialogueOptions:
   - stage: 1
@@ -22,7 +24,7 @@ MonoBehaviour:
   - stage: 2
     flowchartBlockId: FinishedQuest1
   requirementType: 0
-  requiredItem: {fileID: 11400000, guid: 90902ff8afd7bf442abac47f914cb270, type: 2}
+  requiredItem: {fileID: 11400000, guid: 0772b65a97addde4689e945ce175da20, type: 2}
   requiredItemAmount: 1
   requiredMonster: {fileID: 0}
   requiredMonsterAmount: 1

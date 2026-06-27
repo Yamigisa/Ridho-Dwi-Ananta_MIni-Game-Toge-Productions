@@ -10,7 +10,5 @@ public class UnitAIData : ScriptableObject
 
     [Header("Vision")]
     public float detectRange = 2.5f;
-    public float detectedRange = 10f;
     public float detectAngle = 360f;
-    public float reactionTime = 1f;
 }

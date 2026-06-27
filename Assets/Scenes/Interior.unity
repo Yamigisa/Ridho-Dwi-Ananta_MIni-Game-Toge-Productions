@@ -275,6 +275,8 @@ MonoBehaviour:
   interiors:
   - entranceId: House1Interior
     prefab: {fileID: 5527954907528280752, guid: 8b665b7a742a1dc4f8b5beed555c66db, type: 3}
+  - entranceId: House2Interior
+    prefab: {fileID: 5527954907528280752, guid: 27bb613edebca0447968b7cdedb70005, type: 3}
   spawnParent: {fileID: 1591045828}
 --- !u!4 &1591045828
 Transform:

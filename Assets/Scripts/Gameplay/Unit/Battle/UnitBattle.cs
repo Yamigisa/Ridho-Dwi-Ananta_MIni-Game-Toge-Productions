@@ -9,6 +9,34 @@ using UnityEngine.UI;
 
 public class UnitBattle : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
 {
+    public enum BattleStat
+    {
+        Attack,
+        Defense,
+        Speed
+    }
+
+    public enum RecoveryStat
+    {
+        HP,
+        MP
+    }
+
+    private sealed class TemporaryStatIncrease
+    {
+        public BattleStat stat;
+        public int amount;
+        public int remainingTurns;
+        public bool skipNextTurnEnd;
+    }
+
+    private sealed class RecurringRecovery
+    {
+        public RecoveryStat stat;
+        public int amount;
+        public int remainingTurns;
+    }
+
     [Header("Unit Battle UI")]
     [SerializeField] private TextMeshProUGUI nameText;
     [SerializeField] private TextMeshProUGUI hpText;
@@ -66,15 +94,20 @@ public class UnitBattle : MonoBehaviour, IPointerClickHandler, IPointerEnterHand
     private Vector3 enemyPositionBeforeShake;
     private Color enemyColorBeforeFlash;
     private bool hasEnemyDamageFeedbackState;
+    private int baseAttack;
+    private int baseDefense;
+    private int baseSpeed;
+    private readonly List<TemporaryStatIncrease> temporaryStatIncreases = new();
+    private readonly List<RecurringRecovery> recurringRecoveries = new();
 
     public int CurrentHP { get; private set; }
     public int CurrentMP { get; private set; }
     public int MaxHP { get; private set; }
     public int MaxMP { get; private set; }
-    public int Attack { get; private set; }
-    public int BaseDefense { get; private set; }
+    public int Attack => Mathf.Max(0, baseAttack + GetTemporaryStatIncrease(BattleStat.Attack));
+    public int BaseDefense => Mathf.Max(0, baseDefense + GetTemporaryStatIncrease(BattleStat.Defense));
     public int Defense => IsGuarding ? BaseDefense * 2 : BaseDefense;
-    public int Speed { get; private set; }
+    public int Speed => Mathf.Max(0, baseSpeed + GetTemporaryStatIncrease(BattleStat.Speed));
     public int Level { get; private set; }
     public UnitData UnitData => unitData;
     public BattleAIProfile BattleAIProfile => unitData != null ? unitData.battleAIProfile : null;
@@ -110,7 +143,8 @@ public class UnitBattle : MonoBehaviour, IPointerClickHandler, IPointerEnterHand
         }
 
         if (selectionBackground != null)
-            defaultSelectionBackgroundColor = selectionBackground.color;
+            defaultSelectionBackgroundColor =
+                selectionBackground.color;
     }
 
     private void OnDisable()
@@ -121,51 +155,40 @@ public class UnitBattle : MonoBehaviour, IPointerClickHandler, IPointerEnterHand
 
     public void InitializeUnitBattle(UnitData unitData, bool usePersistentState = false)
     {
-        if (unitData == null)
-        {
-            Debug.LogWarning($"{name}: UnitData is null, skipping initialization.");
-            return;
-        }
+        temporaryStatIncreases.Clear();
+        recurringRecoveries.Clear();
 
         this.unitData = unitData;
         unitBattleData = unitData.battleData;
         Level = Mathf.Max(0, unitData.level);
-
-        if (unitBattleData == null)
+        if (usePersistentState)
         {
-            Debug.LogWarning($"{name}: UnitBattleData is null, skipping stat setup.");
+            runtimeState = UnitRuntimeState.GetOrCreate(unitData);
+            Level = runtimeState.level;
+            MaxHP = runtimeState.maxHP;
+            MaxMP = runtimeState.maxMP;
+            CurrentHP = Mathf.Clamp(runtimeState.currentHP, 0, MaxHP);
+            CurrentMP = Mathf.Clamp(runtimeState.currentMP, 0, MaxMP);
+            baseAttack = runtimeState.attack;
+            baseDefense = runtimeState.defense;
+            baseSpeed = runtimeState.speed;
         }
         else
         {
-            if (usePersistentState)
-            {
-                runtimeState = UnitRuntimeState.GetOrCreate(unitData);
-                Level = runtimeState.level;
-                MaxHP = runtimeState.maxHP;
-                MaxMP = runtimeState.maxMP;
-                CurrentHP = Mathf.Clamp(runtimeState.currentHP, 0, MaxHP);
-                CurrentMP = Mathf.Clamp(runtimeState.currentMP, 0, MaxMP);
-                Attack = runtimeState.attack;
-                BaseDefense = runtimeState.defense;
-                Speed = runtimeState.speed;
-            }
-            else
-            {
-                runtimeState = null;
-                MaxHP = UnitRuntimeState.CalculateScaledHP(unitData);
-                MaxMP = UnitRuntimeState.CalculateScaledMP(unitData);
-                CurrentHP = MaxHP;
-                CurrentMP = MaxMP;
-                Attack = UnitRuntimeState.CalculateScaledAttack(unitData);
-                BaseDefense = UnitRuntimeState.CalculateScaledDefense(unitData);
-                Speed = UnitRuntimeState.CalculateScaledSpeed(unitData);
-            }
-
-            if (unitAnimator != null)
-                unitAnimator.ApplyBattleAnimatorController(unitData);
-            else if (animator != null && unitBattleData.battleAnimator != null)
-                animator.runtimeAnimatorController = unitBattleData.battleAnimator;
+            runtimeState = null;
+            MaxHP = UnitRuntimeState.CalculateScaledHP(unitData);
+            MaxMP = UnitRuntimeState.CalculateScaledMP(unitData);
+            CurrentHP = MaxHP;
+            CurrentMP = MaxMP;
+            baseAttack = UnitRuntimeState.CalculateScaledAttack(unitData);
+            baseDefense = UnitRuntimeState.CalculateScaledDefense(unitData);
+            baseSpeed = UnitRuntimeState.CalculateScaledSpeed(unitData);
         }
+
+        if (unitAnimator != null)
+            unitAnimator.ApplyBattleAnimatorController(unitData);
+        else if (animator != null && unitBattleData.battleAnimator != null)
+            animator.runtimeAnimatorController = unitBattleData.battleAnimator;
 
         RefreshUI(unitData);
     }
@@ -208,44 +231,135 @@ public class UnitBattle : MonoBehaviour, IPointerClickHandler, IPointerEnterHand
 
     public void IncreaseAttack(int amount)
     {
-        Attack += Mathf.Max(0, amount);
+        baseAttack += Mathf.Max(0, amount);
         if (runtimeState != null)
-            runtimeState.attack = Attack;
+            runtimeState.attack = baseAttack;
     }
 
     public void IncreaseDefense(int amount)
     {
-        BaseDefense += Mathf.Max(0, amount);
+        baseDefense += Mathf.Max(0, amount);
         if (runtimeState != null)
-            runtimeState.defense = BaseDefense;
+            runtimeState.defense = baseDefense;
     }
 
     public void IncreaseSpeed(int amount)
     {
-        Speed += Mathf.Max(0, amount);
+        baseSpeed += Mathf.Max(0, amount);
         if (runtimeState != null)
-            runtimeState.speed = Speed;
+            runtimeState.speed = baseSpeed;
     }
 
     public void DecreaseAttack(int amount)
     {
-        Attack = Mathf.Max(0, Attack - Mathf.Max(0, amount));
+        baseAttack = Mathf.Max(0, baseAttack - Mathf.Max(0, amount));
         if (runtimeState != null)
-            runtimeState.attack = Attack;
+            runtimeState.attack = baseAttack;
     }
 
     public void DecreaseDefense(int amount)
     {
-        BaseDefense = Mathf.Max(0, BaseDefense - Mathf.Max(0, amount));
+        baseDefense = Mathf.Max(0, baseDefense - Mathf.Max(0, amount));
         if (runtimeState != null)
-            runtimeState.defense = BaseDefense;
+            runtimeState.defense = baseDefense;
     }
 
     public void DecreaseSpeed(int amount)
     {
-        Speed = Mathf.Max(0, Speed - Mathf.Max(0, amount));
+        baseSpeed = Mathf.Max(0, baseSpeed - Mathf.Max(0, amount));
         if (runtimeState != null)
-            runtimeState.speed = Speed;
+            runtimeState.speed = baseSpeed;
+    }
+
+    public void AddTemporaryStatIncrease(
+        BattleStat stat,
+        int amount,
+        int duration,
+        bool appliedDuringOwnTurn)
+    {
+        amount = Mathf.Max(0, amount);
+        if (amount == 0)
+            return;
+
+        temporaryStatIncreases.Add(new TemporaryStatIncrease
+        {
+            stat = stat,
+            amount = amount,
+            remainingTurns = Mathf.Max(0, duration),
+            skipNextTurnEnd = duration > 0 && appliedDuringOwnTurn
+        });
+    }
+
+    public void AdvanceTemporaryStatDurations()
+    {
+        for (int i = temporaryStatIncreases.Count - 1; i >= 0; i--)
+        {
+            TemporaryStatIncrease increase = temporaryStatIncreases[i];
+
+            if (increase.remainingTurns == 0)
+                continue;
+
+            if (increase.skipNextTurnEnd)
+            {
+                increase.skipNextTurnEnd = false;
+                continue;
+            }
+
+            increase.remainingTurns--;
+            if (increase.remainingTurns == 0)
+                temporaryStatIncreases.RemoveAt(i);
+        }
+    }
+
+    public void AddRecurringRecovery(
+        RecoveryStat stat,
+        int amount,
+        int duration)
+    {
+        amount = Mathf.Max(0, amount);
+        if (amount == 0)
+            return;
+
+        recurringRecoveries.Add(new RecurringRecovery
+        {
+            stat = stat,
+            amount = amount,
+            remainingTurns = Mathf.Max(0, duration)
+        });
+    }
+
+    public void ApplyRecurringRecoveryAtTurnStart()
+    {
+        for (int i = recurringRecoveries.Count - 1; i >= 0; i--)
+        {
+            RecurringRecovery recovery = recurringRecoveries[i];
+
+            if (recovery.stat == RecoveryStat.HP)
+                HealHP(recovery.amount);
+            else
+                HealMP(recovery.amount);
+
+            if (recovery.remainingTurns == 0)
+                continue;
+
+            recovery.remainingTurns--;
+            if (recovery.remainingTurns == 0)
+                recurringRecoveries.RemoveAt(i);
+        }
+    }
+
+    private int GetTemporaryStatIncrease(BattleStat stat)
+    {
+        int total = 0;
+
+        for (int i = 0; i < temporaryStatIncreases.Count; i++)
+        {
+            TemporaryStatIncrease increase = temporaryStatIncreases[i];
+            if (increase.stat == stat)
+                total += increase.amount;
+        }
+
+        return total;
     }
 
     public bool CanPaySkillCost(SkillData skill)
@@ -337,8 +451,17 @@ public class UnitBattle : MonoBehaviour, IPointerClickHandler, IPointerEnterHand
         if (nameText != null) nameText.text = unitData != null ? unitData.unitName : string.Empty;
         if (levelText != null) levelText.text = unitData != null ? $"Lv. {Level}" : string.Empty;
 
-        if (uiImage != null && unitData != null && unitData.icon != null)
-            uiImage.sprite = unitData.icon;
+        if (uiImage != null)
+        {
+            Sprite portrait = unitBattleData != null && unitBattleData.portrait != null
+                ? unitBattleData.portrait
+                : unitData != null
+                    ? unitData.icon
+                    : null;
+
+            if (portrait != null)
+                uiImage.sprite = portrait;
+        }
 
         if (spriteRenderer != null)
         {
@@ -479,18 +602,27 @@ public class UnitBattle : MonoBehaviour, IPointerClickHandler, IPointerEnterHand
 
     private void HandleSelectionClick()
     {
+        if (DialogueManager.IsGameplayInputLocked)
+            return;
+
         if (IsTargetable)
             OnSelected?.Invoke(this);
     }
 
     private void HandleHoverEntered()
     {
+        if (DialogueManager.IsGameplayInputLocked)
+            return;
+
         if (IsTargetable)
             OnHoverEntered?.Invoke(this);
     }
 
     private void HandleHoverExited()
     {
+        if (DialogueManager.IsGameplayInputLocked)
+            return;
+
         if (IsTargetable)
             OnHoverExited?.Invoke(this);
     }

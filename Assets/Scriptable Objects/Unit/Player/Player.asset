@@ -13,11 +13,10 @@ MonoBehaviour:
   m_Name: Player
   m_EditorClassIdentifier: Assembly-CSharp::UnitData
   unitName: Player
-  level: 0
+  level: 1
   icon: {fileID: -514839073, guid: b055e0beefc4b884587544dc019ed755, type: 3}
   battleData: {fileID: 11400000, guid: d2cd381064978134980fdc87e5254273, type: 2}
   explorationData: {fileID: 11400000, guid: b295676cb0af5284591a97c230a5461f, type: 2}
-  explorationAnimator: {fileID: 0}
   battleAIProfile: {fileID: 0}
   aiData: {fileID: 0}
   skills:

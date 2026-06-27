@@ -2,6 +2,7 @@ using UnityEngine;
 using Fungus;
 using UnityEngine.SceneManagement;
 using System.Collections;
+using System.Collections.Generic;
 using System;
 
 public class DialogueManager : MonoBehaviour
@@ -18,8 +19,12 @@ public class DialogueManager : MonoBehaviour
     [SerializeField, Min(1)] private int flowchartInitializationFrames = 10;
 
     public static DialogueManager Instance { get; private set; }
+    public static bool IsGameplayInputLocked =>
+        (Instance != null && Instance.IsDialoguePlaying) ||
+        NewTimelineManager.IsAnyCutscenePlaying;
     public bool IsDialoguePlaying =>
         activeDialogueRequests > 0 ||
+        executingBlocks.Count > 0 ||
         IsDialogueUiBusy(flowchart);
 
     public event Action<bool> OnPopupVisibilityChanged;
@@ -27,6 +32,7 @@ public class DialogueManager : MonoBehaviour
     private int popupSequenceDepth;
     private int activeDialogueRequests;
     private float dialogueIdleTime;
+    private readonly HashSet<Block> executingBlocks = new();
 
     private void Awake()
     {
@@ -43,11 +49,15 @@ public class DialogueManager : MonoBehaviour
     private void OnEnable()
     {
         SceneManager.sceneLoaded += OnSceneLoaded;
+        BlockSignals.OnBlockStart += HandleBlockStarted;
+        BlockSignals.OnBlockEnd += HandleBlockEnded;
     }
 
     private void OnDisable()
     {
         SceneManager.sceneLoaded -= OnSceneLoaded;
+        BlockSignals.OnBlockStart -= HandleBlockStarted;
+        BlockSignals.OnBlockEnd -= HandleBlockEnded;
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -55,6 +65,19 @@ public class DialogueManager : MonoBehaviour
         flowchart = null;
         activeDialogueRequests = 0;
         dialogueIdleTime = 0f;
+        executingBlocks.Clear();
+    }
+
+    private void HandleBlockStarted(Block block)
+    {
+        if (block != null)
+            executingBlocks.Add(block);
+    }
+
+    private void HandleBlockEnded(Block block)
+    {
+        if (block != null)
+            executingBlocks.Remove(block);
     }
 
     private void Update()

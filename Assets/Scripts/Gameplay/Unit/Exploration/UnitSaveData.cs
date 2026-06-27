@@ -97,6 +97,7 @@ public class UnitSaveData : MonoBehaviour
         string key = GetPlayerPrefsKey(saveID);
         if (!SaveDataTransaction.HasKey(key))
         {
+            TryRestoreBattleReturnPosition();
             Save();
             return;
         }
@@ -120,10 +121,26 @@ public class UnitSaveData : MonoBehaviour
         if (savedData.sceneName == gameObject.scene.name)
             RestorePosition(savedData.position);
 
+        TryRestoreBattleReturnPosition();
+
         if (loadedUnitStateIds.Add(saveID))
             RestoreUnitState(savedData);
 
         RestoreParty(savedData);
+    }
+
+    private void TryRestoreBattleReturnPosition()
+    {
+        if (!CompareTag("Player") ||
+            !BattleRelay.TryConsumePlayerReturnPosition(
+                gameObject.scene.name,
+                out Vector3 returnPosition))
+        {
+            return;
+        }
+
+        RestorePosition(returnPosition);
+        Save();
     }
 
     public void SetExistsInWorld(bool exists)

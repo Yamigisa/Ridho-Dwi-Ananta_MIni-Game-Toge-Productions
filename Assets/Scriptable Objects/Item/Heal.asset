@@ -13,9 +13,8 @@ MonoBehaviour:
   m_Name: Heal
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
   itemName: Heal
-  description: Heal for 90 health
-  icon: {fileID: 1232179201, guid: 113b8dfa5daf1c84392574ab27716fb2, type: 3}
-  category: 0
+  description: Heal 10 health
+  icon: {fileID: 1579172822, guid: c7eeef828c20a1b4ca9850601b3c3f1b, type: 3}
   maxStacks: 99
   attributes:
   - attribute: 0

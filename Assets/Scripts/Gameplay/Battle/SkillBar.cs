@@ -63,6 +63,9 @@ public class SkillBar : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 
     public void UseSkill()
     {
+        if (DialogueManager.IsGameplayInputLocked)
+            return;
+
         Clicked?.Invoke(this);
     }
 
@@ -82,11 +85,17 @@ public class SkillBar : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 
     public void OnPointerEnter(PointerEventData eventData)
     {
+        if (DialogueManager.IsGameplayInputLocked)
+            return;
+
         HoverEntered?.Invoke(this);
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
+        if (DialogueManager.IsGameplayInputLocked)
+            return;
+
         HoverExited?.Invoke(this);
     }
 

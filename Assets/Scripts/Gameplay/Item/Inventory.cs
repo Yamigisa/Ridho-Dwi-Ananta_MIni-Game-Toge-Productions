@@ -44,6 +44,12 @@ public class Inventory : MonoBehaviour
         CloseItemPanel();
     }
 
+    private void Update()
+    {
+        if (IsOpen && DialogueManager.IsGameplayInputLocked)
+            CloseItemPanel();
+    }
+
     private void OnDestroy()
     {
         if (Instance == this)
@@ -176,7 +182,9 @@ public class Inventory : MonoBehaviour
     private void HandleItemBarClicked(ItemBar clickedItemBar)
     {
         InventoryItem clickedItem = FindItem(clickedItemBar.ItemData);
-        if (clickedItem == null || clickedItem.amount <= 0)
+        if (clickedItem == null ||
+            clickedItem.amount <= 0 ||
+            clickedItem.itemData.IsQuestItem)
             return;
 
         ItemUseRequested?.Invoke(clickedItem.itemData);

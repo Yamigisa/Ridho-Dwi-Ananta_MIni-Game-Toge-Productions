@@ -18,6 +18,7 @@ GameObject:
   - component: {fileID: 6042067886965708588}
   - component: {fileID: 6130640321169624657}
   - component: {fileID: 7349980547350759612}
+  - component: {fileID: 5362235190764430812}
   m_Layer: 0
   m_Name: Base NPC
   m_TagString: Untagged
@@ -137,7 +138,19 @@ MonoBehaviour:
         m_CallState: 2
   onInteract:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 5362235190764430812}
+        m_TargetAssemblyTypeName: DialogueTrigger, Assembly-CSharp
+        m_MethodName: TriggerDialogue
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!50 &1312561156013459735
 Rigidbody2D:
   serializedVersion: 5
@@ -177,7 +190,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5d0cca744ab12ac4b81ffbaac833ab74, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitMovement
-  moveSpeed: 1.45
+  moveSpeed: 1
   acceleration: 12
   deceleration: 18
   inputDeadZone: 0.1
@@ -223,6 +236,7 @@ MonoBehaviour:
   m_Events:
     m_Signals:
     - {fileID: 11400000, guid: 2981b1f3fcf4bfa40aedebea5dc2f94f, type: 2}
+    - {fileID: 11400000, guid: 1fd2f658d2755124b9cacadc59ecfa73, type: 2}
     m_Events:
     - m_PersistentCalls:
         m_Calls:
@@ -238,6 +252,8 @@ MonoBehaviour:
             m_StringArgument: 1.5,2
             m_BoolArgument: 0
           m_CallState: 2
+    - m_PersistentCalls:
+        m_Calls: []
 --- !u!114 &6130640321169624657
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -260,7 +276,6 @@ MonoBehaviour:
   attackParameter: Attack
   hurtParameter: Hurt
   deathParameter: Death
-  interactParameter: Interact
 --- !u!114 &7349980547350759612
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -275,6 +290,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::UnitSaveData
   saveID: NPC 1
   generateIDFromSceneHierarchy: 0
+--- !u!114 &5362235190764430812
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3129208481565427032}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 356a85066eb3d154d84ea4e0a22ab7c7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DialogueTrigger
+  dialogueBlockName: NPC1Talk
 --- !u!1 &7282270087776092863
 GameObject:
   m_ObjectHideFlags: 0
@@ -301,8 +329,8 @@ Transform:
   m_GameObject: {fileID: 7282270087776092863}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.5, z: 0}
-  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
+  m_LocalPosition: {x: 0, y: 0.5, z: 0}
+  m_LocalScale: {x: 3, y: 3, z: 3}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 2799728096101578742}
@@ -352,12 +380,12 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingLayerID: -514705383
+  m_SortingLayer: 2
+  m_SortingOrder: -1
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Sprite: {fileID: 21300000, guid: f224bfd122877a34aa49c63693fc317b, type: 3}
+  m_Color: {r: 1, g: 0.8622245, b: 0, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -556,5 +584,5 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 0.35, y: 0.65}
+  m_Size: {x: 0.35, y: 0.24}
   m_EdgeRadius: 0

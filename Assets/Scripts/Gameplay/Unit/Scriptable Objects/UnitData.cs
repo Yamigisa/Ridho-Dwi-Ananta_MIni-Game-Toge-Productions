@@ -16,9 +16,6 @@ public class UnitData : ScriptableObject
     [Header("Exploration Attributes Data")]
     public UnitExplorationData explorationData;
 
-    [Header("Optional Exploration Animator")]
-    public RuntimeAnimatorController explorationAnimator;
-
     [Header("Battle AI (leave empty for player-controlled units)")]
     public BattleAIProfile battleAIProfile;
 
