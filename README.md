@@ -14,9 +14,7 @@ systems.
 | Deliverable       | Link                                                                                         |
 | ----------------- | -------------------------------------------------------------------------------------------- |
 | Source repository | [GitHub repository](https://github.com/Yamigisa/Ridho-Dwi-Ananta_MIni-Game-Toge-Productions) |
-| Gameplay video    | **Add public gameplay video link here**                                                      |
-
-> Replace the two placeholders above before submitting the project.
+| Gameplay video    | https://drive.google.com/drive/folders/1qRDPViCigvoy0iybGx1YYCzO9tfF_otu?hl=ID               |
 
 ## Features
 
