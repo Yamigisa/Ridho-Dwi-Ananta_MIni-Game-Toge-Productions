@@ -1,4 +1,4 @@
-[README.md](https://github.com/user-attachments/files/29432739/README.md)
+[README.md](https://github.com/user-attachments/files/29433357/README.md)
 # Turn-Based RPG Prototype
 
 A 2D narrative turn-based RPG developed in Unity as a programmer pre-interview
@@ -12,11 +12,10 @@ systems.
 
 ## Submission Links
 
-| Deliverable | Link |
-| --- | --- |
+| Deliverable       | Link                                                                                         |
+| ----------------- | -------------------------------------------------------------------------------------------- |
 | Source repository | [GitHub repository](https://github.com/Yamigisa/Ridho-Dwi-Ananta_MIni-Game-Toge-Productions) |
-| Downloadable build | **Add public Google Drive build link here** |
-| Gameplay video | **Add public gameplay video link here** |
+| Gameplay video    | **Add public gameplay video link here**                                                      |
 
 > Replace the two placeholders above before submitting the project.
 
@@ -74,30 +73,30 @@ systems.
 
 ## Controls
 
-| Action | Keyboard | Gamepad |
-| --- | --- | --- |
-| Move | `WASD` or Arrow Keys | Left Stick |
-| Interact | `E` | North Button |
-| Sprint | Left Shift | Left Stick Press |
-| Inventory | `I` | Right Shoulder |
-| Party | `C` | Select |
-| Pause | `Esc` | Start |
-| UI navigation | Mouse or `WASD`/Arrow Keys | Stick or D-pad |
+| Action        | Keyboard                   | Gamepad          |
+| ------------- | -------------------------- | ---------------- |
+| Move          | `WASD` or Arrow Keys       | Left Stick       |
+| Interact      | `E`                        | North Button     |
+| Sprint        | Left Shift                 | Left Stick Press |
+| Inventory     | `I`                        | Right Shoulder   |
+| Party         | `C`                        | Select           |
+| Pause         | `Esc`                      | Start            |
+| UI navigation | Mouse or `WASD`/Arrow Keys | Stick or D-pad   |
 
 Battle actions and targets are selected through the on-screen interface.
 
 ## Technical Overview
 
-| Category | Technology |
-| --- | --- |
-| Engine | Unity 6.3 LTS (`6000.3.13f1`) |
-| Language | C# |
-| Input | Unity Input System |
-| Narrative | Fungus |
-| Cutscenes | Unity Timeline |
-| Camera | Cinemachine |
-| Rendering | Unity 2D and Universal Render Pipeline packages |
-| Persistence | PlayerPrefs with serializable save models |
+| Category    | Technology                                      |
+| ----------- | ----------------------------------------------- |
+| Engine      | Unity 6.3 LTS (`6000.3.13f1`)                   |
+| Language    | C#                                              |
+| Input       | Unity Input System                              |
+| Narrative   | Fungus                                          |
+| Cutscenes   | Unity Timeline                                  |
+| Camera      | Cinemachine                                     |
+| Rendering   | Unity 2D and Universal Render Pipeline packages |
+| Persistence | PlayerPrefs with serializable save models       |
 
 ## Architecture
 
@@ -142,48 +141,19 @@ Assets/
 └── External Packages/       # Fungus and bundled third-party dependencies
 ```
 
-## Getting Started
-
-1. Clone the repository:
-
-   ```bash
-   git clone https://github.com/Yamigisa/Ridho-Dwi-Ananta_MIni-Game-Toge-Productions.git
-   ```
-
-2. Open the project through Unity Hub with Unity `6000.3.13f1`.
-3. Allow Unity to import the project and restore its packages.
-4. Open `Assets/Scenes/Initializer.unity`.
-5. Enter Play Mode.
-
-## Creating a Build
-
-1. Open **File > Build Profiles** in Unity.
-2. Select the target desktop platform.
-3. Confirm that the scenes are enabled in this order:
-   - `Initializer`
-   - `Main Menu`
-   - `Gameplay`
-   - `Interior`
-   - `Battle`
-4. Choose **Build** or **Build and Run**.
-
-The repository ignores generated build folders. Upload the finished build to a
-publicly accessible location such as Google Drive and add its URL to
-**Submission Links**.
-
 ## Assignment Coverage
 
-| Requirement | Implementation |
-| --- | --- |
-| Player, NPC, enemy, and background objects | Included |
-| WASD / Arrow Key world movement | Included |
-| World interaction | Included through a dedicated interaction input |
-| Dialogue | Implemented with Fungus |
-| Automatic player movement in cutscenes | Implemented with Timeline and scripted unit movement |
-| JRPG-style turn-based battle | Included |
-| ScriptableObject usage | Units, skills, items, quests, AI, and attributes |
-| Prefab implementation | Used throughout gameplay, characters, UI, and environments |
-| Fungus narrative integration | Included |
+| Requirement                                | Implementation                                             |
+| ------------------------------------------ | ---------------------------------------------------------- |
+| Player, NPC, enemy, and background objects | Included                                                   |
+| WASD / Arrow Key world movement            | Included                                                   |
+| World interaction                          | Included through a dedicated interaction input             |
+| Dialogue                                   | Implemented with Fungus                                    |
+| Automatic player movement in cutscenes     | Implemented with Timeline and scripted unit movement       |
+| JRPG-style turn-based battle               | Included                                                   |
+| ScriptableObject usage                     | Units, skills, items, quests, AI, and attributes           |
+| Prefab implementation                      | Used throughout gameplay, characters, UI, and environments |
+| Fungus narrative integration               | Included                                                   |
 
 ## Author
 
