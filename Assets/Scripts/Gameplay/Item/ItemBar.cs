@@ -24,6 +24,7 @@ public class ItemBar : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
         originalColor = itemBarButton.targetGraphic.color;
         itemBarButton.onClick.AddListener(HandleClick);
+        AudioManager.Instance?.RegisterButton(itemBarButton);
     }
 
     public void InitializeItemBar(ItemData itemData)

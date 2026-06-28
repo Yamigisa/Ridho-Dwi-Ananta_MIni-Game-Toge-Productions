@@ -164,6 +164,7 @@ public class UnitPartyUI : MonoBehaviour
         }
 
         Inventory.Instance.RemoveItem(itemBeingUsed, 1);
+        AudioManager.Instance?.PlaySFX(SFXName.UseItem);
         Inventory.Instance.ClearItemSelection();
         ShowItemUsedPopup(target, itemBeingUsed);
 

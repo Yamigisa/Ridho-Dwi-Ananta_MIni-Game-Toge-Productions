@@ -178,13 +178,37 @@ MonoBehaviour:
   musicSource: {fileID: 954451564510047469}
   sfxSource: {fileID: 8857219424063029054}
   musicList:
-  - name: NewBGM
-    clip: {fileID: 0}
+  - name: Gameplay
+    clip: {fileID: 8300000, guid: 0ad591428b0c18c4da51fe3bf98dbc63, type: 3}
+    volume: 0.5
+    loop: 1
+  - name: Battle
+    clip: {fileID: 8300000, guid: fc5af015011ea3745b7f78ea1dd1049f, type: 3}
+    volume: 0.5
+    loop: 1
+  - name: Interior
+    clip: {fileID: 8300000, guid: 559c232a43caebe41870ce54786f604e, type: 3}
+    volume: 0.5
+    loop: 1
+  sfxList:
+  - name: Click
+    clip: {fileID: 8300000, guid: 65b5b2f5c9ff71c4aa29d580b5ab057f, type: 3}
     volume: 1
     loop: 0
-  sfxList:
-  - name: NewSFX
-    clip: {fileID: 0}
+  - name: PickupItem
+    clip: {fileID: 8300000, guid: 4b6425d4296230e4b84b96eaa233b162, type: 3}
+    volume: 1
+    loop: 0
+  - name: UseItem
+    clip: {fileID: 8300000, guid: a07407845c8b54347b193aed47f7190c, type: 3}
+    volume: 1
+    loop: 0
+  - name: BattleWin
+    clip: {fileID: 8300000, guid: 1a76dfa0180f7c143abc7cc4c8a1f615, type: 3}
+    volume: 1
+    loop: 0
+  - name: GameOver
+    clip: {fileID: 8300000, guid: df9b5d27dabecbe4981e96bcf7983a18, type: 3}
     volume: 1
     loop: 0
 --- !u!1 &7409893163099278514

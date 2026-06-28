@@ -117,8 +117,23 @@ MonoBehaviour:
   levelText: {fileID: 8445896699931724461}
   hpSlider: {fileID: 898102214370670729}
   mpSlider: {fileID: 0}
+  expSlider: {fileID: 0}
+  expText: {fileID: 0}
   uiImage: {fileID: 0}
+  selectionBackground: {fileID: 0}
   spriteRenderer: {fileID: 6456157734247230808}
+  targetedColor: {r: 0.32941177, g: 0.6862745, b: 0.7294118, a: 1}
+  targetedScaleMultiplier: 1.12
+  hpGhostColor: {r: 0.3, g: 1, b: 0.45, a: 0.65}
+  mpGhostColor: {r: 0.3, g: 0.7, b: 1, a: 0.65}
+  hpBarAnimationDuration: 0.5
+  mpBarAnimationDuration: 0.35
+  damageFlashColor: {r: 1, g: 0.05, b: 0.05, a: 0.45}
+  damageShakeStrength: {x: 10, y: 5}
+  enemyDamageShakeStrength: {x: 0.15, y: 0.08}
+  damageShakeVibrato: 18
+  damageShakeRandomness: 45
+  damageFlashCount: 3
 --- !u!114 &6142389054617371021
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -141,7 +156,6 @@ MonoBehaviour:
   attackParameter: Attack
   hurtParameter: Hurt
   deathParameter: Death
-  interactParameter: Interact
 --- !u!1 &1957594419502439888
 GameObject:
   m_ObjectHideFlags: 0
@@ -200,7 +214,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.81960785, g: 0.1882353, b: 0.1882353, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -295,8 +309,8 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
+  m_SortingLayerID: -514705383
+  m_SortingLayer: 2
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: -1631652605, guid: 3e850ac3f829d4646b94d5ad8aba3620, type: 3}
@@ -475,15 +489,15 @@ MonoBehaviour:
       m_Calls: []
   m_text: Hp Value Text
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 719a2cd1b556003479b2f4a28069604d, type: 2}
+  m_sharedMaterial: {fileID: -2015261379666619483, guid: 719a2cd1b556003479b2f4a28069604d, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4278190080
-  m_fontColor: {r: 0, g: 0, b: 0, a: 1}
+    rgba: 4294967295
+  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -500,8 +514,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 0.15
-  m_fontSizeBase: 0.15
+  m_fontSize: 0.1
+  m_fontSizeBase: 0.1
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -755,7 +769,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: -1.2590998, y: -0.0020001382}
-  m_SizeDelta: {x: -1.7454002, y: -0.15719998}
+  m_SizeDelta: {x: -1.7454, y: -0.1572}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &7891987958938916786
 CanvasRenderer:
@@ -787,8 +801,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: HP
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 719a2cd1b556003479b2f4a28069604d, type: 2}
+  m_sharedMaterial: {fileID: -2015261379666619483, guid: 719a2cd1b556003479b2f4a28069604d, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -819,8 +833,8 @@ MonoBehaviour:
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
-  m_HorizontalAlignment: 1
-  m_VerticalAlignment: 256
+  m_HorizontalAlignment: 2
+  m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_characterHorizontalScale: 1
@@ -924,15 +938,15 @@ MonoBehaviour:
       m_Calls: []
   m_text: Lv.XX
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 719a2cd1b556003479b2f4a28069604d, type: 2}
+  m_sharedMaterial: {fileID: -2015261379666619483, guid: 719a2cd1b556003479b2f4a28069604d, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+    rgba: 4278225151
+  m_fontColor: {r: 1, g: 0.53333336, b: 0, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -1052,7 +1066,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.23921569, g: 0.23921569, b: 0.23921569, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1226,8 +1240,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Enemy name
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 719a2cd1b556003479b2f4a28069604d, type: 2}
+  m_sharedMaterial: {fileID: -2015261379666619483, guid: 719a2cd1b556003479b2f4a28069604d, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []

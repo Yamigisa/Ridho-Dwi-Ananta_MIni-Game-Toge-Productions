@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Goblin
   m_EditorClassIdentifier: Assembly-CSharp::UnitData
   unitName: Goblin
-  level: 0
+  level: 1
   icon: {fileID: 714872673, guid: 41bc5539d0ec84945bd57c11c5124cf9, type: 3}
   battleData: {fileID: 11400000, guid: 2a0a43f26c73c164a882678dc031f9e4, type: 2}
   explorationData: {fileID: 11400000, guid: 90585562f9906ad40a48e629a86931ce, type: 2}

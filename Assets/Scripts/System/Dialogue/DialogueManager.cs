@@ -21,7 +21,7 @@ public class DialogueManager : MonoBehaviour
     public static DialogueManager Instance { get; private set; }
     public static bool IsGameplayInputLocked =>
         (Instance != null && Instance.IsDialoguePlaying) ||
-        NewTimelineManager.IsAnyCutscenePlaying;
+        TimelineManager.IsAnyCutscenePlaying;
     public bool IsDialoguePlaying =>
         activeDialogueRequests > 0 ||
         executingBlocks.Count > 0 ||

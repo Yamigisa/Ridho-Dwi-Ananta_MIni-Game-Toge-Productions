@@ -36,6 +36,12 @@ public class UnitAI : MonoBehaviour
     {
         if (aiData == null) return;
 
+        if (DialogueManager.IsGameplayInputLocked)
+        {
+            movement.Stop();
+            return;
+        }
+
         if (isChasing)
         {
             if (!IsPlayerInRange())
@@ -84,7 +90,9 @@ public class UnitAI : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (!other.CompareTag("Player")) return;
+        if (DialogueManager.IsGameplayInputLocked ||
+            !other.CompareTag("Player"))
+            return;
 
         Vector2 directionToPlayer = (other.transform.position - transform.position).normalized;
         float angle = Vector2.Angle(transform.up, directionToPlayer);
@@ -157,6 +165,12 @@ public class UnitAI : MonoBehaviour
 
     public void StartChasing(Transform target)
     {
+        if (DialogueManager.IsGameplayInputLocked)
+        {
+            movement.Stop();
+            return;
+        }
+
         playerTarget = target;
         isChasing = true;
         isWandering = false;

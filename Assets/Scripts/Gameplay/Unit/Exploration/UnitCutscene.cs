@@ -78,13 +78,13 @@ public class UnitCutscene : MonoBehaviour
         }
 
         bool pausedTimeline =
-            NewTimelineManager.Instance != null &&
-            NewTimelineManager.Instance.PauseTimeline();
+            TimelineManager.Instance != null &&
+            TimelineManager.Instance.PauseTimeline();
 
         yield return new WaitUntil(() => !unitMovement.IsMovingToDestination);
 
-        if (pausedTimeline && NewTimelineManager.Instance != null)
-            NewTimelineManager.Instance.ResumeTimeline();
+        if (pausedTimeline && TimelineManager.Instance != null)
+            TimelineManager.Instance.ResumeTimeline();
 
         cutsceneMovementRoutine = null;
     }

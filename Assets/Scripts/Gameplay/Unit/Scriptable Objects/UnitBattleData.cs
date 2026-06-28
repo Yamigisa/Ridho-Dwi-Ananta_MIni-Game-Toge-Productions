@@ -39,6 +39,17 @@ public class UnitBattleData : ScriptableObject
     [Header("Item Drops")]
     public List<ItemDrop> itemDrops = new();
 
+    [Header("Action SFX")]
+    [SerializeField] private AudioClip attackSFX;
+    [SerializeField] private AudioClip defendSFX;
+    [SerializeField] private AudioClip passSFX;
+    [SerializeField] private AudioClip fleeSFX;
+
     [Header("Optional Animator")]
     public RuntimeAnimatorController battleAnimator;
+
+    public AudioClip AttackSFX => attackSFX;
+    public AudioClip DefendSFX => defendSFX;
+    public AudioClip PassSFX => passSFX;
+    public AudioClip FleeSFX => fleeSFX;
 }

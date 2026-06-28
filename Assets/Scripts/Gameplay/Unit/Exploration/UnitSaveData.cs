@@ -13,6 +13,7 @@ public class UnitSaveData : MonoBehaviour
         public string locationId;
         public Vector3 position;
         public int level;
+        public int experience;
         public int currentHP;
         public int currentMP;
         public int attack;
@@ -166,7 +167,10 @@ public class UnitSaveData : MonoBehaviour
         if (unitData == null)
             return;
 
-        unitData.level = Mathf.Max(1, level);
+        UnitRuntimeState.SetProgress(
+            unitData,
+            Mathf.Max(1, level),
+            UnitRuntimeState.GetExperience(unitData));
         Save();
     }
 
@@ -228,9 +232,9 @@ public class UnitSaveData : MonoBehaviour
         if (unitData == null)
             return savedData;
 
-        savedData.level = unitData.level;
-
         UnitRuntimeState.State state = UnitRuntimeState.GetOrCreate(unitData);
+        savedData.level = state.level;
+        savedData.experience = state.experience;
         savedData.currentHP = state.currentHP;
         savedData.currentMP = state.currentMP;
         savedData.attack = state.attack;
@@ -265,6 +269,7 @@ public class UnitSaveData : MonoBehaviour
     private void RestoreParty(SavedData savedData)
     {
         if (battleParty == null ||
+            battleParty.HasCanonicalPlayerParty ||
             !savedData.hasPartyData ||
             savedData.partyUnitIds == null)
         {
@@ -278,6 +283,15 @@ public class UnitSaveData : MonoBehaviour
         {
             if (loadedUnits.TryGetValue(unitId, out UnitData unit))
                 restoredUnits.Add(unit);
+        }
+
+        if (restoredUnits.Count != savedData.partyUnitIds.Count)
+        {
+            Debug.LogWarning(
+                $"{name} could not resolve every saved party member. " +
+                "The current party was kept to prevent data loss.",
+                this);
+            return;
         }
 
         isRestoringParty = true;
@@ -303,15 +317,26 @@ public class UnitSaveData : MonoBehaviour
         if (unitData == null)
             return;
 
-        if (savedData.level > 0)
-            unitData.level = savedData.level;
+        UnitRuntimeState.State state = UnitRuntimeState.RestoreProgress(
+            unitData,
+            savedData.level,
+            savedData.experience);
 
-        UnitRuntimeState.State state = UnitRuntimeState.GetOrCreate(unitData);
-        state.currentHP = savedData.currentHP;
-        state.currentMP = savedData.currentMP;
-        state.attack = savedData.attack;
-        state.defense = savedData.defense;
-        state.speed = savedData.speed;
+        if (state == null)
+            return;
+
+        bool savedStatsMatchProgress =
+            savedData.level == state.level &&
+            savedData.experience == state.experience;
+
+        if (savedStatsMatchProgress)
+        {
+            state.currentHP = savedData.currentHP;
+            state.currentMP = savedData.currentMP;
+            state.attack = savedData.attack;
+            state.defense = savedData.defense;
+            state.speed = savedData.speed;
+        }
 
         SkillData[] loadedSkills = Resources.FindObjectsOfTypeAll<SkillData>();
         foreach (string skillName in savedData.addedSkillNames)

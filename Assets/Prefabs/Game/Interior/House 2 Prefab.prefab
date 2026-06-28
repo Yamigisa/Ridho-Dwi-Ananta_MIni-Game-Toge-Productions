@@ -3998,6 +3998,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 8617431377148837531}
     m_Modifications:
+    - target: {fileID: 2320362870243494093, guid: 3ce00f1a3d1c69f41924f2b79e4208b5, type: 3}
+      propertyPath: itemInstanceId
+      value: 3b666c09-b6e8-45b7-8fe3-2a53c162a6e9
+      objectReference: {fileID: 0}
     - target: {fileID: 2588995165704390985, guid: 3ce00f1a3d1c69f41924f2b79e4208b5, type: 3}
       propertyPath: m_LocalPosition.x
       value: 1.2307801
@@ -4137,6 +4141,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Attack Upper
       objectReference: {fileID: 0}
+    - target: {fileID: 5612917392546629871, guid: 18f891e839a22b24ea77bb53d810c42e, type: 3}
+      propertyPath: itemInstanceId
+      value: f5c84340-5c80-4052-a1a3-1fd0604b9b28
+      objectReference: {fileID: 0}
     - target: {fileID: 5637229646543554923, guid: 18f891e839a22b24ea77bb53d810c42e, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0.33078015
@@ -4235,6 +4243,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1611432236972216199, guid: 295e2e32c484fe54eb5d688bb82bd878, type: 3}
+      propertyPath: itemInstanceId
+      value: c9074e94-c77b-45d2-b2fb-125e600a7919
+      objectReference: {fileID: 0}
     - target: {fileID: 6526384201180598686, guid: 295e2e32c484fe54eb5d688bb82bd878, type: 3}
       propertyPath: m_Name
       value: Defense Upper
@@ -4301,6 +4313,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8569998984669533400, guid: 98c3b3f3bd52c1144be1afa9493a675b, type: 3}
+      propertyPath: itemInstanceId
+      value: 3e37c0c2-6d1f-4cd3-ad08-237cb2fcd604
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -4322,6 +4338,10 @@ PrefabInstance:
     - target: {fileID: 3244671435017125604, guid: 70a7667ea6e229541895876bea785145, type: 3}
       propertyPath: m_Name
       value: Energy
+      objectReference: {fileID: 0}
+    - target: {fileID: 7046384867236225277, guid: 70a7667ea6e229541895876bea785145, type: 3}
+      propertyPath: itemInstanceId
+      value: e2fff216-ca3a-41d7-bfe9-9d62d69b7fd4
       objectReference: {fileID: 0}
     - target: {fileID: 7068304414482669945, guid: 70a7667ea6e229541895876bea785145, type: 3}
       propertyPath: m_LocalPosition.x

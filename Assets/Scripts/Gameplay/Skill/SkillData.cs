@@ -61,6 +61,7 @@ public class SkillData : ScriptableObject
     [SerializeField] private string skillName;
     [SerializeField, TextArea(2, 5)] private string description;
     [SerializeField] private Sprite icon;
+    [SerializeField] private AudioClip audioClip;
 
     [Header("Cost")]
     [SerializeField, Min(0)] private int hpCost;
@@ -75,6 +76,7 @@ public class SkillData : ScriptableObject
     public string SkillName => skillName;
     public string Description => description;
     public Sprite Icon => icon;
+    public AudioClip AudioClip => audioClip;
     public int HPCost => hpCost;
     public int MPCost => mpCost;
     public TargetType Targeting => targetType;

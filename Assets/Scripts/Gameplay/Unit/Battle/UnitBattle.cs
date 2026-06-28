@@ -926,6 +926,14 @@ public readonly struct ItemDropReward
 
 public static class UnitRuntimeState
 {
+    [Serializable]
+    private sealed class SavedProgress
+    {
+        public bool hasData;
+        public int level;
+        public int experience;
+    }
+
     public sealed class State
     {
         public int level;
@@ -941,10 +949,33 @@ public static class UnitRuntimeState
 
     private static readonly Dictionary<UnitData, State> states =
         new Dictionary<UnitData, State>();
+    private static readonly HashSet<UnitData> unitsWithSavedProgress =
+        new HashSet<UnitData>();
+    private const string PlayerPrefsPrefix = "UnitRuntimeState.";
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void InitializeStatics()
+    {
+        states.Clear();
+        unitsWithSavedProgress.Clear();
+    }
 
     public static State GetOrCreate(UnitData unitData)
     {
-        if (!states.TryGetValue(unitData, out State state))
+        bool hasState = states.TryGetValue(unitData, out State state);
+
+        // PlayerPrefs can be cleared while Unity is still running. Invalidate
+        // the cached state when its previously saved progress no longer exists.
+        if (hasState &&
+            unitsWithSavedProgress.Contains(unitData) &&
+            !SaveDataTransaction.HasKey(GetPlayerPrefsKey(unitData)))
+        {
+            states.Remove(unitData);
+            unitsWithSavedProgress.Remove(unitData);
+            hasState = false;
+        }
+
+        if (!hasState)
         {
             state = CreateInitialState(unitData);
             states.Add(unitData, state);
@@ -988,47 +1019,143 @@ public static class UnitRuntimeState
             ApplyScaledStats(unitData, state, true);
         }
 
+        SaveProgress(unitData, state);
         newLevel = state.level;
         return state.experience;
     }
 
+    public static void SetProgress(UnitData unitData, int level, int experience)
+    {
+        if (unitData == null)
+            return;
+
+        State state = GetOrCreate(unitData);
+        state.level = Mathf.Max(0, level);
+        state.experience = Mathf.Max(0, experience);
+        ApplyScaledStats(unitData, state, true);
+        SaveProgress(unitData, state);
+    }
+
+    public static State RestoreProgress(
+        UnitData unitData,
+        int legacyLevel,
+        int legacyExperience)
+    {
+        if (unitData == null)
+            return null;
+
+        State state = GetOrCreate(unitData);
+        if (HasSavedProgress(unitData))
+            return state;
+
+        if (legacyLevel > 0)
+        {
+            state.level = legacyLevel;
+            state.experience = Mathf.Max(0, legacyExperience);
+            ApplyScaledStats(unitData, state, false);
+            SaveProgress(unitData, state);
+        }
+
+        return state;
+    }
+
     public static int CalculateScaledHP(UnitData unitData)
     {
-        return CalculateScaledStat(unitData?.battleData?.baseHP ?? 0, GetInitialLevel(unitData), unitData?.battleData);
+        return CalculateScaledStat(unitData?.battleData?.baseHP ?? 0, GetCurrentLevel(unitData), unitData?.battleData);
     }
 
     public static int CalculateScaledMP(UnitData unitData)
     {
-        return CalculateScaledStat(unitData?.battleData?.baseMP ?? 0, GetInitialLevel(unitData), unitData?.battleData);
+        return CalculateScaledStat(unitData?.battleData?.baseMP ?? 0, GetCurrentLevel(unitData), unitData?.battleData);
     }
 
     public static int CalculateScaledAttack(UnitData unitData)
     {
-        return CalculateScaledStat(unitData?.battleData?.baseAttack ?? 0, GetInitialLevel(unitData), unitData?.battleData);
+        return CalculateScaledStat(unitData?.battleData?.baseAttack ?? 0, GetCurrentLevel(unitData), unitData?.battleData);
     }
 
     public static int CalculateScaledDefense(UnitData unitData)
     {
-        return CalculateScaledStat(unitData?.battleData?.baseDefense ?? 0, GetInitialLevel(unitData), unitData?.battleData);
+        return CalculateScaledStat(unitData?.battleData?.baseDefense ?? 0, GetCurrentLevel(unitData), unitData?.battleData);
     }
 
     public static int CalculateScaledSpeed(UnitData unitData)
     {
-        return CalculateScaledStat(unitData?.battleData?.baseSpeed ?? 0, GetInitialLevel(unitData), unitData?.battleData);
+        return CalculateScaledStat(unitData?.battleData?.baseSpeed ?? 0, GetCurrentLevel(unitData), unitData?.battleData);
     }
 
     private static State CreateInitialState(UnitData unitData)
     {
+        int level = GetInitialLevel(unitData);
+        int experience = 0;
+        if (TryLoadProgress(unitData, out level, out experience))
+            unitsWithSavedProgress.Add(unitData);
+
         State state = new State
         {
-            level = GetInitialLevel(unitData),
-            experience = 0
+            level = level,
+            experience = experience
         };
 
         ApplyScaledStats(unitData, state, false);
         state.currentHP = state.maxHP;
         state.currentMP = state.maxMP;
         return state;
+    }
+
+    private static bool TryLoadProgress(
+        UnitData unitData,
+        out int level,
+        out int experience)
+    {
+        level = GetInitialLevel(unitData);
+        experience = 0;
+
+        if (unitData == null)
+            return false;
+
+        string key = GetPlayerPrefsKey(unitData);
+        if (!SaveDataTransaction.HasKey(key))
+            return false;
+
+        SavedProgress savedProgress = JsonUtility.FromJson<SavedProgress>(
+            SaveDataTransaction.GetString(key));
+
+        if (savedProgress == null || !savedProgress.hasData)
+            return false;
+
+        level = Mathf.Max(0, savedProgress.level);
+        experience = Mathf.Max(0, savedProgress.experience);
+        return true;
+    }
+
+    private static bool HasSavedProgress(UnitData unitData)
+    {
+        return TryLoadProgress(unitData, out _, out _);
+    }
+
+    private static void SaveProgress(UnitData unitData, State state)
+    {
+        if (unitData == null || state == null)
+            return;
+
+        SavedProgress savedProgress = new SavedProgress
+        {
+            hasData = true,
+            level = state.level,
+            experience = state.experience
+        };
+
+        SaveDataTransaction.SetString(
+            GetPlayerPrefsKey(unitData),
+            JsonUtility.ToJson(savedProgress));
+        unitsWithSavedProgress.Add(unitData);
+        SaveDataTransaction.Save();
+    }
+
+    private static string GetPlayerPrefsKey(UnitData unitData)
+    {
+        return PlayerPrefsPrefix + unitData.name.Trim();
     }
 
     private static void EnsureScaledStats(UnitData unitData, State state)
@@ -1092,8 +1219,14 @@ public static class UnitRuntimeState
         return unitData != null ? Mathf.Max(0, unitData.level) : 0;
     }
 
+    private static int GetCurrentLevel(UnitData unitData)
+    {
+        return unitData != null ? GetOrCreate(unitData).level : 0;
+    }
+
     public static void Clear()
     {
         states.Clear();
+        unitsWithSavedProgress.Clear();
     }
 }

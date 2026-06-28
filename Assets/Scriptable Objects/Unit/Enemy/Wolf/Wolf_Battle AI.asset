@@ -13,11 +13,13 @@ MonoBehaviour:
   m_Name: Wolf_Battle AI
   m_EditorClassIdentifier: Assembly-CSharp::BattleAIProfile
   thinkDelay: 0.5
-  attackWeight: 3.05
-  defendWeight: 0
+  attackWeight: 6.4
+  skillWeight: 4.03
+  itemWeight: 0
+  defendWeight: 2.33
   passWeight: 0
   targetMode: 1
-  canFlee: 1
+  canFlee: 0
   fleeHpPercentThreshold: 0.3
   fleeLevelGapThreshold: 2
   baseFleeChance: 0.5

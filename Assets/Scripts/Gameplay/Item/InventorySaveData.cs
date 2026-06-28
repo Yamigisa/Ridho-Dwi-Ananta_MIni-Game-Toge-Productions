@@ -113,7 +113,7 @@ public class InventorySaveData : MonoBehaviour
                     continue;
                 }
 
-                inventory.PickUpItem(itemData, savedItem.amount);
+                inventory.RestoreItem(itemData, savedItem.amount);
             }
         }
         finally

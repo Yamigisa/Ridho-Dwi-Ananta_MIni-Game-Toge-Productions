@@ -2757,11 +2757,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   version: 1
-  scrollPos: {x: 879.3836, y: -37.399845}
+  scrollPos: {x: 775.71295, y: 4.9353013}
   variablesScrollPos: {x: 0, y: 0}
   variablesExpanded: 1
   blockViewHeight: 400
-  zoom: 0.6100003
+  zoom: 0.67000026
   scrollViewRect:
     serializedVersion: 2
     x: -343
@@ -2769,8 +2769,9 @@ MonoBehaviour:
     width: 1114
     height: 859
   selectedBlocks:
-  - {fileID: 7506475064496895193}
-  selectedCommands: []
+  - {fileID: 4965534448897114649}
+  selectedCommands:
+  - {fileID: 2106475721656457142}
   variables:
   - {fileID: 606303563600329058}
   description: 
@@ -2924,7 +2925,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Fungus::Fungus.Say
   itemId: 8
   indentLevel: 0
-  storyText: I'm NPC 1. Glad to meet you
+  storyText: I'm Josh. Glad to meet you
   description: 
   character: {fileID: 3001718634143410893}
   portrait: {fileID: -422712755, guid: ace4fa4b18255eb4590d7954a34565f1, type: 3}
@@ -3832,7 +3833,7 @@ MonoBehaviour:
   storyText: Aw man, c'mon. Help a buddy out here
   description: 
   character: {fileID: 0}
-  portrait: {fileID: 0}
+  portrait: {fileID: -422712755, guid: ace4fa4b18255eb4590d7954a34565f1, type: 3}
   voiceOverClip: {fileID: 0}
   showAlways: 1
   showCount: 1
@@ -4238,11 +4239,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3129208481565427032, guid: 052d74503d279f041ab8fd0c009c9a6d, type: 3}
       propertyPath: m_Name
-      value: NPC 1
+      value: Josh
+      objectReference: {fileID: 0}
+    - target: {fileID: 5362235190764430812, guid: 052d74503d279f041ab8fd0c009c9a6d, type: 3}
+      propertyPath: dialogueBlockName
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 5849443596723853111, guid: 052d74503d279f041ab8fd0c009c9a6d, type: 3}
       propertyPath: dialogueOptions.Array.size
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7349980547350759612, guid: 052d74503d279f041ab8fd0c009c9a6d, type: 3}
+      propertyPath: saveID
+      value: Josh
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

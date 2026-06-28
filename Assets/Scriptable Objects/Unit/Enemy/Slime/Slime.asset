@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Slime
   m_EditorClassIdentifier: Assembly-CSharp::UnitData
   unitName: Slime
-  level: 0
-  icon: {fileID: 21300000, guid: 888feb4a32e3b564fb7e6f9b28cc8e10, type: 3}
+  level: 1
+  icon: {fileID: -1725194681, guid: cd9e416f63daa0b4dbf8b704b5c5cf65, type: 3}
   battleData: {fileID: 11400000, guid: fdcc0bb61047d0747a39ecd1f73a92d1, type: 2}
   explorationData: {fileID: 11400000, guid: 47cd7922c1104b64ea8fa027318140fd, type: 2}
   battleAIProfile: {fileID: 11400000, guid: 5994b0c0122d7ec4e818454cbea0f2c9, type: 2}

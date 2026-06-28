@@ -39,10 +39,10 @@ public class SceneLoadInteraction : Interactable
 
         SceneTransitionState.SetDestination(destinationInteractionId);
 
-        if (NewTimelineManager.Instance != null &&
-            NewTimelineManager.IsAnyCutscenePlaying)
+        if (TimelineManager.Instance != null &&
+            TimelineManager.IsAnyCutscenePlaying)
         {
-            NewTimelineManager.Instance.CompleteTimeline();
+            TimelineManager.Instance.CompleteTimeline();
         }
 
         SceneManager.LoadScene(sceneName);

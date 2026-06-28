@@ -67,8 +67,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: x 1
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 719a2cd1b556003479b2f4a28069604d, type: 2}
+  m_sharedMaterial: {fileID: -2015261379666619483, guid: 719a2cd1b556003479b2f4a28069604d, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -204,8 +204,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Item Name
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 719a2cd1b556003479b2f4a28069604d, type: 2}
+  m_sharedMaterial: {fileID: -2015261379666619483, guid: 719a2cd1b556003479b2f4a28069604d, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -397,6 +397,7 @@ MonoBehaviour:
   itemNameText: {fileID: 3239352642182665328}
   itemAmountText: {fileID: 3248219054001786305}
   itemBarButton: {fileID: 6770151360621945641}
+  selectedColorMultiplier: 0.7
 --- !u!114 &6770151360621945641
 MonoBehaviour:
   m_ObjectHideFlags: 0

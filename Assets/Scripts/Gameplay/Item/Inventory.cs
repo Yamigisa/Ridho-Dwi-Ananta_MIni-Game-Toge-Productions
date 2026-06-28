@@ -98,8 +98,23 @@ public class Inventory : MonoBehaviour
 
     public void PickUpItem(ItemData itemData, int amount = 1)
     {
+        AddItem(itemData, amount, true);
+    }
+
+    public bool TryPickUpItem(ItemData itemData, int amount = 1)
+    {
+        return AddItem(itemData, amount, true);
+    }
+
+    internal void RestoreItem(ItemData itemData, int amount)
+    {
+        AddItem(itemData, amount, false);
+    }
+
+    private bool AddItem(ItemData itemData, int amount, bool playSFX)
+    {
         if (itemData == null || amount <= 0)
-            return;
+            return false;
 
         InventoryItem inventoryItem = FindItem(itemData);
         if (inventoryItem == null)
@@ -115,6 +130,11 @@ public class Inventory : MonoBehaviour
         }
 
         InventoryChanged?.Invoke();
+
+        if (playSFX)
+            AudioManager.Instance?.PlaySFX(SFXName.PickupItem);
+
+        return true;
     }
 
     public void RemoveItem(ItemData itemData, int amount = 1)

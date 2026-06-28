@@ -24,4 +24,8 @@ MonoBehaviour:
   baseExpToNextLevel: 3
   expDropAfterDefeat: 100
   itemDrops: []
+  attackSFX: {fileID: 8300000, guid: d730f90569bbf3b4fa8358181a11e146, type: 3}
+  defendSFX: {fileID: 8300000, guid: 6da81aa17747b8440acd696e1f3d5f44, type: 3}
+  passSFX: {fileID: 8300000, guid: f5f2513403bf4764a9780839ef81b4d4, type: 3}
+  fleeSFX: {fileID: 8300000, guid: 3a019c8d0e84f3b4d83fc8657b973874, type: 3}
   battleAnimator: {fileID: 9100000, guid: c6c6ae237b57eb44680e3f95f4f6e0cd, type: 2}

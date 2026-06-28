@@ -19,7 +19,9 @@ public class ItemWorld : MonoBehaviour
         if (itemData == null || Inventory.Instance == null)
             return;
 
-        Inventory.Instance.PickUpItem(itemData, itemAmount);
+        if (!Inventory.Instance.TryPickUpItem(itemData, itemAmount))
+            return;
+
         OnPickedUp?.Invoke();
         ItemWorldPickupEvents.RaisePickedUp(this);
 

@@ -15,9 +15,10 @@ MonoBehaviour:
   skillName: Mega Energize
   description: Restore MP to all allies
   icon: {fileID: 151494926, guid: 0d71d356fc93a77478aaec5ccbf125e0, type: 3}
+  audioClip: {fileID: 0}
   hpCost: 0
   mpCost: 1
-  targetType: 1
+  targetType: 2
   effects:
   - effectType: 2
     recipient: 0

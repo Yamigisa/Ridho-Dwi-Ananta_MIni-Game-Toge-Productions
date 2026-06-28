@@ -44,8 +44,11 @@ public class GameManager : MonoBehaviour
     [SerializeField, HideInInspector] private string resetGameScenePath;
 
     private bool isGamePaused = false;
+    private bool isGameOver;
+    private int lastPauseRequestFrame = -1;
 
     public static GameManager Instance { get; private set; }
+    public bool IsGamePaused => isGamePaused;
 
     private void Awake()
     {
@@ -62,6 +65,7 @@ public class GameManager : MonoBehaviour
 
     private void OnEnable()
     {
+        PlayerInput.PauseRequested += HandlePauseRequested;
         resumeButton.onClick.AddListener(TogglePause);
         settingsButton.onClick.AddListener(OpenSettings);
         menuButton.onClick.AddListener(Menu);
@@ -77,6 +81,7 @@ public class GameManager : MonoBehaviour
 
     private void OnDisable()
     {
+        PlayerInput.PauseRequested -= HandlePauseRequested;
         resumeButton.onClick.RemoveListener(TogglePause);
         settingsButton.onClick.RemoveListener(OpenSettings);
         menuButton.onClick.RemoveListener(Menu);
@@ -90,11 +95,16 @@ public class GameManager : MonoBehaviour
 
     public void TogglePause()
     {
+        if (isGameOver)
+            return;
+
         isGamePaused = !isGamePaused;
 
         gameText.text = "PAUSED";
 
         gamePanel.SetActive(isGamePaused);
+        if (!isGamePaused)
+            settingPanel.SetActive(false);
 
         resumeButton.gameObject.SetActive(true);
         settingsButton.gameObject.SetActive(true);
@@ -103,10 +113,20 @@ public class GameManager : MonoBehaviour
         Time.timeScale = isGamePaused ? 0f : 1f;
     }
 
+    private void HandlePauseRequested()
+    {
+        if (lastPauseRequestFrame == Time.frameCount)
+            return;
+
+        lastPauseRequestFrame = Time.frameCount;
+        TogglePause();
+    }
+
     public void GameOver()
     {
         Time.timeScale = 0f;
         isGamePaused = true;
+        isGameOver = true;
 
         gamePanel.SetActive(true);
         settingPanel.SetActive(false);
@@ -167,6 +187,7 @@ public class GameManager : MonoBehaviour
     {
         Time.timeScale = 1f;
         isGamePaused = false;
+        isGameOver = false;
 
         gamePanel.SetActive(false);
         settingPanel.SetActive(false);

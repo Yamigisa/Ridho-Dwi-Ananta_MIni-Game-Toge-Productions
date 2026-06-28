@@ -27,4 +27,8 @@ MonoBehaviour:
   - item: {fileID: 11400000, guid: 90902ff8afd7bf442abac47f914cb270, type: 2}
     amount: 1
     dropChance: 1
+  attackSFX: {fileID: 8300000, guid: d730f90569bbf3b4fa8358181a11e146, type: 3}
+  defendSFX: {fileID: 8300000, guid: 6da81aa17747b8440acd696e1f3d5f44, type: 3}
+  passSFX: {fileID: 8300000, guid: f5f2513403bf4764a9780839ef81b4d4, type: 3}
+  fleeSFX: {fileID: 8300000, guid: 3a019c8d0e84f3b4d83fc8657b973874, type: 3}
   battleAnimator: {fileID: 9100000, guid: 5e4bc9d04c45c454c8a78c6321853433, type: 2}

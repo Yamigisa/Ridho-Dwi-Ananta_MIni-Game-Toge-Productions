@@ -292,6 +292,8 @@ public class BattleManager : MonoBehaviour
 
         if (success)
         {
+            AudioManager.Instance?.PlaySFX(actingUnit.GetUnitBattleData()?.FleeSFX);
+
             yield return DialogueManager.Instance.ShowFormattedPopupAndWait(
                 DialogueManager.Instance.Messages.unitFleeSuccess,
                 ("unit", actingUnit.name)
@@ -311,6 +313,7 @@ public class BattleManager : MonoBehaviour
             if (enemyBattleUnits.Count == 0)
             {
                 currentState = BattleState.Win;
+                AudioManager.Instance?.PlaySFX(SFXName.BattleWin);
                 yield return DialogueManager.Instance.ShowPopupAndWait(DialogueManager.Instance.Messages.victory);
                 DialogueManager.Instance.EndPopupSequence();
                 BattleRelay.MarkCurrentEncounterDefeated();
@@ -394,6 +397,7 @@ public class BattleManager : MonoBehaviour
             ("target", targetName)
         );
 
+        AudioManager.Instance?.PlaySFX(attacker.GetUnitBattleData()?.AttackSFX);
         attacker.PlayAttack();
         yield return new WaitForSeconds(0.5f);
 
@@ -428,6 +432,7 @@ public class BattleManager : MonoBehaviour
             if (enemyBattleUnits.Count == 0)
             {
                 currentState = BattleState.Win;
+                AudioManager.Instance?.PlaySFX(SFXName.BattleWin);
                 yield return DialogueManager.Instance.ShowPopupAndWait(DialogueManager.Instance.Messages.victory);
                 yield return AwardVictoryExperience();
                 yield return AwardVictoryItemDrops();
@@ -752,6 +757,7 @@ public class BattleManager : MonoBehaviour
         ItemData usedItem = itemBeingUsed;
         StopPlayerItemTargeting();
         Inventory.Instance.RemoveItem(usedItem, 1);
+        AudioManager.Instance?.PlaySFX(SFXName.UseItem);
         Inventory.Instance.ClearItemSelection();
         StartCoroutine(CompletePlayerItemUse(target, usedItem));
     }
@@ -1030,6 +1036,7 @@ public class BattleManager : MonoBehaviour
         isExecutingSkill = true;
         UnitBattle caster = currentActingUnit;
         caster.PaySkillCost(skill);
+        AudioManager.Instance?.PlaySFX(skill.AudioClip);
 
         yield return DialogueManager.Instance.ShowFormattedPopupAndWait(
             DialogueManager.Instance.Messages.unitSkill,
@@ -1367,6 +1374,7 @@ public class BattleManager : MonoBehaviour
         else if (enemyBattleUnits.Count == 0)
         {
             currentState = BattleState.Win;
+            AudioManager.Instance?.PlaySFX(SFXName.BattleWin);
             yield return DialogueManager.Instance.ShowPopupAndWait(
                 DialogueManager.Instance.Messages.victory);
             yield return AwardVictoryExperience();
@@ -1379,6 +1387,7 @@ public class BattleManager : MonoBehaviour
     private IEnumerator ShowGameOverAndReturnToMainMenu()
     {
         currentState = BattleState.Lose;
+        AudioManager.Instance?.PlaySFX(SFXName.GameOver);
         battleHUD.HideActionMenu();
         battleHUD.HideCancelButton();
 
@@ -1549,6 +1558,7 @@ public class BattleManager : MonoBehaviour
     private IEnumerator ExecutePassSequence(UnitBattle actingUnit)
     {
         string unitName = actingUnit != null ? actingUnit.name : "Unit";
+        AudioManager.Instance?.PlaySFX(actingUnit?.GetUnitBattleData()?.PassSFX);
         int recoveredHP = actingUnit != null ? actingUnit.RecoverHPPercent(0.1f) : 0;
         int recoveredMP = actingUnit != null ? actingUnit.RecoverMPPercent(0.1f) : 0;
 
@@ -1579,6 +1589,7 @@ public class BattleManager : MonoBehaviour
 
         if (actingUnit != null)
         {
+            AudioManager.Instance?.PlaySFX(actingUnit.GetUnitBattleData()?.DefendSFX);
             recoveredMP = actingUnit.RecoverMPPercent(0.2f);
             actingUnit.StartGuard();
         }
@@ -1604,10 +1615,11 @@ public class BattleManager : MonoBehaviour
 
         if (success)
         {
+            AudioManager.Instance?.PlaySFX(currentActingUnit?.GetUnitBattleData()?.FleeSFX);
             yield return DialogueManager.Instance.ShowPopupAndWait(DialogueManager.Instance.Messages.escapeSuccess);
 
             DialogueManager.Instance.EndPopupSequence();
-            BattleRelay.ClearCurrentEncounter();
+            BattleRelay.MarkCurrentEncounterDefeated();
             SceneManager.LoadScene("Gameplay");
         }
         else

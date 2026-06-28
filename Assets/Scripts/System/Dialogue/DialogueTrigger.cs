@@ -109,8 +109,8 @@ public class DialogueTrigger : MonoBehaviour
         }
 
         bool pausedThroughManager =
-            NewTimelineManager.Instance != null &&
-            NewTimelineManager.Instance.PauseTimeline();
+            TimelineManager.Instance != null &&
+            TimelineManager.Instance.PauseTimeline();
 
         if (!pausedThroughManager)
             playableDirector.Pause();
@@ -122,9 +122,9 @@ public class DialogueTrigger : MonoBehaviour
         finally
         {
             if (pausedThroughManager &&
-                NewTimelineManager.Instance != null)
+                TimelineManager.Instance != null)
             {
-                NewTimelineManager.Instance.ResumeTimeline();
+                TimelineManager.Instance.ResumeTimeline();
             }
             else if (playableDirector != null)
             {

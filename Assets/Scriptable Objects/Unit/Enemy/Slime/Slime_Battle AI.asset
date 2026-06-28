@@ -13,9 +13,11 @@ MonoBehaviour:
   m_Name: Slime_Battle AI
   m_EditorClassIdentifier: Assembly-CSharp::BattleAIProfile
   thinkDelay: 0.5
-  attackWeight: 3.05
-  defendWeight: 0
-  passWeight: 0
+  attackWeight: 2.29
+  skillWeight: 7.39
+  itemWeight: 0
+  defendWeight: 4.7
+  passWeight: 3.83
   targetMode: 1
   canFlee: 1
   fleeHpPercentThreshold: 0.3

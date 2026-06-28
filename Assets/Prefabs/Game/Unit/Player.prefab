@@ -556,6 +556,7 @@ MonoBehaviour:
   interactAction: {fileID: 1781555164194001046, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   inventoryAction: {fileID: -2273269577572825109, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   partyAction: {fileID: -5530284542499794646, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
+  pauseAction: {fileID: 6171790591282108967, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   sprintAction: {fileID: -7471211009204490832, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
 --- !u!114 &5055638607401977331
 MonoBehaviour:

@@ -12,8 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 15491dd6749ad5d46bd7644b540d26d4, type: 3}
   m_Name: Quest3
   m_EditorClassIdentifier: Assembly-CSharp::QuestSO
-  questId: Quest2
+  questId: Quest3
   displayName: Kill the last boss
+  description: Kill the wolf
   startAfterCutsceneId: 
   startAfterFlowchartBlockName: FinishedQuest2
   targetGameObject: {fileID: 0}
@@ -23,5 +24,5 @@ MonoBehaviour:
   requirementType: 1
   requiredItem: {fileID: 0}
   requiredItemAmount: 1
-  requiredMonster: {fileID: 11400000, guid: c5bc1c6215f1dda4f970023e2757da49, type: 2}
+  requiredMonster: {fileID: 11400000, guid: fe5421879e675e046a17607e2a97b192, type: 2}
   requiredMonsterAmount: 1

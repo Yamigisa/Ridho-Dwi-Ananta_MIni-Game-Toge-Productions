@@ -64,7 +64,7 @@ public class QuestManager : MonoBehaviour
     private void OnEnable()
     {
         SceneManager.sceneLoaded += HandleSceneLoaded;
-        NewTimelineManager.CutsceneFinished += HandleCutsceneFinished;
+        TimelineManager.CutsceneFinished += HandleCutsceneFinished;
         BlockSignals.OnBlockEnd += HandleFlowchartBlockFinished;
         BattleRelay.UnitDefeated += HandleUnitDefeated;
     }
@@ -72,7 +72,7 @@ public class QuestManager : MonoBehaviour
     private void OnDisable()
     {
         SceneManager.sceneLoaded -= HandleSceneLoaded;
-        NewTimelineManager.CutsceneFinished -= HandleCutsceneFinished;
+        TimelineManager.CutsceneFinished -= HandleCutsceneFinished;
         BlockSignals.OnBlockEnd -= HandleFlowchartBlockFinished;
         BattleRelay.UnitDefeated -= HandleUnitDefeated;
         UnsubscribeInventoryEvents();
@@ -574,28 +574,28 @@ public class QuestManager : MonoBehaviour
         switch (quest.requirementType)
         {
             case QuestSO.RequirementType.GetItem:
-            {
-                string itemName =
-                    quest.requiredItem != null &&
-                    !string.IsNullOrWhiteSpace(
-                        quest.requiredItem.ItemName)
-                        ? quest.requiredItem.ItemName
-                        : "item";
+                {
+                    string itemName =
+                        quest.requiredItem != null &&
+                        !string.IsNullOrWhiteSpace(
+                            quest.requiredItem.ItemName)
+                            ? quest.requiredItem.ItemName
+                            : "item";
 
-                return $"Get {requiredAmount} {itemName} {progressText}";
-            }
+                    return $"Get {requiredAmount} {itemName} {progressText}";
+                }
 
             case QuestSO.RequirementType.KillMonster:
-            {
-                string monsterName =
-                    quest.requiredMonster != null &&
-                    !string.IsNullOrWhiteSpace(
-                        quest.requiredMonster.unitName)
-                        ? quest.requiredMonster.unitName
-                        : "enemy";
+                {
+                    string monsterName =
+                        quest.requiredMonster != null &&
+                        !string.IsNullOrWhiteSpace(
+                            quest.requiredMonster.unitName)
+                            ? quest.requiredMonster.unitName
+                            : "enemy";
 
-                return $"Kill {requiredAmount} {monsterName} {progressText}";
-            }
+                    return $"Kill {requiredAmount} {monsterName} {progressText}";
+                }
 
             default:
                 return string.Empty;

@@ -13,8 +13,10 @@ MonoBehaviour:
   m_Name: Goblin_Battle AI
   m_EditorClassIdentifier: Assembly-CSharp::BattleAIProfile
   thinkDelay: 0.5
-  attackWeight: 3.05
-  defendWeight: 0
+  attackWeight: 7.59
+  skillWeight: 3.75
+  itemWeight: 0
+  defendWeight: 1.26
   passWeight: 0
   targetMode: 1
   canFlee: 1

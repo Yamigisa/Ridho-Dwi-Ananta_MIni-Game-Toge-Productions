@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class AudioManager : MonoBehaviour
 {
@@ -23,6 +25,9 @@ public class AudioManager : MonoBehaviour
     [SerializeField] private List<SoundData> musicList = new List<SoundData>();
     [SerializeField] private List<SoundData> sfxList = new List<SoundData>();
 
+    private readonly HashSet<Button> registeredButtons = new HashSet<Button>();
+    private string currentMusicName;
+
     public float MusicVolume { get; private set; } = 1f;
     public float SFXVolume { get; private set; } = 1f;
 
@@ -35,11 +40,34 @@ public class AudioManager : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
+            SceneManager.sceneLoaded += HandleSceneLoaded;
         }
         else
         {
             Destroy(gameObject);
         }
+    }
+
+    private void Start()
+    {
+        HandleSceneLoaded(SceneManager.GetActiveScene(), LoadSceneMode.Single);
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance != this)
+            return;
+
+        SceneManager.sceneLoaded -= HandleSceneLoaded;
+
+        foreach (Button button in registeredButtons)
+        {
+            if (button != null)
+                button.onClick.RemoveListener(PlayButtonClickSFX);
+        }
+
+        registeredButtons.Clear();
+        Instance = null;
     }
 
     public void PlayMusic(MusicName musicName)
@@ -52,6 +80,14 @@ public class AudioManager : MonoBehaviour
         PlaySFX(sfxName.ToString());
     }
 
+    public void PlaySFX(AudioClip clip)
+    {
+        if (clip == null || IsSFXMuted)
+            return;
+
+        sfxSource.PlayOneShot(clip, SFXVolume);
+    }
+
     public void PlayMusic(string musicName)
     {
         SoundData music = musicList.Find(x => x.name == musicName);
@@ -62,6 +98,10 @@ public class AudioManager : MonoBehaviour
             return;
         }
 
+        if (currentMusicName == musicName && musicSource.isPlaying)
+            return;
+
+        currentMusicName = musicName;
         musicSource.clip = music.clip;
         musicSource.loop = music.loop;
         musicSource.volume = IsMusicMuted ? 0f : music.volume * MusicVolume;
@@ -116,5 +156,52 @@ public class AudioManager : MonoBehaviour
     public void ToggleSFXMute()
     {
         IsSFXMuted = !IsSFXMuted;
+    }
+
+    public void RegisterButton(Button button)
+    {
+        if (button == null || !registeredButtons.Add(button))
+            return;
+
+        button.onClick.AddListener(PlayButtonClickSFX);
+    }
+
+    private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        switch (scene.name)
+        {
+            case "Gameplay":
+            case "Main Menu":
+                PlayMusic(MusicName.Gameplay);
+                break;
+            case "Battle":
+                PlayMusic(MusicName.Battle);
+                break;
+            case "Interior":
+                PlayMusic(MusicName.Interior);
+                break;
+        }
+
+        RegisterSceneButtons();
+    }
+
+    private void RegisterSceneButtons()
+    {
+        registeredButtons.RemoveWhere(button => button == null);
+
+        Button[] buttons = FindObjectsByType<Button>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None);
+
+        foreach (Button button in buttons)
+            RegisterButton(button);
+    }
+
+    private void PlayButtonClickSFX()
+    {
+        if (SceneManager.GetActiveScene().name == "Battle")
+            return;
+
+        PlaySFX(SFXName.Click);
     }
 }

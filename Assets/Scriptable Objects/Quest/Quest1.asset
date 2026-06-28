@@ -15,8 +15,8 @@ MonoBehaviour:
   questId: Quest1
   displayName: Get healing potion
   description: Get the healing potion from a nearby table
-  startAfterCutsceneId: House1
-  startAfterFlowchartBlockName: 
+  startAfterCutsceneId: 
+  startAfterFlowchartBlockName: PlayerIntroduction1
   targetGameObject: {fileID: 3129208481565427032, guid: 052d74503d279f041ab8fd0c009c9a6d, type: 3}
   dialogueOptions:
   - stage: 1
