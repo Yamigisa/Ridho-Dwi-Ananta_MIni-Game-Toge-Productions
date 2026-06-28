@@ -101,9 +101,6 @@ public class DialogueTrigger : MonoBehaviour
     {
         if (playableDirector == null)
         {
-            Debug.LogWarning(
-                "DialogueTrigger requires a PlayableDirector on the same GameObject."
-            );
             dialogueTimelineRoutine = null;
             yield break;
         }

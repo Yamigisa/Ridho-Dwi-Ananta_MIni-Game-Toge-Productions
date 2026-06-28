@@ -36,21 +36,13 @@ public class MainMenuManager : MonoBehaviour
     private void OnPlayClicked()
     {
         if (string.IsNullOrEmpty(gameplayScenePath))
-        {
-            Debug.LogError("Gameplay Scene belum dipilih di MainMenuManager.");
             return;
-        }
 
         int sceneBuildIndex =
             SceneUtility.GetBuildIndexByScenePath(gameplayScenePath);
 
         if (sceneBuildIndex < 0)
-        {
-            Debug.LogError(
-                $"Scene '{gameplayScenePath}' belum dimasukkan ke Build Settings."
-            );
             return;
-        }
 
         SceneManager.LoadScene(sceneBuildIndex);
     }

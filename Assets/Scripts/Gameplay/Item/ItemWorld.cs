@@ -23,7 +23,6 @@ public class ItemWorld : MonoBehaviour
             return;
 
         OnPickedUp?.Invoke();
-        ItemWorldPickupEvents.RaisePickedUp(this);
 
         if (DialogueManager.Instance != null &&
             DialogueManager.Instance.Messages != null)

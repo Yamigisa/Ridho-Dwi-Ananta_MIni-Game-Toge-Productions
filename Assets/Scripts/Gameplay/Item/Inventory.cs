@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
+[DisallowMultipleComponent]
 public class Inventory : MonoBehaviour
 {
     [Header("Inventory Panel")]
@@ -22,6 +23,12 @@ public class Inventory : MonoBehaviour
     public event Action InventoryChanged;
     public IReadOnlyList<InventoryItem> Items => items;
     public bool IsOpen => itemPanel != null && itemPanel.activeSelf;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetStatics()
+    {
+        Instance = null;
+    }
 
     private void Awake()
     {
@@ -46,7 +53,7 @@ public class Inventory : MonoBehaviour
 
     private void Update()
     {
-        if (IsOpen && DialogueManager.IsGameplayInputLocked)
+        if (IsOpen && GameplayState.BlocksPlayerInput)
             CloseItemPanel();
     }
 

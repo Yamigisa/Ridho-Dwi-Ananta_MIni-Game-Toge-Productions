@@ -16,13 +16,7 @@ public class PlayerInteractor : MonoBehaviour
     private void Awake()
     {
         if (promptText == null)
-        {
-            Debug.LogWarning(
-                "PlayerInteractor has no interaction prompt text assigned.",
-                this
-            );
             return;
-        }
 
         HidePrompt();
     }
@@ -101,6 +95,6 @@ public class PlayerInteractor : MonoBehaviour
 
     private bool IsInteractionLocked()
     {
-        return DialogueManager.IsGameplayInputLocked;
+        return GameplayState.BlocksPlayerInput;
     }
 }

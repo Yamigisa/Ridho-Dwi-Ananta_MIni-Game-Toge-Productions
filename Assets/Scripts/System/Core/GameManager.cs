@@ -7,6 +7,7 @@ using UnityEngine.UI;
 using UnityEditor;
 #endif
 
+[DisallowMultipleComponent]
 public class GameManager : MonoBehaviour
 {
     [Header("Panel & Text Field")]
@@ -38,10 +39,8 @@ public class GameManager : MonoBehaviour
     [Header("Scene Navigation")]
 #if UNITY_EDITOR
     [SerializeField] private SceneAsset menuScene;
-    [SerializeField] private SceneAsset resetGameScene;
 #endif
     [SerializeField, HideInInspector] private string menuScenePath;
-    [SerializeField, HideInInspector] private string resetGameScenePath;
 
     private bool isGamePaused = false;
     private bool isGameOver;
@@ -49,6 +48,12 @@ public class GameManager : MonoBehaviour
 
     public static GameManager Instance { get; private set; }
     public bool IsGamePaused => isGamePaused;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetStatics()
+    {
+        Instance = null;
+    }
 
     private void Awake()
     {
@@ -65,7 +70,7 @@ public class GameManager : MonoBehaviour
 
     private void OnEnable()
     {
-        PlayerInput.PauseRequested += HandlePauseRequested;
+        GameInputEvents.PauseRequested += HandlePauseRequested;
         resumeButton.onClick.AddListener(TogglePause);
         settingsButton.onClick.AddListener(OpenSettings);
         menuButton.onClick.AddListener(Menu);
@@ -81,7 +86,7 @@ public class GameManager : MonoBehaviour
 
     private void OnDisable()
     {
-        PlayerInput.PauseRequested -= HandlePauseRequested;
+        GameInputEvents.PauseRequested -= HandlePauseRequested;
         resumeButton.onClick.RemoveListener(TogglePause);
         settingsButton.onClick.RemoveListener(OpenSettings);
         menuButton.onClick.RemoveListener(Menu);
@@ -91,6 +96,12 @@ public class GameManager : MonoBehaviour
         sfxSlider.onValueChanged.RemoveListener(OnSFXSliderChanged);
         toggleMusicButton.onClick.RemoveListener(OnToggleMusic);
         toggleSFXButton.onClick.RemoveListener(OnToggleSFX);
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+            Instance = null;
     }
 
     public void TogglePause()
@@ -192,29 +203,19 @@ public class GameManager : MonoBehaviour
         gamePanel.SetActive(false);
         settingPanel.SetActive(false);
 
-        LoadConfiguredScene(menuScenePath, "Menu");
+        LoadConfiguredScene(menuScenePath);
     }
 
-    private static void LoadConfiguredScene(
-        string scenePath,
-        string fieldName)
+    private static void LoadConfiguredScene(string scenePath)
     {
         if (string.IsNullOrWhiteSpace(scenePath))
-        {
-            Debug.LogError(
-                $"{fieldName} scene is not assigned on GameManager.");
             return;
-        }
 
         int sceneBuildIndex =
             SceneUtility.GetBuildIndexByScenePath(scenePath);
 
         if (sceneBuildIndex < 0)
-        {
-            Debug.LogError(
-                $"Scene '{scenePath}' is not included in Build Settings.");
             return;
-        }
 
         SceneManager.LoadScene(sceneBuildIndex);
     }
@@ -225,10 +226,31 @@ public class GameManager : MonoBehaviour
         menuScenePath = menuScene != null
             ? AssetDatabase.GetAssetPath(menuScene)
             : string.Empty;
-
-        resetGameScenePath = resetGameScene != null
-            ? AssetDatabase.GetAssetPath(resetGameScene)
-            : string.Empty;
     }
 #endif
+}
+
+/// <summary>
+/// Centralizes the application-level rules that temporarily block gameplay.
+/// Gameplay components depend on these rules instead of depending directly on
+/// the dialogue, timeline, or pause implementations that produce them.
+/// </summary>
+public static class GameplayState
+{
+    public static bool BlocksPlayerInput =>
+        DialogueManager.IsGameplayInputLocked ||
+        GameManager.Instance != null && GameManager.Instance.IsGamePaused;
+
+    public static bool BlocksWorldSimulation =>
+        DialogueManager.IsGameplayInputLocked ||
+        GameManager.Instance != null && GameManager.Instance.IsGamePaused;
+}
+
+public static class GameScenes
+{
+    public const string Initializer = "Initializer";
+    public const string MainMenu = "Main Menu";
+    public const string Gameplay = "Gameplay";
+    public const string Interior = "Interior";
+    public const string Battle = "Battle";
 }

@@ -2,8 +2,11 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 [RequireComponent(typeof(UnitBattleParty))]
+[DisallowMultipleComponent]
 public class UnitEncounter : MonoBehaviour
 {
+    [SerializeField] private string battleSceneName = GameScenes.Battle;
+
     private UnitBattleParty enemyBattleParty;
     private string encounterId;
 
@@ -27,10 +30,10 @@ public class UnitEncounter : MonoBehaviour
         UnitBattleParty playerParty = other.GetComponentInParent<UnitBattleParty>();
 
         if (playerParty == null)
-        {
-            Debug.LogWarning("No UnitBattleParty found on player!");
             return;
-        }
+
+        if (!Application.CanStreamedLevelBeLoaded(battleSceneName))
+            return;
 
         UnitSaveData playerSaveData =
             playerParty.GetComponent<UnitSaveData>();
@@ -42,7 +45,7 @@ public class UnitEncounter : MonoBehaviour
             encounterId,
             gameObject.scene.name,
             playerParty.transform.position);
-        SceneManager.LoadScene("Battle");
+        SceneManager.LoadScene(battleSceneName);
     }
 
     private string BuildEncounterId()

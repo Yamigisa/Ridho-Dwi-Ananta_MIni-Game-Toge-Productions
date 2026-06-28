@@ -9,9 +9,9 @@ public class InteriorSpawner : MonoBehaviour
     private class InteriorDefinition
     {
         [Tooltip("Must match the destination doorway's Interaction ID.")]
-        public string entranceId;
+        public string entranceId = string.Empty;
 
-        public GameObject prefab;
+        public GameObject prefab = null;
     }
 
     [SerializeField] private List<InteriorDefinition> interiors = new();
@@ -29,34 +29,16 @@ public class InteriorSpawner : MonoBehaviour
         DespawnInterior();
 
         if (string.IsNullOrWhiteSpace(entranceId))
-        {
-            Debug.LogWarning(
-                "InteriorSpawner received no entrance ID.",
-                this
-            );
             return;
-        }
 
         InteriorDefinition definition =
             interiors.FirstOrDefault(interior => interior.entranceId == entranceId);
 
         if (definition == null)
-        {
-            Debug.LogError(
-                $"InteriorSpawner has no interior registered for ID '{entranceId}'.",
-                this
-            );
             return;
-        }
 
         if (definition.prefab == null)
-        {
-            Debug.LogError(
-                $"Interior '{entranceId}' has no prefab assigned.",
-                this
-            );
             return;
-        }
 
         Transform parent = spawnParent != null ? spawnParent : transform;
         spawnedInterior = Instantiate(

@@ -49,23 +49,12 @@ public static class SceneTransitionState
                 );
 
         if (destination == null)
-        {
-            Debug.LogError(
-                $"Scene '{scene.name}' has no SceneLoadInteraction with ID " +
-                $"'{destinationInteractionId}'."
-            );
             yield break;
-        }
 
         GameObject player = GameObject.FindGameObjectWithTag("Player");
 
         if (player == null)
-        {
-            Debug.LogError(
-                $"Scene '{scene.name}' has no active GameObject tagged Player."
-            );
             yield break;
-        }
 
         player.transform.SetPositionAndRotation(
             destination.PlayerSpawnPosition,

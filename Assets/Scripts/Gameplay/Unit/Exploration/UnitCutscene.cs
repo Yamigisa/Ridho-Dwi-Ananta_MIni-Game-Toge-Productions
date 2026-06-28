@@ -94,10 +94,7 @@ public class UnitCutscene : MonoBehaviour
         parsedOffset = Vector2.zero;
 
         if (string.IsNullOrWhiteSpace(offset))
-        {
-            Debug.LogWarning("Movement offset cannot be empty.");
             return false;
-        }
 
         string[] values = offset.Split(',');
 
@@ -113,9 +110,6 @@ public class UnitCutscene : MonoBehaviour
                 CultureInfo.InvariantCulture,
                 out float y))
         {
-            Debug.LogWarning(
-                $"Invalid movement offset '{offset}'. Use the format x,y, for example 5,2."
-            );
             return false;
         }
 

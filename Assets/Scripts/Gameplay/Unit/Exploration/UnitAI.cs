@@ -1,6 +1,10 @@
 using UnityEngine;
 
-[RequireComponent(typeof(UnitMovement), typeof(BoxCollider2D))]
+[RequireComponent(
+    typeof(UnitMovement),
+    typeof(BoxCollider2D),
+    typeof(UnitExploration))]
+[DisallowMultipleComponent]
 public class UnitAI : MonoBehaviour
 {
     private UnitExploration unitExploration;
@@ -28,15 +32,15 @@ public class UnitAI : MonoBehaviour
     private void Start()
     {
         aiData = unitExploration.GetAIData();
-        if (aiData != null)
+        enabled = aiData != null;
+
+        if (enabled)
             Initialize(aiData);
     }
 
     private void Update()
     {
-        if (aiData == null) return;
-
-        if (DialogueManager.IsGameplayInputLocked)
+        if (GameplayState.BlocksWorldSimulation)
         {
             movement.Stop();
             return;
@@ -90,7 +94,7 @@ public class UnitAI : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (DialogueManager.IsGameplayInputLocked ||
+        if (GameplayState.BlocksWorldSimulation ||
             !other.CompareTag("Player"))
             return;
 
@@ -165,7 +169,7 @@ public class UnitAI : MonoBehaviour
 
     public void StartChasing(Transform target)
     {
-        if (DialogueManager.IsGameplayInputLocked)
+        if (GameplayState.BlocksWorldSimulation)
         {
             movement.Stop();
             return;

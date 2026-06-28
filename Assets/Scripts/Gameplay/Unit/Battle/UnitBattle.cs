@@ -277,7 +277,19 @@ public class UnitBattle : MonoBehaviour, IPointerClickHandler, IPointerEnterHand
         int duration,
         bool appliedDuringOwnTurn)
     {
-        amount = Mathf.Max(0, amount);
+        AddTemporaryStatModifier(
+            stat,
+            Mathf.Max(0, amount),
+            duration,
+            appliedDuringOwnTurn);
+    }
+
+    public void AddTemporaryStatModifier(
+        BattleStat stat,
+        int amount,
+        int duration,
+        bool appliedDuringOwnTurn)
+    {
         if (amount == 0)
             return;
 
@@ -602,7 +614,7 @@ public class UnitBattle : MonoBehaviour, IPointerClickHandler, IPointerEnterHand
 
     private void HandleSelectionClick()
     {
-        if (DialogueManager.IsGameplayInputLocked)
+        if (GameplayState.BlocksPlayerInput)
             return;
 
         if (IsTargetable)
@@ -611,7 +623,7 @@ public class UnitBattle : MonoBehaviour, IPointerClickHandler, IPointerEnterHand
 
     private void HandleHoverEntered()
     {
-        if (DialogueManager.IsGameplayInputLocked)
+        if (GameplayState.BlocksPlayerInput)
             return;
 
         if (IsTargetable)
@@ -620,7 +632,7 @@ public class UnitBattle : MonoBehaviour, IPointerClickHandler, IPointerEnterHand
 
     private void HandleHoverExited()
     {
-        if (DialogueManager.IsGameplayInputLocked)
+        if (GameplayState.BlocksPlayerInput)
             return;
 
         if (IsTargetable)

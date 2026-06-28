@@ -27,7 +27,7 @@ public class SkillUI : MonoBehaviour
     {
         if (skillUIPanel != null &&
             skillUIPanel.activeSelf &&
-            DialogueManager.IsGameplayInputLocked)
+            GameplayState.BlocksPlayerInput)
         {
             CloseSkillUI();
         }

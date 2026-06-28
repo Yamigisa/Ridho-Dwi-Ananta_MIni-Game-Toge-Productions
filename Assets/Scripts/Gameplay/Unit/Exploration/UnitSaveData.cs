@@ -98,6 +98,7 @@ public class UnitSaveData : MonoBehaviour
         string key = GetPlayerPrefsKey(saveID);
         if (!SaveDataTransaction.HasKey(key))
         {
+            unitData?.ClearAddedSkills();
             TryRestoreBattleReturnPosition();
             Save();
             return;
@@ -286,13 +287,7 @@ public class UnitSaveData : MonoBehaviour
         }
 
         if (restoredUnits.Count != savedData.partyUnitIds.Count)
-        {
-            Debug.LogWarning(
-                $"{name} could not resolve every saved party member. " +
-                "The current party was kept to prevent data loss.",
-                this);
             return;
-        }
 
         isRestoringParty = true;
 
@@ -338,6 +333,7 @@ public class UnitSaveData : MonoBehaviour
             state.speed = savedData.speed;
         }
 
+        unitData.ClearAddedSkills();
         SkillData[] loadedSkills = Resources.FindObjectsOfTypeAll<SkillData>();
         foreach (string skillName in savedData.addedSkillNames)
         {
@@ -392,7 +388,6 @@ public class UnitSaveData : MonoBehaviour
         if (!string.IsNullOrWhiteSpace(saveID))
             return true;
 
-        Debug.LogWarning($"{name} has no UnitSaveData Save ID.", this);
         return false;
     }
 

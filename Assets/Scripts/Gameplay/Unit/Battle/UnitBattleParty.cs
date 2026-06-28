@@ -68,10 +68,7 @@ public class UnitBattleParty : MonoBehaviour
         UnitBattleParty playerParty = GetPlayerParty();
 
         if (playerParty == null)
-        {
-            Debug.LogWarning("No active player UnitBattleParty found.");
             return;
-        }
 
         playerParty.AddUnit(unit);
     }

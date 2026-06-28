@@ -65,13 +65,7 @@ public class QuestSO : ScriptableObject
         UnitData targetUnitData = configuredUnit?.GetUnitData();
 
         if (targetUnitData == null)
-        {
-            Debug.LogWarning(
-                $"Quest '{questId}' target prefab '{targetGameObject.name}' has no UnitExploration with UnitData.",
-                this
-            );
             return null;
-        }
 
         UnitExploration[] runtimeUnits =
             FindObjectsByType<UnitExploration>(

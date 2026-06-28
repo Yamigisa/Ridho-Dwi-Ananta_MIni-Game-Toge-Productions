@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System;
 
+[DisallowMultipleComponent]
 public class DialogueManager : MonoBehaviour
 {
     [Header("Flowchart")]
@@ -34,6 +35,12 @@ public class DialogueManager : MonoBehaviour
     private float dialogueIdleTime;
     private readonly HashSet<Block> executingBlocks = new();
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetStatics()
+    {
+        Instance = null;
+    }
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -58,6 +65,12 @@ public class DialogueManager : MonoBehaviour
         SceneManager.sceneLoaded -= OnSceneLoaded;
         BlockSignals.OnBlockStart -= HandleBlockStarted;
         BlockSignals.OnBlockEnd -= HandleBlockEnded;
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+            Instance = null;
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -257,10 +270,7 @@ public class DialogueManager : MonoBehaviour
     private IEnumerator RunDialogueWhenReady(string blockName)
     {
         if (string.IsNullOrWhiteSpace(blockName))
-        {
-            Debug.LogWarning("Cannot play dialogue without a block name.");
             yield break;
-        }
 
         Flowchart targetFlowchart = null;
 
@@ -273,10 +283,7 @@ public class DialogueManager : MonoBehaviour
         }
 
         if (targetFlowchart == null)
-        {
-            Debug.LogWarning($"Block {blockName} does not exist.");
             yield break;
-        }
 
         flowchart = targetFlowchart;
         targetFlowchart.ExecuteBlock(blockName);
@@ -320,19 +327,7 @@ public class DialogueManager : MonoBehaviour
         popupFlowchart = null;
 
         if (flowcharts.Length == 0)
-        {
-            Debug.LogWarning("No Flowchart found for popup message.");
             return false;
-        }
-
-        foreach (Flowchart candidate in flowcharts)
-        {
-            if (!candidate.HasVariable(popupVariableName))
-                Debug.LogWarning($"{candidate.name} is missing variable {popupVariableName}.");
-
-            if (!candidate.HasBlock(popupBlockName))
-                Debug.LogWarning($"{candidate.name} is missing block {popupBlockName}.");
-        }
 
         return false;
     }

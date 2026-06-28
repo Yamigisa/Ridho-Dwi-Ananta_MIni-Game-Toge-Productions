@@ -33,12 +33,12 @@ public class Interactable : MonoBehaviour
         interactionCollider = GetComponent<BoxCollider2D>();
         ApplyColliderSettings();
         wasGameplayInputLocked =
-            DialogueManager.IsGameplayInputLocked;
+            GameplayState.BlocksPlayerInput;
     }
 
     private void Update()
     {
-        bool isLocked = DialogueManager.IsGameplayInputLocked;
+        bool isLocked = GameplayState.BlocksPlayerInput;
         if (isLocked == wasGameplayInputLocked)
             return;
 
@@ -63,7 +63,7 @@ public class Interactable : MonoBehaviour
             if (other.TryGetComponent<PlayerInteractor>(out var interactor))
                 interactor.OnEnterRange(this);
 
-            if (!DialogueManager.IsGameplayInputLocked)
+            if (!GameplayState.BlocksPlayerInput)
                 onPlayerEnterRange?.Invoke(other.gameObject);
         }
     }
@@ -84,7 +84,7 @@ public class Interactable : MonoBehaviour
     public virtual void Interact(GameObject interactor)
     {
         if (!canInteract ||
-            DialogueManager.IsGameplayInputLocked)
+            GameplayState.BlocksPlayerInput)
             return;
 
         onInteract?.Invoke(interactor);

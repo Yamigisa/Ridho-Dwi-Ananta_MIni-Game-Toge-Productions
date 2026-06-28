@@ -24,7 +24,15 @@ public class UnitData : ScriptableObject
 
     [Header("Skills")]
     [SerializeField] private List<SkillData> skills = new();
-    private readonly List<SkillData> addedSkills = new();
+
+    private static readonly Dictionary<UnitData, List<SkillData>>
+        runtimeSkills = new();
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetRuntimeSkills()
+    {
+        runtimeSkills.Clear();
+    }
 
     public IReadOnlyList<SkillData> Skills
     {
@@ -32,7 +40,7 @@ public class UnitData : ScriptableObject
         {
             List<SkillData> allSkills = new(skills);
 
-            foreach (SkillData skill in addedSkills)
+            foreach (SkillData skill in GetRuntimeSkills())
             {
                 if (skill != null && !allSkills.Contains(skill))
                     allSkills.Add(skill);
@@ -43,7 +51,7 @@ public class UnitData : ScriptableObject
         }
     }
 
-    public IReadOnlyList<SkillData> AddedSkills => addedSkills;
+    public IReadOnlyList<SkillData> AddedSkills => GetRuntimeSkills();
 
 #if UNITY_EDITOR
     private void OnValidate()
@@ -54,7 +62,10 @@ public class UnitData : ScriptableObject
 
     public bool AddSkill(SkillData skill)
     {
-        if (skill == null || skills.Contains(skill) || addedSkills.Contains(skill))
+        List<SkillData> addedSkills = GetRuntimeSkills();
+        if (skill == null ||
+            skills.Contains(skill) ||
+            addedSkills.Contains(skill))
             return false;
 
         addedSkills.Add(skill);
@@ -63,7 +74,23 @@ public class UnitData : ScriptableObject
 
     public bool RemoveAddedSkill(SkillData skill)
     {
-        return skill != null && addedSkills.Remove(skill);
+        return skill != null && GetRuntimeSkills().Remove(skill);
+    }
+
+    public void ClearAddedSkills()
+    {
+        runtimeSkills.Remove(this);
+    }
+
+    private List<SkillData> GetRuntimeSkills()
+    {
+        if (!runtimeSkills.TryGetValue(this, out List<SkillData> addedSkills))
+        {
+            addedSkills = new List<SkillData>();
+            runtimeSkills.Add(this, addedSkills);
+        }
+
+        return addedSkills;
     }
 
     private static void SortSkills(List<SkillData> skillList)

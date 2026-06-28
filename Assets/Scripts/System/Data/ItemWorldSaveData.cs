@@ -25,35 +25,15 @@ public class ItemWorldSaveData : MonoBehaviour
         EnsureLoaded();
 
         if (string.IsNullOrEmpty(itemInstanceId))
-        {
-            Debug.LogWarning(
-                $"{name} has no itemInstanceId set. Right-click the component header and choose 'Generate ID'.",
-                this
-            );
             return;
-        }
 
         if (pickedUpIds.Contains(itemInstanceId))
             Destroy(gameObject);
     }
 
-    private void OnEnable()
+    private void OnDestroy()
     {
-        if (itemWorld != null)
-            ItemWorldPickupEvents.OnAnyItemPickedUp += HandleAnyItemPickedUp;
-    }
-
-    private void OnDisable()
-    {
-        ItemWorldPickupEvents.OnAnyItemPickedUp -= HandleAnyItemPickedUp;
-    }
-
-    private void HandleAnyItemPickedUp(ItemWorld pickedUp)
-    {
-        if (pickedUp != itemWorld)
-            return;
-
-        MarkAsPickedUp();
+        itemWorld.OnPickedUp -= MarkAsPickedUp;
     }
 
     private void MarkAsPickedUp()
@@ -125,11 +105,4 @@ public class ItemWorldSaveData : MonoBehaviour
         UnityEditor.EditorUtility.SetDirty(this);
     }
 #endif
-}
-
-public static class ItemWorldPickupEvents
-{
-    public static event Action<ItemWorld> OnAnyItemPickedUp;
-
-    public static void RaisePickedUp(ItemWorld item) => OnAnyItemPickedUp?.Invoke(item);
 }

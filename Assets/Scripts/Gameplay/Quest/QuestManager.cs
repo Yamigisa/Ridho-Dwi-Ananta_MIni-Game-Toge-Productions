@@ -30,8 +30,6 @@ public class QuestManager : MonoBehaviour
     }
 
     private const string PlayerPrefsPrefix = "QuestManager.";
-    private const string GameplaySceneName = "Gameplay";
-
     [Header("Quests")]
     [SerializeField] private List<QuestSO> quests = new();
 
@@ -47,6 +45,12 @@ public class QuestManager : MonoBehaviour
 
     public static QuestManager Instance { get; private set; }
     public IReadOnlyList<QuestSO> Quests => quests;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetStatics()
+    {
+        Instance = null;
+    }
 
     private void Awake()
     {
@@ -373,7 +377,7 @@ public class QuestManager : MonoBehaviour
         RefreshQuestTracker();
         StartCoroutine(RebindAfterSceneLoad());
 
-        if (scene.name == GameplaySceneName)
+        if (scene.name == GameScenes.Gameplay)
             StartCoroutine(ResolveKillQuestsAfterGameplayLoad());
     }
 
@@ -465,8 +469,6 @@ public class QuestManager : MonoBehaviour
 
             if (DialogueManager.Instance == null)
             {
-                Debug.LogWarning(
-                    $"Quest '{quest.questId}' finished, but its dialogue could not play because DialogueManager is unavailable.");
                 displayedCompletionQuest = null;
                 RefreshQuestTracker();
                 continue;
@@ -605,9 +607,9 @@ public class QuestManager : MonoBehaviour
     private static bool IsQuestTrackerAllowedInCurrentScene()
     {
         string sceneName = SceneManager.GetActiveScene().name;
-        return sceneName != "Battle" &&
-               sceneName != "Main Menu" &&
-               sceneName != "Initializer";
+        return sceneName != GameScenes.Battle &&
+               sceneName != GameScenes.MainMenu &&
+               sceneName != GameScenes.Initializer;
     }
 
     private void EnsureQuestTrackerUI()
@@ -711,12 +713,7 @@ public class QuestManager : MonoBehaviour
     private static bool ValidateQuest(QuestSO quest)
     {
         if (quest == null || string.IsNullOrWhiteSpace(quest.questId))
-        {
-            Debug.LogWarning(
-                "QuestManager contains a quest without an ID."
-            );
             return false;
-        }
 
         return quest.requirementType == QuestSO.RequirementType.GetItem
             ? quest.requiredItem != null

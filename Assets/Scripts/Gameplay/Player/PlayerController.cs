@@ -1,16 +1,23 @@
+using System;
 using UnityEngine;
 
-[RequireComponent(typeof(PlayerInput), typeof(UnitMovement), typeof(PlayerInteractor))]
+[RequireComponent(typeof(UnitMovement), typeof(PlayerInteractor))]
+[DisallowMultipleComponent]
 public class PlayerController : MonoBehaviour
 {
-    private PlayerInput input;
+    [SerializeField, Tooltip(
+        "Optional component implementing IPlayerInputSource. " +
+        "When empty, one is discovered on this GameObject.")]
+    private MonoBehaviour inputSource;
+
+    private IPlayerInputSource input;
     private UnitMovement movement;
     private PlayerInteractor interactor;
     private UnitPartyUI unitPartyUI;
 
     private void Awake()
     {
-        input = GetComponent<PlayerInput>();
+        input = ResolveInputSource();
         movement = GetComponent<UnitMovement>();
         interactor = GetComponent<PlayerInteractor>();
         unitPartyUI = FindFirstObjectByType<UnitPartyUI>(FindObjectsInactive.Include);
@@ -53,7 +60,7 @@ public class PlayerController : MonoBehaviour
 
     private bool GameplayInputIsLocked()
     {
-        return DialogueManager.IsGameplayInputLocked;
+        return GameplayState.BlocksPlayerInput;
     }
 
     private bool MenuIsOpen()
@@ -98,6 +105,22 @@ public class PlayerController : MonoBehaviour
             unitPartyUI = FindFirstObjectByType<UnitPartyUI>(FindObjectsInactive.Include);
 
         return unitPartyUI;
+    }
+
+    private IPlayerInputSource ResolveInputSource()
+    {
+        if (inputSource is IPlayerInputSource configuredInput)
+            return configuredInput;
+
+        foreach (MonoBehaviour behaviour in GetComponents<MonoBehaviour>())
+        {
+            if (behaviour is IPlayerInputSource discoveredInput)
+                return discoveredInput;
+        }
+
+        throw new InvalidOperationException(
+            $"{name} requires a component implementing " +
+            $"{nameof(IPlayerInputSource)}.");
     }
 
     private void OnDisable()

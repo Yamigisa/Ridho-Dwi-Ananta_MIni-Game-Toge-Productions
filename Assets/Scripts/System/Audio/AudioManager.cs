@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
+[DisallowMultipleComponent]
 public class AudioManager : MonoBehaviour
 {
     public static AudioManager Instance { get; private set; }
@@ -26,7 +27,13 @@ public class AudioManager : MonoBehaviour
     [SerializeField] private List<SoundData> sfxList = new List<SoundData>();
 
     private readonly HashSet<Button> registeredButtons = new HashSet<Button>();
+    private readonly Dictionary<string, SoundData> musicByName =
+        new Dictionary<string, SoundData>(StringComparer.Ordinal);
+    private readonly Dictionary<string, SoundData> sfxByName =
+        new Dictionary<string, SoundData>(StringComparer.Ordinal);
+
     private string currentMusicName;
+    private SoundData currentMusic;
 
     public float MusicVolume { get; private set; } = 1f;
     public float SFXVolume { get; private set; } = 1f;
@@ -34,11 +41,19 @@ public class AudioManager : MonoBehaviour
     public bool IsMusicMuted { get; private set; }
     public bool IsSFXMuted { get; private set; }
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetStatics()
+    {
+        Instance = null;
+    }
+
     private void Awake()
     {
         if (Instance == null)
         {
             Instance = this;
+            BuildSoundLookup(musicList, musicByName);
+            BuildSoundLookup(sfxList, sfxByName);
             DontDestroyOnLoad(gameObject);
             SceneManager.sceneLoaded += HandleSceneLoaded;
         }
@@ -90,21 +105,18 @@ public class AudioManager : MonoBehaviour
 
     public void PlayMusic(string musicName)
     {
-        SoundData music = musicList.Find(x => x.name == musicName);
-
-        if (music == null || music.clip == null)
-        {
-            Debug.LogWarning($"Music '{musicName}' not found.");
+        if (!musicByName.TryGetValue(musicName, out SoundData music) ||
+            music.clip == null)
             return;
-        }
 
         if (currentMusicName == musicName && musicSource.isPlaying)
             return;
 
         currentMusicName = musicName;
+        currentMusic = music;
         musicSource.clip = music.clip;
         musicSource.loop = music.loop;
-        musicSource.volume = IsMusicMuted ? 0f : music.volume * MusicVolume;
+        ApplyMusicVolume();
         musicSource.Play();
     }
 
@@ -115,13 +127,9 @@ public class AudioManager : MonoBehaviour
 
     public void PlaySFX(string sfxName)
     {
-        SoundData sfx = sfxList.Find(x => x.name == sfxName);
-
-        if (sfx == null || sfx.clip == null)
-        {
-            Debug.LogWarning($"SFX '{sfxName}' not found.");
+        if (!sfxByName.TryGetValue(sfxName, out SoundData sfx) ||
+            sfx.clip == null)
             return;
-        }
 
         if (IsSFXMuted) return;
 
@@ -130,27 +138,19 @@ public class AudioManager : MonoBehaviour
 
     public void SetMusicVolume(float value)
     {
-        MusicVolume = value;
-
-        if (musicSource != null && musicSource.clip != null)
-        {
-            musicSource.volume = IsMusicMuted ? 0f : MusicVolume;
-        }
+        MusicVolume = Mathf.Clamp01(value);
+        ApplyMusicVolume();
     }
 
     public void SetSFXVolume(float value)
     {
-        SFXVolume = value;
+        SFXVolume = Mathf.Clamp01(value);
     }
 
     public void ToggleMusicMute()
     {
         IsMusicMuted = !IsMusicMuted;
-
-        if (musicSource != null)
-        {
-            musicSource.volume = IsMusicMuted ? 0f : MusicVolume;
-        }
+        ApplyMusicVolume();
     }
 
     public void ToggleSFXMute()
@@ -170,14 +170,14 @@ public class AudioManager : MonoBehaviour
     {
         switch (scene.name)
         {
-            case "Gameplay":
-            case "Main Menu":
+            case GameScenes.Gameplay:
+            case GameScenes.MainMenu:
                 PlayMusic(MusicName.Gameplay);
                 break;
-            case "Battle":
+            case GameScenes.Battle:
                 PlayMusic(MusicName.Battle);
                 break;
-            case "Interior":
+            case GameScenes.Interior:
                 PlayMusic(MusicName.Interior);
                 break;
         }
@@ -199,9 +199,38 @@ public class AudioManager : MonoBehaviour
 
     private void PlayButtonClickSFX()
     {
-        if (SceneManager.GetActiveScene().name == "Battle")
+        if (SceneManager.GetActiveScene().name == GameScenes.Battle)
             return;
 
         PlaySFX(SFXName.Click);
+    }
+
+    private void ApplyMusicVolume()
+    {
+        if (musicSource == null)
+            return;
+
+        float trackVolume = currentMusic != null
+            ? currentMusic.volume
+            : 1f;
+
+        musicSource.volume = IsMusicMuted
+            ? 0f
+            : trackVolume * MusicVolume;
+    }
+
+    private static void BuildSoundLookup(
+        IEnumerable<SoundData> sounds,
+        IDictionary<string, SoundData> destination)
+    {
+        destination.Clear();
+
+        foreach (SoundData sound in sounds)
+        {
+            if (sound == null || string.IsNullOrWhiteSpace(sound.name))
+                continue;
+
+            destination[sound.name.Trim()] = sound;
+        }
     }
 }

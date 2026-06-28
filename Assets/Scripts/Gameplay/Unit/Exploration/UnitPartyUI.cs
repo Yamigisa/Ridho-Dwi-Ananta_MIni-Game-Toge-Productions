@@ -17,17 +17,14 @@ public class UnitPartyUI : MonoBehaviour
     private void Start()
     {
         if (Inventory.Instance == null)
-        {
-            Debug.LogWarning("UnitPartyUI could not find the Inventory.");
             return;
-        }
 
         Inventory.Instance.ItemUseRequested += BeginItemUse;
     }
 
     private void Update()
     {
-        if (IsOpen && DialogueManager.IsGameplayInputLocked)
+        if (IsOpen && GameplayState.BlocksPlayerInput)
             ClosePartyUI();
     }
 
@@ -176,10 +173,7 @@ public class UnitPartyUI : MonoBehaviour
     {
         if (DialogueManager.Instance == null ||
             DialogueManager.Instance.Messages == null)
-        {
-            Debug.LogWarning("Cannot show item-used popup because DialogueManager is unavailable.");
             return;
-        }
 
         string unitName = target.UnitData != null
             ? target.UnitData.unitName

@@ -42,11 +42,11 @@ public class BattleAIProfile : ScriptableObject
     [Range(0f, 10f)]
     [SerializeField] private float attackWeight = 1f;
 
-    [Tooltip("Relative chance to use a skill. 0 disables skills. Placeholder until skill logic is implemented.")]
+    [Tooltip("Relative chance to use a skill. 0 disables skill selection.")]
     [Range(0f, 10f)]
     [SerializeField] private float skillWeight = 0f;
 
-    [Tooltip("Relative chance to use an item. 0 disables items. Placeholder until item logic is implemented.")]
+    [Tooltip("Relative chance to use an item. 0 disables item selection.")]
     [Range(0f, 10f)]
     [SerializeField] private float itemWeight = 0f;
 
@@ -78,7 +78,10 @@ public class BattleAIProfile : ScriptableObject
             return new BattleAIIntent(BattleAIAction.Flee);
 
         BattleAIAction action = ChooseWeightedAction();
-        if (action == BattleAIAction.Attack || action == BattleAIAction.Skill)
+        if (action == BattleAIAction.Skill)
+            return new BattleAIIntent(action);
+
+        if (action == BattleAIAction.Attack)
         {
             UnitBattle target = ChooseTarget(opponents);
             if (target == null)
@@ -88,6 +91,12 @@ public class BattleAIProfile : ScriptableObject
         }
 
         return new BattleAIIntent(action);
+    }
+
+    public UnitBattle ChooseLivingTarget(
+        IReadOnlyList<UnitBattle> candidates)
+    {
+        return ChooseTarget(candidates);
     }
 
     public bool RollFleeSuccess(UnitBattle self, IReadOnlyList<UnitBattle> opponents)
@@ -191,5 +200,52 @@ public class BattleAIProfile : ScriptableObject
         }
 
         return count > 0 ? Mathf.RoundToInt((float)total / count) : 0;
+    }
+}
+
+/// <summary>
+/// Stateless battle formulas. Keeping calculations outside BattleManager makes
+/// them reusable by player actions, AI, previews, and automated tests.
+/// </summary>
+public static class BattleRules
+{
+    public static int CalculateAttackDamage(
+        UnitBattle attacker,
+        UnitBattle target)
+    {
+        return Mathf.Max(0, attacker.Attack - target.Defense);
+    }
+
+    public static float CalculateFleeChance(
+        IReadOnlyList<UnitBattle> playerUnits,
+        IReadOnlyList<UnitBattle> enemyUnits)
+    {
+        if (playerUnits.Count == 0 || enemyUnits.Count == 0)
+            return 1f;
+
+        float playerAverageSpeed = CalculateAverageSpeed(playerUnits);
+        float enemyAverageSpeed = CalculateAverageSpeed(enemyUnits);
+        float speedRatio =
+            playerAverageSpeed / Mathf.Max(1f, enemyAverageSpeed);
+
+        return Mathf.Clamp(0.5f * speedRatio, 0.1f, 0.95f);
+    }
+
+    private static float CalculateAverageSpeed(
+        IReadOnlyList<UnitBattle> units)
+    {
+        float total = 0f;
+        int count = 0;
+
+        foreach (UnitBattle unit in units)
+        {
+            if (unit == null || !unit.IsAlive)
+                continue;
+
+            total += unit.Speed;
+            count++;
+        }
+
+        return count > 0 ? total / count : 0f;
     }
 }

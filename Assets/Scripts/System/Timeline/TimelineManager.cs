@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Playables;
 
+[DisallowMultipleComponent]
 public class TimelineManager : MonoBehaviour
 {
     // V2 ignores completion flags written by the previous quit-time bug.
@@ -35,6 +36,12 @@ public class TimelineManager : MonoBehaviour
 
     private void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
         Instance = this;
 
         foreach (TimelineEntry entry in timelineEntries)
@@ -104,22 +111,10 @@ public class TimelineManager : MonoBehaviour
             return false;
 
         if (entry.playableDirector == null)
-        {
-            Debug.LogWarning(
-                $"Timeline '{entry.id}' has no PlayableDirector assigned.",
-                this
-            );
             return false;
-        }
 
         if (currentPlayableDirector != null)
-        {
-            Debug.LogWarning(
-                "Another timeline is already active.",
-                this
-            );
             return false;
-        }
 
         currentTimelineEntry = entry;
         currentPlayableDirector = entry.playableDirector;
@@ -195,7 +190,7 @@ public class TimelineManager : MonoBehaviour
 
     public bool HasPlayed(string id)
     {
-        TimelineEntry entry = FindTimeline(id, false);
+        TimelineEntry entry = FindTimeline(id);
         return entry != null && entry.hasPlayed;
     }
 
@@ -294,15 +289,13 @@ public class TimelineManager : MonoBehaviour
                duration - frameTolerance;
     }
 
-    private TimelineEntry FindTimeline(
-        string id,
-        bool logWarning = true)
+    private TimelineEntry FindTimeline(string id)
     {
         if (string.IsNullOrWhiteSpace(id))
             return null;
 
         string trimmedId = id.Trim();
-        TimelineEntry entry = timelineEntries.Find(
+        return timelineEntries.Find(
             timeline => timeline != null &&
                         string.Equals(
                             timeline.id,
@@ -310,16 +303,6 @@ public class TimelineManager : MonoBehaviour
                             StringComparison.Ordinal
                         )
         );
-
-        if (entry == null && logWarning)
-        {
-            Debug.LogWarning(
-                $"No timeline with ID '{trimmedId}' was found.",
-                this
-            );
-        }
-
-        return entry;
     }
 
     private static bool LoadHasPlayed(string id)
@@ -348,4 +331,3 @@ public class TimelineEntry
 
     [NonSerialized] public bool hasPlayed;
 }
-

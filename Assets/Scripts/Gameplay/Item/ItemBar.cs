@@ -54,7 +54,7 @@ public class ItemBar : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 
     private void HandleClick()
     {
-        if (DialogueManager.IsGameplayInputLocked)
+        if (GameplayState.BlocksPlayerInput)
             return;
 
         Clicked?.Invoke(this);
@@ -62,7 +62,7 @@ public class ItemBar : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        if (DialogueManager.IsGameplayInputLocked)
+        if (GameplayState.BlocksPlayerInput)
             return;
 
         HoverEntered?.Invoke(this);
@@ -70,7 +70,7 @@ public class ItemBar : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 
     public void OnPointerExit(PointerEventData eventData)
     {
-        if (DialogueManager.IsGameplayInputLocked)
+        if (GameplayState.BlocksPlayerInput)
             return;
 
         HoverExited?.Invoke(this);

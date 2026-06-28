@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 public class BattleHUD : MonoBehaviour
@@ -23,12 +24,12 @@ public class BattleHUD : MonoBehaviour
 
     private void Awake()
     {
-        attackButton.onClick.AddListener(() => SelectAction(BattleAction.Attack));
-        defendButton.onClick.AddListener(() => SelectAction(BattleAction.Defend));
-        itemButton.onClick.AddListener(() => SelectAction(BattleAction.Item));
-        fleeButton.onClick.AddListener(() => SelectAction(BattleAction.Flee));
-        skillButton.onClick.AddListener(() => SelectAction(BattleAction.Skill));
-        passButton.onClick.AddListener(() => SelectAction(BattleAction.Pass));
+        attackButton.onClick.AddListener(SelectAttack);
+        defendButton.onClick.AddListener(SelectDefend);
+        itemButton.onClick.AddListener(SelectItem);
+        fleeButton.onClick.AddListener(SelectFlee);
+        skillButton.onClick.AddListener(SelectSkill);
+        passButton.onClick.AddListener(SelectPass);
 
         if (cancelButton != null)
             cancelButton.onClick.AddListener(SelectCancel);
@@ -36,15 +37,56 @@ public class BattleHUD : MonoBehaviour
         HideCancelButton();
     }
 
+    private void OnDestroy()
+    {
+        attackButton.onClick.RemoveListener(SelectAttack);
+        defendButton.onClick.RemoveListener(SelectDefend);
+        itemButton.onClick.RemoveListener(SelectItem);
+        fleeButton.onClick.RemoveListener(SelectFlee);
+        skillButton.onClick.RemoveListener(SelectSkill);
+        passButton.onClick.RemoveListener(SelectPass);
+
+        if (cancelButton != null)
+            cancelButton.onClick.RemoveListener(SelectCancel);
+
+        OnActionSelected = null;
+        OnCancelSelected = null;
+    }
+
+    private void Update()
+    {
+        if (GameplayState.BlocksPlayerInput ||
+            cancelButton == null ||
+            !cancelButton.gameObject.activeInHierarchy)
+            return;
+
+        bool keyboardCanceled =
+            Keyboard.current != null &&
+            Keyboard.current.escapeKey.wasPressedThisFrame;
+        bool mouseCanceled =
+            Mouse.current != null &&
+            Mouse.current.rightButton.wasPressedThisFrame;
+
+        if (keyboardCanceled || mouseCanceled)
+            SelectCancel();
+    }
+
+    private void SelectAttack() => SelectAction(BattleAction.Attack);
+    private void SelectSkill() => SelectAction(BattleAction.Skill);
+    private void SelectDefend() => SelectAction(BattleAction.Defend);
+    private void SelectItem() => SelectAction(BattleAction.Item);
+    private void SelectPass() => SelectAction(BattleAction.Pass);
+    private void SelectFlee() => SelectAction(BattleAction.Flee);
+
     private void SelectAction(BattleAction action)
     {
-        if (!DialogueManager.IsGameplayInputLocked)
+        if (!GameplayState.BlocksPlayerInput)
             OnActionSelected?.Invoke(action);
     }
 
     private void SelectCancel()
     {
-        if (!DialogueManager.IsGameplayInputLocked)
+        if (!GameplayState.BlocksPlayerInput)
             OnCancelSelected?.Invoke();
     }
 

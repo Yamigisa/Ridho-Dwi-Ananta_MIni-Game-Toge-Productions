@@ -70,21 +70,6 @@ public class BattleManager : MonoBehaviour
         SubscribeDialogueEvents();
     }
 
-    private void Update()
-    {
-        if (DialogueManager.IsGameplayInputLocked)
-            return;
-
-        if (!isChoosingItem &&
-            !isSelectingItemTarget &&
-            !isChoosingSkill &&
-            !isSelectingSkillTarget)
-            return;
-
-        if (Input.GetKeyDown(KeyCode.Escape) || Input.GetMouseButtonDown(1))
-            OnCancelAction();
-    }
-
     private void OnDestroy()
     {
         battleHUD.OnActionSelected -= OnPlayerAction;
@@ -256,7 +241,10 @@ public class BattleManager : MonoBehaviour
                     yield return ExecuteAttackSequence(actingUnit, intent.Target);
                 break;
             case BattleAIAction.Skill:
-                yield return ExecuteSkillSequence(actingUnit, intent.Target);
+                yield return ExecuteAISkillSequence(
+                    actingUnit,
+                    allies,
+                    opponents);
                 break;
             case BattleAIAction.Item:
                 yield return ExecuteItemSequence(actingUnit);
@@ -277,6 +265,230 @@ public class BattleManager : MonoBehaviour
 
         CompleteCurrentTurn();
         ProcessNextTurn();
+    }
+
+    private IEnumerator ExecuteAISkillSequence(
+        UnitBattle actingUnit,
+        List<UnitBattle> allies,
+        List<UnitBattle> opponents)
+    {
+        SkillData skill = ChooseAISkill(actingUnit, allies, opponents);
+        List<UnitBattle> targets = ResolveAISkillTargets(
+            actingUnit,
+            skill,
+            allies,
+            opponents);
+
+        if (skill == null || targets.Count == 0)
+        {
+            UnitBattle fallbackTarget = GetFirstAliveUnit(opponents);
+            if (fallbackTarget != null)
+                yield return ExecuteAttackSequence(
+                    actingUnit,
+                    fallbackTarget);
+            else
+                yield return ExecutePassSequence(actingUnit);
+
+            yield break;
+        }
+
+        yield return ExecuteSkill(
+            actingUnit,
+            skill,
+            targets);
+    }
+
+    private SkillData ChooseAISkill(
+        UnitBattle actingUnit,
+        List<UnitBattle> allies,
+        List<UnitBattle> opponents)
+    {
+        if (actingUnit.UnitData == null)
+            return null;
+
+        List<SkillData> usefulSkills = new();
+
+        foreach (SkillData skill in actingUnit.UnitData.Skills)
+        {
+            if (skill == null || !actingUnit.CanPaySkillCost(skill))
+                continue;
+
+            List<UnitBattle> targets = ResolveAISkillTargets(
+                actingUnit,
+                skill,
+                allies,
+                opponents);
+
+            if (targets.Count == 0)
+                continue;
+
+            if (IsSkillUseful(skill, actingUnit, targets))
+                usefulSkills.Add(skill);
+        }
+
+        return usefulSkills.Count > 0
+            ? usefulSkills[Random.Range(0, usefulSkills.Count)]
+            : null;
+    }
+
+    private List<UnitBattle> ResolveAISkillTargets(
+        UnitBattle caster,
+        SkillData skill,
+        List<UnitBattle> allies,
+        List<UnitBattle> opponents)
+    {
+        List<UnitBattle> targets = new();
+        if (skill == null)
+            return targets;
+
+        switch (skill.Targeting)
+        {
+            case SkillData.TargetType.Self:
+                if (caster.IsAlive)
+                    targets.Add(caster);
+                break;
+
+            case SkillData.TargetType.SingleAlly:
+                {
+                    UnitBattle target = ChooseBestAllyTarget(
+                        caster,
+                        skill,
+                        allies);
+                    if (target != null)
+                        targets.Add(target);
+                    break;
+                }
+
+            case SkillData.TargetType.AllAllies:
+                targets.AddRange(GetLivingUnits(allies));
+                break;
+
+            case SkillData.TargetType.SingleEnemy:
+                {
+                    UnitBattle target =
+                        caster.BattleAIProfile != null
+                            ? caster.BattleAIProfile
+                                .ChooseLivingTarget(opponents)
+                            : GetFirstAliveUnit(opponents);
+                    if (target != null)
+                        targets.Add(target);
+                    break;
+                }
+
+            case SkillData.TargetType.AllEnemies:
+                targets.AddRange(GetLivingUnits(opponents));
+                break;
+        }
+
+        return targets;
+    }
+
+    private UnitBattle ChooseBestAllyTarget(
+        UnitBattle caster,
+        SkillData skill,
+        List<UnitBattle> allies)
+    {
+        List<UnitBattle> livingAllies = GetLivingUnits(allies);
+        if (livingAllies.Count == 0)
+            return null;
+
+        UnitBattle bestTarget = null;
+        int bestRestorationNeed = 0;
+
+        foreach (UnitBattle ally in livingAllies)
+        {
+            int restorationNeed = GetRestorationNeed(skill, ally);
+            if (restorationNeed <= bestRestorationNeed)
+                continue;
+
+            bestRestorationNeed = restorationNeed;
+            bestTarget = ally;
+        }
+
+        if (bestTarget != null)
+            return bestTarget;
+
+        return caster.BattleAIProfile != null
+            ? caster.BattleAIProfile.ChooseLivingTarget(livingAllies)
+            : livingAllies[0];
+    }
+
+    private static int GetRestorationNeed(
+        SkillData skill,
+        UnitBattle target)
+    {
+        int need = 0;
+
+        foreach (SkillData.SkillEffect effect in skill.Effects)
+        {
+            if (effect == null ||
+                effect.Recipient != SkillData.EffectRecipient.Target)
+                continue;
+
+            if (effect.Type == SkillData.EffectType.HealHP)
+                need += target.MaxHP - target.CurrentHP;
+            else if (effect.Type == SkillData.EffectType.HealMP)
+                need += target.MaxMP - target.CurrentMP;
+        }
+
+        return need;
+    }
+
+    private bool IsSkillUseful(
+        SkillData skill,
+        UnitBattle caster,
+        List<UnitBattle> targets)
+    {
+        foreach (SkillData.SkillEffect effect in skill.Effects)
+        {
+            if (effect == null || effect.SuccessChance <= 0f)
+                continue;
+
+            if (effect.Recipient == SkillData.EffectRecipient.Caster)
+            {
+                if (WouldSkillEffectChangeTarget(effect, caster))
+                    return true;
+
+                continue;
+            }
+
+            foreach (UnitBattle target in targets)
+            {
+                if (WouldSkillEffectChangeTarget(effect, target))
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
+    private bool WouldSkillEffectChangeTarget(
+        SkillData.SkillEffect effect,
+        UnitBattle target)
+    {
+        int amount = GetSkillEffectAmount(effect, target);
+        if (amount <= 0)
+            return false;
+
+        switch (effect.Type)
+        {
+            case SkillData.EffectType.HealHP:
+                return target.CurrentHP < target.MaxHP;
+            case SkillData.EffectType.HealMP:
+                return target.CurrentMP < target.MaxMP;
+            case SkillData.EffectType.Damage:
+                return target.IsAlive &&
+                       (effect.ValueType == SkillData.ValueType.Percent ||
+                        amount > target.Defense);
+            case SkillData.EffectType.DecreaseAttack:
+                return target.Attack > 0;
+            case SkillData.EffectType.DecreaseDefense:
+                return target.BaseDefense > 0;
+            case SkillData.EffectType.DecreaseSpeed:
+                return target.Speed > 0;
+            default:
+                return target.IsAlive;
+        }
     }
 
     private IEnumerator ExecuteAIFleeSequence(UnitBattle actingUnit, List<UnitBattle> allies, List<UnitBattle> opponents)
@@ -401,7 +613,7 @@ public class BattleManager : MonoBehaviour
         attacker.PlayAttack();
         yield return new WaitForSeconds(0.5f);
 
-        int damage = CalculateAttackDamage(attacker, target);
+        int damage = BattleRules.CalculateAttackDamage(attacker, target);
         target.PlayHurt();
         yield return target.SetHPAnimated(target.CurrentHP - damage);
 
@@ -492,14 +704,7 @@ public class BattleManager : MonoBehaviour
         battleHUD.ShowCancelButton();
 
         while (!targetConfirmed && !targetSelectionCanceled)
-        {
-            if (!DialogueManager.IsGameplayInputLocked &&
-                (Input.GetKeyDown(KeyCode.Escape) ||
-                 Input.GetMouseButtonDown(1)))
-                CancelEnemyTargetSelection();
-
             yield return null;
-        }
     }
 
     private void SubscribeEnemyTargetCallbacks()
@@ -645,11 +850,6 @@ public class BattleManager : MonoBehaviour
         return null;
     }
 
-    private int CalculateAttackDamage(UnitBattle attacker, UnitBattle target)
-    {
-        return Mathf.Max(0, attacker.Attack - target.Defense);
-    }
-
     private void HandlePopupVisibilityChanged(bool isVisible)
     {
         RefreshPlayerCardsForPopupState(isVisible);
@@ -690,10 +890,7 @@ public class BattleManager : MonoBehaviour
     private void SubscribeInventoryEvents()
     {
         if (Inventory.Instance == null)
-        {
-            Debug.LogWarning("BattleManager could not find the persistent Inventory.");
             return;
-        }
 
         Inventory.Instance.ItemUseRequested -= OnBattleItemSelected;
         Inventory.Instance.ItemUseRequested += OnBattleItemSelected;
@@ -705,7 +902,6 @@ public class BattleManager : MonoBehaviour
     {
         if (Inventory.Instance == null)
         {
-            Debug.LogWarning("Cannot use an item because no Inventory exists.");
             battleHUD.ShowActionMenu();
             return;
         }
@@ -897,7 +1093,6 @@ public class BattleManager : MonoBehaviour
     {
         if (skillUI == null)
         {
-            Debug.LogWarning("BattleManager could not find a SkillUI in the Battle scene.");
             battleHUD.ShowActionMenu();
             return;
         }
@@ -1035,20 +1230,7 @@ public class BattleManager : MonoBehaviour
 
         isExecutingSkill = true;
         UnitBattle caster = currentActingUnit;
-        caster.PaySkillCost(skill);
-        AudioManager.Instance?.PlaySFX(skill.AudioClip);
-
-        yield return DialogueManager.Instance.ShowFormattedPopupAndWait(
-            DialogueManager.Instance.Messages.unitSkill,
-            ("unit", caster.name),
-            ("skill", skill.SkillName));
-
-        bool hasDamageEffect = HasEffect(skill, SkillData.EffectType.Damage);
-        if (hasDamageEffect)
-            caster.PlayAttack();
-
-        yield return ApplySkillEffects(skill, caster, targets);
-        yield return RemoveUnitsDefeatedBySkill();
+        yield return ExecuteSkill(caster, skill, targets);
 
         isExecutingSkill = false;
         skillBeingUsed = null;
@@ -1060,6 +1242,26 @@ public class BattleManager : MonoBehaviour
 
         CompleteCurrentTurn();
         ProcessNextTurn();
+    }
+
+    private IEnumerator ExecuteSkill(
+        UnitBattle caster,
+        SkillData skill,
+        List<UnitBattle> targets)
+    {
+        caster.PaySkillCost(skill);
+        AudioManager.Instance?.PlaySFX(skill.AudioClip);
+
+        yield return DialogueManager.Instance.ShowFormattedPopupAndWait(
+            DialogueManager.Instance.Messages.unitSkill,
+            ("unit", GetUnitDisplayName(caster)),
+            ("skill", skill.SkillName));
+
+        if (HasEffect(skill, SkillData.EffectType.Damage))
+            caster.PlayAttack();
+
+        yield return ApplySkillEffects(skill, caster, targets);
+        yield return RemoveUnitsDefeatedBySkill();
     }
 
     private IEnumerator ApplySkillEffects(
@@ -1079,7 +1281,11 @@ public class BattleManager : MonoBehaviour
                 continue;
             }
 
-            yield return ApplySkillEffect(skill, effect, caster);
+            yield return ApplySkillEffect(
+                skill,
+                effect,
+                caster,
+                caster);
         }
 
         foreach (UnitBattle target in targets)
@@ -1099,7 +1305,11 @@ public class BattleManager : MonoBehaviour
                     continue;
                 }
 
-                yield return ApplySkillEffect(skill, effect, target);
+                yield return ApplySkillEffect(
+                    skill,
+                    effect,
+                    target,
+                    caster);
             }
         }
     }
@@ -1119,7 +1329,11 @@ public class BattleManager : MonoBehaviour
             ("target", targetName));
     }
 
-    private IEnumerator ApplySkillEffect(SkillData skill, SkillData.SkillEffect effect, UnitBattle target)
+    private IEnumerator ApplySkillEffect(
+        SkillData skill,
+        SkillData.SkillEffect effect,
+        UnitBattle target,
+        UnitBattle caster)
     {
         if (effect == null || target == null)
             yield break;
@@ -1156,45 +1370,118 @@ public class BattleManager : MonoBehaviour
             case SkillData.EffectType.IncreaseAttack:
                 {
                     int beforeAttack = target.Attack;
-                    target.IncreaseAttack(amount);
+                    ApplySkillStatModifier(
+                        target,
+                        caster,
+                        UnitBattle.BattleStat.Attack,
+                        amount,
+                        effect.Duration);
                     yield return ShowSkillStatChangedPopup(skill, target, "Attack", target.Attack - beforeAttack, true);
                     break;
                 }
             case SkillData.EffectType.IncreaseDefense:
                 {
                     int beforeDefense = target.BaseDefense;
-                    target.IncreaseDefense(amount);
+                    ApplySkillStatModifier(
+                        target,
+                        caster,
+                        UnitBattle.BattleStat.Defense,
+                        amount,
+                        effect.Duration);
                     yield return ShowSkillStatChangedPopup(skill, target, "Defense", target.BaseDefense - beforeDefense, true);
                     break;
                 }
             case SkillData.EffectType.IncreaseSpeed:
                 {
                     int beforeSpeed = target.Speed;
-                    target.IncreaseSpeed(amount);
+                    ApplySkillStatModifier(
+                        target,
+                        caster,
+                        UnitBattle.BattleStat.Speed,
+                        amount,
+                        effect.Duration);
                     yield return ShowSkillStatChangedPopup(skill, target, "Speed", target.Speed - beforeSpeed, true);
                     break;
                 }
             case SkillData.EffectType.DecreaseAttack:
                 {
                     int beforeAttack = target.Attack;
-                    target.DecreaseAttack(amount);
+                    ApplySkillStatModifier(
+                        target,
+                        caster,
+                        UnitBattle.BattleStat.Attack,
+                        -amount,
+                        effect.Duration);
                     yield return ShowSkillStatChangedPopup(skill, target, "Attack", beforeAttack - target.Attack, false);
                     break;
                 }
             case SkillData.EffectType.DecreaseDefense:
                 {
                     int beforeDefense = target.BaseDefense;
-                    target.DecreaseDefense(amount);
+                    ApplySkillStatModifier(
+                        target,
+                        caster,
+                        UnitBattle.BattleStat.Defense,
+                        -amount,
+                        effect.Duration);
                     yield return ShowSkillStatChangedPopup(skill, target, "Defense", beforeDefense - target.BaseDefense, false);
                     break;
                 }
             case SkillData.EffectType.DecreaseSpeed:
                 {
                     int beforeSpeed = target.Speed;
-                    target.DecreaseSpeed(amount);
+                    ApplySkillStatModifier(
+                        target,
+                        caster,
+                        UnitBattle.BattleStat.Speed,
+                        -amount,
+                        effect.Duration);
                     yield return ShowSkillStatChangedPopup(skill, target, "Speed", beforeSpeed - target.Speed, false);
                     break;
                 }
+        }
+    }
+
+    private static void ApplySkillStatModifier(
+        UnitBattle target,
+        UnitBattle caster,
+        UnitBattle.BattleStat stat,
+        int amount,
+        int duration)
+    {
+        if (duration > 0)
+        {
+            target.AddTemporaryStatModifier(
+                stat,
+                amount,
+                duration,
+                target == caster);
+            return;
+        }
+
+        bool increases = amount > 0;
+        int magnitude = Mathf.Abs(amount);
+
+        switch (stat)
+        {
+            case UnitBattle.BattleStat.Attack:
+                if (increases)
+                    target.IncreaseAttack(magnitude);
+                else
+                    target.DecreaseAttack(magnitude);
+                break;
+            case UnitBattle.BattleStat.Defense:
+                if (increases)
+                    target.IncreaseDefense(magnitude);
+                else
+                    target.DecreaseDefense(magnitude);
+                break;
+            case UnitBattle.BattleStat.Speed:
+                if (increases)
+                    target.IncreaseSpeed(magnitude);
+                else
+                    target.DecreaseSpeed(magnitude);
+                break;
         }
     }
 
@@ -1380,7 +1667,7 @@ public class BattleManager : MonoBehaviour
             yield return AwardVictoryExperience();
             yield return AwardVictoryItemDrops();
             BattleRelay.MarkCurrentEncounterDefeated();
-            SceneManager.LoadScene("Gameplay");
+            SceneManager.LoadScene(GameScenes.Gameplay);
         }
     }
 
@@ -1477,7 +1764,6 @@ public class BattleManager : MonoBehaviour
 
         if (Inventory.Instance == null)
         {
-            Debug.LogWarning("Cannot award battle item drops because no Inventory exists.");
             pendingItemRewards.Clear();
             yield break;
         }
@@ -1529,17 +1815,6 @@ public class BattleManager : MonoBehaviour
         yield return DialogueManager.Instance.ShowFormattedPopupAndWait(
             DialogueManager.Instance.Messages.unitItem,
             ("unit", unitName)
-        );
-    }
-
-    private IEnumerator ExecuteSkillSequence(UnitBattle actingUnit, UnitBattle target)
-    {
-        string unitName = actingUnit != null ? actingUnit.name : "Unit";
-
-        yield return DialogueManager.Instance.ShowFormattedPopupAndWait(
-            DialogueManager.Instance.Messages.unitSkill,
-            ("unit", unitName),
-            ("skill", "a skill")
         );
     }
 
@@ -1611,7 +1886,10 @@ public class BattleManager : MonoBehaviour
 
         yield return DialogueManager.Instance.ShowPopupAndWait(DialogueManager.Instance.Messages.fleeAttempt);
 
-        bool success = Random.value <= CalculateFleeChance();
+        bool success = Random.value <=
+                       BattleRules.CalculateFleeChance(
+                           playerBattleUnits,
+                           enemyBattleUnits);
 
         if (success)
         {
@@ -1620,7 +1898,7 @@ public class BattleManager : MonoBehaviour
 
             DialogueManager.Instance.EndPopupSequence();
             BattleRelay.MarkCurrentEncounterDefeated();
-            SceneManager.LoadScene("Gameplay");
+            SceneManager.LoadScene(GameScenes.Gameplay);
         }
         else
         {
@@ -1632,27 +1910,6 @@ public class BattleManager : MonoBehaviour
             CompleteCurrentTurn();
             ProcessNextTurn();
         }
-    }
-
-    private float CalculateFleeChance()
-    {
-        if (playerBattleUnits.Count == 0 || enemyBattleUnits.Count == 0)
-            return 1f;
-
-        float playerAvgSpeed = 0f;
-        foreach (var unit in playerBattleUnits)
-            playerAvgSpeed += unit.Speed;
-        playerAvgSpeed /= playerBattleUnits.Count;
-
-        float enemyAvgSpeed = 0f;
-        foreach (var unit in enemyBattleUnits)
-            enemyAvgSpeed += unit.Speed;
-        enemyAvgSpeed /= enemyBattleUnits.Count;
-
-        float speedRatio = playerAvgSpeed / Mathf.Max(1f, enemyAvgSpeed);
-        float chance = 0.5f * speedRatio;
-
-        return Mathf.Clamp(chance, 0.1f, 0.95f);
     }
 
     private void CompleteCurrentTurn()

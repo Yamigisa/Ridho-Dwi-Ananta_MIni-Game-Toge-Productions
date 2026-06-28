@@ -18,24 +18,13 @@ public class SceneLoadInteraction : Interactable
     public void LoadScene(string sceneName)
     {
         if (string.IsNullOrWhiteSpace(sceneName))
-        {
-            Debug.LogError($"{name} cannot load a scene without a scene name.");
             return;
-        }
 
         if (!Application.CanStreamedLevelBeLoaded(sceneName))
-        {
-            Debug.LogError(
-                $"Scene '{sceneName}' is not included in the Build Profile."
-            );
             return;
-        }
 
         if (string.IsNullOrWhiteSpace(destinationInteractionId))
-        {
-            Debug.LogError($"{name} has no Destination Interaction ID.");
             return;
-        }
 
         SceneTransitionState.SetDestination(destinationInteractionId);
 

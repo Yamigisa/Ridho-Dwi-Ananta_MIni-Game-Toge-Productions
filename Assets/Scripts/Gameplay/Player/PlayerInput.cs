@@ -2,7 +2,33 @@ using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class PlayerInput : MonoBehaviour
+public interface IPlayerInputSource
+{
+    Vector2 MoveInput { get; }
+    bool InteractPressed { get; }
+    bool InventoryPressed { get; }
+    bool PartyPressed { get; }
+    bool SprintHeld { get; }
+}
+
+public static class GameInputEvents
+{
+    public static event Action PauseRequested;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void Reset()
+    {
+        PauseRequested = null;
+    }
+
+    public static void RequestPause()
+    {
+        PauseRequested?.Invoke();
+    }
+}
+
+[DisallowMultipleComponent]
+public sealed class PlayerInput : MonoBehaviour, IPlayerInputSource
 {
     [SerializeField] private InputActionReference moveAction;
     [SerializeField] private InputActionReference interactAction;
@@ -10,8 +36,6 @@ public class PlayerInput : MonoBehaviour
     [SerializeField] private InputActionReference partyAction;
     [SerializeField] private InputActionReference pauseAction;
     [SerializeField] private InputActionReference sprintAction;
-
-    public static event Action PauseRequested;
 
     public Vector2 MoveInput { get; private set; }
     public bool InteractPressed { get; private set; }
@@ -25,12 +49,6 @@ public class PlayerInput : MonoBehaviour
     private InputAction party;
     private InputAction pause;
     private InputAction sprint;
-
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    private static void InitializeStatics()
-    {
-        PauseRequested = null;
-    }
 
     private void OnEnable()
     {
@@ -62,18 +80,7 @@ public class PlayerInput : MonoBehaviour
     private void Update()
     {
         if (pause?.WasPressedThisFrame() ?? false)
-            PauseRequested?.Invoke();
-
-        if (DialogueManager.IsGameplayInputLocked ||
-            GameManager.Instance != null && GameManager.Instance.IsGamePaused)
-        {
-            MoveInput = Vector2.zero;
-            InteractPressed = false;
-            InventoryPressed = false;
-            PartyPressed = false;
-            SprintHeld = false;
-            return;
-        }
+            GameInputEvents.RequestPause();
 
         MoveInput = move?.ReadValue<Vector2>() ?? Vector2.zero;
         InteractPressed = interact?.WasPressedThisFrame() ?? false;

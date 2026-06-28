@@ -20,6 +20,22 @@ public static class BattleRelay
     public static event Action<string> EncounterDefeated;
     public static event Action<UnitData> UnitDefeated;
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetRuntimeState()
+    {
+        defeatedEncounterIds.Clear();
+        defeatedUnitCounts.Clear();
+        PlayerUnits = null;
+        EnemyUnits = null;
+        EnemyPartyName = null;
+        CurrentEncounterId = null;
+        playerReturnScene = null;
+        playerReturnPosition = default;
+        restorePlayerPositionAfterBattle = false;
+        EncounterDefeated = null;
+        UnitDefeated = null;
+    }
+
     public static void Set(
         UnitBattleParty player,
         UnitBattleParty enemy,
